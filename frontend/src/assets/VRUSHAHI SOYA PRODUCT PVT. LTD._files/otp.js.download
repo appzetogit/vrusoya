@@ -1,0 +1,135 @@
+jQuery(document).ready(function($){
+
+    let resendTimer;
+    let resendSeconds = 30;
+
+    function startResendCountdown(button){
+        resendSeconds = 30;
+
+        button.prop('disabled', true);
+
+        resendTimer = setInterval(function(){
+
+            resendSeconds--;
+
+            button.text("Resend OTP in " + resendSeconds + "s");
+
+            if(resendSeconds <= 0){
+                clearInterval(resendTimer);
+                button.prop('disabled', false).text("Resend OTP");
+            }
+
+        },1000);
+    }
+
+    /* OPEN / CLOSE */
+    $('#prp-floating-btn').click(function(){
+        $('#prp-otp-modal').fadeIn();
+    });
+
+    $('#prp_close').click(function(){
+        $('#prp-otp-modal').fadeOut();
+    });
+
+
+    /* SEND OTP */
+    $('#prp_send_otp').click(function(){
+
+        let button = $(this);
+        let name = $('#prp_name').val().trim();
+        let mobile = $('#prp_mobile').val().trim();
+
+        if(name === '' || mobile.length < 10){
+            alert("Please enter valid name and mobile number");
+            return;
+        }
+
+        button.prop('disabled', true).text('Sending...');
+        $('#prp_success').html("📩 Sending OTP...").show();
+
+        $.post(prp_ajax.ajax_url,{
+            action:'prp_send_otp',
+            name:name,
+            mobile:mobile,
+            nonce:prp_ajax.nonce
+        },function(res){
+
+            if(res.success){
+
+                $('#prp_success').html("✅ OTP Sent. Enter OTP below");
+
+                // create otp box once
+                if($('#prp_enter_otp').length === 0){
+                    button.after(`
+                        <input type="text" id="prp_enter_otp" placeholder="Enter OTP">
+                        <button id="prp_verify_btn">Verify OTP</button>
+                    `);
+                }
+
+                // start countdown
+                startResendCountdown(button);
+
+            }else{
+                $('#prp_success').html("❌ Failed to send OTP");
+                button.prop('disabled', false).text('Send OTP');
+            }
+
+        }).fail(function(){
+            $('#prp_success').html("❌ Network error. Try again.");
+            button.prop('disabled', false).text('Send OTP');
+        });
+
+    });
+
+
+    /* VERIFY OTP */
+    $(document).on('click','#prp_verify_btn',function(){
+
+        let mobile = $('#prp_mobile').val().trim();
+        let otp = $('#prp_enter_otp').val().trim();
+        let verifyBtn = $(this);
+
+        if(otp.length < 4){
+            alert("Enter valid OTP");
+            return;
+        }
+
+        verifyBtn.prop('disabled',true).text('Verifying...');
+        $('#prp_success').html("🔐 Verifying OTP...");
+
+        $.post(prp_ajax.ajax_url,{
+            action:'prp_verify_otp',
+            mobile:mobile,
+            otp:otp,
+            nonce:prp_ajax.nonce
+        },function(res){
+
+            if(res.success){
+
+                $('#prp_success').html("✅ Number Verified Successfully");
+
+                clearInterval(resendTimer);
+
+                setTimeout(function(){
+                    $('#prp_name').val('');
+                    $('#prp_mobile').val('');
+                    $('#prp_enter_otp').remove();
+                    $('#prp_verify_btn').remove();
+                    $('#prp_success').hide();
+                    $('#prp_send_otp').prop('disabled',false).text('Send OTP');
+                    $('#prp-otp-modal').fadeOut();
+                },1500);
+
+            }else{
+                $('#prp_success').html("❌ Wrong OTP");
+                verifyBtn.prop('disabled',false).text('Verify OTP');
+            }
+
+        }).fail(function(){
+            $('#prp_success').html("❌ Server error. Try again.");
+            verifyBtn.prop('disabled',false).text('Verify OTP');
+        });
+
+    });
+
+});

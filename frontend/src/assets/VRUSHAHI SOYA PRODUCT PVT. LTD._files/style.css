@@ -1,0 +1,141 @@
+/* ================= ROOT THEME VARIABLES ================= */
+:root{
+    --prp-primary: var(--wp--preset--color--primary, #2271b1);
+    --prp-surface: var(--wp--preset--color--background, #ffffff);
+    --prp-text: var(--wp--preset--color--foreground, #1c2434);
+
+    --prp-primary-light: color-mix(in srgb, var(--prp-primary) 70%, white);
+    --prp-primary-dark: color-mix(in srgb, var(--prp-primary) 70%, black);
+
+    --prp-primary-gradient: linear-gradient(135deg, var(--prp-primary-dark), var(--prp-primary));
+    --prp-input-bg: color-mix(in srgb, var(--prp-surface) 92%, var(--prp-primary) 8%);
+}
+
+/* Fix overflow */
+#prp-otp-modal, 
+#prp-otp-modal *{
+    box-sizing:border-box;
+}
+
+/* ================= FLOATING BUTTON ================= */
+#prp-floating-btn{
+    position:fixed;
+    bottom:25px;
+    right:25px;
+    width:65px;
+    height:65px;
+    background:var(--prp-primary-gradient);
+    color:white;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    cursor:pointer;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+    transition:.3s;
+}
+#prp-floating-btn:hover{
+    transform:scale(1.08);
+}
+
+/* ================= MODAL ================= */
+#prp-otp-modal{
+    position:fixed;
+    bottom:100px;
+    right:25px;
+    width:340px;
+    background:var(--prp-surface);
+    border-radius:16px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    display:none;
+    animation:prpFade .25s ease;
+}
+
+@keyframes prpFade{
+    from{transform:translateY(20px);opacity:0}
+    to{transform:translateY(0);opacity:1}
+}
+
+.prp-modal-content{
+    padding:22px;
+    font-family:system-ui;
+}
+
+/* ================= HEADING ================= */
+.prp-modal-content h3{
+    margin:0 0 18px;
+    font-weight:700;
+    letter-spacing:.3px;
+    color:var(--prp-text);
+}
+
+/* ================= INPUTS ================= */
+.prp-modal-content input{
+    width:100%;
+    padding:14px 16px;
+    margin:12px 0;
+    border:2px solid transparent;
+    border-radius:12px;
+    background:var(--prp-input-bg);
+    font-size:15px;
+    transition:all .25s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.prp-modal-content input::placeholder{
+    color:color-mix(in srgb, var(--prp-text) 50%, transparent);
+    font-weight:500;
+}
+
+.prp-modal-content input:focus{
+    background:var(--prp-surface);
+    border-color:var(--prp-primary);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--prp-primary) 25%, transparent),
+        0 8px 18px rgba(0,0,0,.08);
+    outline:none;
+    transform:translateY(-1px);
+}
+
+#prp_enter_otp{
+    margin-top:14px;
+}
+
+/* ================= BUTTONS ================= */
+#prp_send_otp,#prp_verify_btn{
+    width:100%;
+    padding:12px;
+    background:var(--prp-primary-gradient);
+    color:white;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    margin-top:8px;
+    font-weight:600;
+    transition:.2s;
+}
+
+#prp_send_otp:hover,#prp_verify_btn:hover{
+    transform:translateY(-1px);
+}
+
+/* ================= MESSAGE ================= */
+#prp_success{
+    margin-top:12px;
+    font-size:14px;
+    font-weight:600;
+}
+
+/* ================= CLOSE ================= */
+#prp_close{
+    position:absolute;
+    top:10px;
+    right:15px;
+    cursor:pointer;
+    font-size:20px;
+    color:color-mix(in srgb, var(--prp-text) 60%, transparent);
+}
+#prp_close:hover{
+    color:var(--prp-text);
+}

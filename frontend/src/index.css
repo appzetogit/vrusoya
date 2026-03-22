@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=Baloo+2:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Primary Palette */
+  --color-primary: #39B54A;
+  /* Natural Green */
+  --color-primaryHover: #2E933B;
+  /* Slightly darker shade of primary */
+  --color-primaryDeep: #23712D;
+
+  /* Backgrounds */
+  --color-background: #F8FCFF;
+  /* Milk White */
+  --color-mint: #F8FCFF;
+  /* Overriding mint with Milk White */
+  --color-primaryLight: #F8FCFF;
+  /* Alias to Milk White */
+  --color-surface: #FFFFFF;
+  /* Pure White for surface/cards */
+
+  /* Typography */
+  --color-textPrimary: #2C2C2C;
+  /* Dark Charcoal */
+  --color-textSecondary: #64748B;
+  /* Keeping neutral secondary */
+
+  /* Accents & Alerts */
+  --color-offerRed: #E63946;
+  /* Keeping red for discount */
+  --color-warning: #FACC15;
+  /* Keeping yellow warning */
+  --color-border: #E8F0F5;
+  /* Gentle border for Milk White BG */
+  --color-accent: #8EDB8F;
+  /* Fresh Leaf */
+  --color-secondary: #3BA4CC;
+  /* Dairy Blue */
+
+  /* Footer Colors */
+  --color-footerBg: #2C2C2C;
+  /* Dark Charcoal Footer */
+  --color-footerText: #F8FCFF;
+  /* Milk White Text */
+
+  /* Legacy/Other (Keep minimal set if needed, or overwrite) */
+  --color-danger: #E63946;
+  /* Mapping danger to Offer Red for consistency */
+  --color-info: #2563EB;
+  --color-gold: #D4AF37;
+
+  --font-sans: 'Inter', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-textPrimary font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .no-number-spinner::-webkit-outer-spin-button,
+  .no-number-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .no-number-spinner {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
+  }
+
+  /* Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .skeleton {
+    background-color: #e9eef2;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.55) 45%,
+        transparent 100%);
+    animation: shimmer 1.2s infinite;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* React Quill Hyperlink Styling */
+.ql-snow .ql-editor a {
+  color: #2563EB !important;
+  /* Bright Blue */
+  text-decoration: underline !important;
+}
