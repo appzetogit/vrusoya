@@ -96,7 +96,7 @@ const AuthPage = () => {
                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white relative">
                     <div className="text-center md:text-left mb-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Poppins'] mb-2">
-                            Welcome to Farmlyf
+                            Welcome to Vrushahi Soya Products
                         </h1>
                         <p className="text-gray-500 text-sm">
                             Enter your mobile number to get started.
