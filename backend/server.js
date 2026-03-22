@@ -46,10 +46,8 @@ const parseOrigins = (value) =>
 const allowedOrigins = new Set([
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-  'https://farmlyf.in',
-  'https://www.farmlyf.in',
-  'http://farmlyf.in',
-  'http://www.farmlyf.in',
+  'https://vrusoya.com',
+  'https://www.vrusoya.com',
   process.env.FRONTEND_URL,
   ...parseOrigins(process.env.FRONTEND_URLS)
 ].filter(Boolean));
@@ -66,8 +64,9 @@ app.use(cors({
     const isVercel = origin.endsWith('.vercel.app');
     const isLocal = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
     const isFarmlyf = origin.includes('farmlyf.in');
+    const isVrusoya = origin.includes('vrusoya.com');
 
-    if (isAllowed || isLocal || isVercel || isFarmlyf || process.env.NODE_ENV === 'development') {
+    if (isAllowed || isLocal || isVercel || isFarmlyf || isVrusoya || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
