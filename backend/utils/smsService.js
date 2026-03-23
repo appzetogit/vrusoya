@@ -2,8 +2,7 @@ import axios from 'axios';
 import Otp from '../models/Otp.js';
 import Order from '../models/Order.js';
 
-// SMS India HUB Configuration
-// SMS India HUB Configuration accessed dynamically to handle ESM loading order
+// SMS Providers Configuration
 const API_TIMEOUT = 30000; // 30 seconds
 
 /**
@@ -39,7 +38,17 @@ function normalizeMobileNumber(mobile) {
  * Build DLT-compliant message
  */
 function buildOtpMessage(otp) {
-    const appName = process.env.APP_NAME || 'Indian Kart';
+    const appName = process.env.APP_NAME || 'VRUSOY';
+    const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
+    
+    if (provider === 'PRP') {
+        const prpTemplateText = process.env.PRP_SMS_TEMPLATE_TEXT;
+        if (prpTemplateText && prpTemplateText.trim()) {
+            return prpTemplateText.replace(/\{#var#\}/g, otp);
+        }
+        return `Dear customer, your OTP for mobile verification from ${appName.toLowerCase()}.com is ${otp}. This code is valid for 10 minutes. Do not share it with anyone.`;
+    }
+    
     return `Welcome to the ${appName} powered by SMSINDIAHUB. Your OTP for registration is ${otp}`;
 }
 
@@ -73,9 +82,110 @@ function handleSmsResponse(responseData) {
 }
 
 /**
- * Send SMS via SMS India HUB API
+ * Send SMS via PRP SMS API
  */
-async function sendSmsViaApi(mobile, message) {
+async function sendSmsViaPrpTemplate(mobile, otp) {
+    const API_KEY = process.env.PRP_SMS_API_KEY;
+    const SENDER = process.env.PRP_SMS_SENDER || 'VRUSOY';
+    const TEMPLATE_NAME = process.env.PRP_SMS_TEMPLATE_NAME || 'temp 1';
+    const API_URL = 'https://api.bulksmsadmin.com/BulkSMSapi/keyApiSendSMS/SendSmsTemplateName';
+
+    if (!API_KEY || !SENDER || !TEMPLATE_NAME) {
+        throw new Error('PRP SMS template credentials are missing. Configure API key, sender, and template name.');
+    }
+
+    if (!otp) {
+        throw new Error('OTP is required for PRP template API.');
+    }
+
+    const cleanMobile = normalizeMobileNumber(mobile);
+    const payload = {
+        sender: SENDER.trim(),
+        templateName: TEMPLATE_NAME.trim(),
+        smsReciever: [
+            {
+                mobileNo: cleanMobile,
+                templateParams: String(otp).trim(),
+            },
+        ],
+    };
+
+    console.log('[SMS] Sending via PRP Template API:', {
+        mobile: cleanMobile,
+        sender: SENDER,
+        templateName: TEMPLATE_NAME,
+        url: API_URL,
+    });
+
+    const response = await axios.post(API_URL, payload, {
+        headers: {
+            apikey: API_KEY.trim(),
+            'Content-Type': 'application/json',
+        },
+        timeout: API_TIMEOUT,
+    });
+
+    console.log('[SMS] PRP Template API Response:', response.status, response.data);
+}
+
+/**
+ * Send SMS via PRP SMS legacy API
+ */
+async function sendSmsViaPrpLegacy(mobile, message) {
+    const API_KEY = process.env.PRP_SMS_API_KEY;
+    const SENDER = process.env.PRP_SMS_SENDER || 'VRUSOY';
+    const BASE_URL = 'https://prpsms.biz/api/sendmsg.php';
+
+    if (!SENDER || !API_KEY) {
+        throw new Error('PRP SMS credentials are missing. Configure PRP_SMS_API_KEY and PRP_SMS_SENDER.');
+    }
+
+    const cleanMobile = normalizeMobileNumber(mobile);
+    const params = {};
+
+    // Keep minimal PRP config: API key + sender only.
+    params.key = API_KEY.trim();
+
+    params.sender = SENDER.trim();
+    params.phone = cleanMobile;
+    params.text = message;
+    params.priority = 'ndnd';
+    params.stype = 'normal';
+
+    console.log('[SMS] Sending via PRP SMS API:', {
+        mobile: cleanMobile,
+        sender: SENDER,
+        url: BASE_URL,
+        mode: 'api-key'
+    });
+
+    const response = await axios.get(BASE_URL, {
+        params,
+        timeout: API_TIMEOUT,
+    });
+
+    console.log('[SMS] PRP SMS API Response:', response.data);
+    
+    // PRP SMS usually returns something like "Message Sent Successfully" or an ID
+    if (!response.data || (typeof response.data === 'string' && response.data.toLowerCase().includes('error'))) {
+        throw new Error(`PRP SMS API Error: ${response.data}`);
+    }
+}
+
+/**
+ * Main function to send SMS via configured provider
+ */
+async function sendSmsViaApi(mobile, message, options = {}) {
+    const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
+
+    if (provider === 'PRP' || provider === 'BULK_SMS') {
+        if (options.otp) {
+            return sendSmsViaPrpTemplate(mobile, options.otp);
+        }
+        return sendSmsViaPrpLegacy(mobile, message);
+    }
+
+    // Default to SMS India HUB
     const API_KEY = process.env.SMS_INDIA_HUB_API_KEY;
     const SENDER_ID = process.env.SMS_INDIA_HUB_SENDER_ID;
     const TEMPLATE_ID = process.env.SMS_INDIA_HUB_DLT_TEMPLATE_ID;
@@ -83,7 +193,7 @@ async function sendSmsViaApi(mobile, message) {
     const GWID = process.env.SMS_INDIA_HUB_GWID || '2';
 
     if (!API_KEY || !SENDER_ID) {
-        throw new Error('SMS India HUB credentials are missing. Please check environment variables.');
+        throw new Error('SMS India HUB credentials are missing.');
     }
 
     const cleanMobile = normalizeMobileNumber(mobile);
@@ -101,8 +211,7 @@ async function sendSmsViaApi(mobile, message) {
         params.DLT_TE_ID = TEMPLATE_ID.trim();
     }
 
-    // DEBUG LOG
-    console.log('[SMS] Sending via API:', { mobile: cleanMobile, sender: SENDER_ID, url: API_URL });
+    console.log('[SMS] Sending via SMS India HUB API:', { mobile: cleanMobile, sender: SENDER_ID, url: API_URL });
 
     const response = await axios.get(API_URL, {
         params,
@@ -114,8 +223,7 @@ async function sendSmsViaApi(mobile, message) {
         timeout: API_TIMEOUT,
     });
 
-    console.log('[SMS] API Response:', response.data);
-
+    console.log('[SMS] SMS India HUB API Response:', response.data);
     handleSmsResponse(response.data);
 }
 
@@ -182,10 +290,23 @@ function isSpecialBypass(mobile) {
  * Check if mock mode should be used
  */
 function isMockMode() {
-    const API_KEY = process.env.SMS_INDIA_HUB_API_KEY;
-    const SENDER_ID = process.env.SMS_INDIA_HUB_SENDER_ID;
-    const useMock = process.env.USE_MOCK_OTP === 'true' || !API_KEY || !SENDER_ID;
-    console.log('[SMS] Mock mode check:', { useMock, USE_MOCK_OTP: process.env.USE_MOCK_OTP, hasKey: !!API_KEY, hasSender: !!SENDER_ID });
+    const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
+    const forceMock = process.env.USE_MOCK_OTP === 'true';
+    let hasCredentials = false;
+
+    if (provider === 'PRP') {
+        const PRP_API_KEY = process.env.PRP_SMS_API_KEY;
+        const PRP_SENDER = process.env.PRP_SMS_SENDER;
+        const PRP_TEMPLATE_NAME = process.env.PRP_SMS_TEMPLATE_NAME;
+        hasCredentials = !!PRP_API_KEY && !!PRP_SENDER && !!PRP_TEMPLATE_NAME;
+    } else {
+        const API_KEY = process.env.SMS_INDIA_HUB_API_KEY;
+        const SENDER_ID = process.env.SMS_INDIA_HUB_SENDER_ID;
+        hasCredentials = !!API_KEY && !!SENDER_ID;
+    }
+
+    const useMock = forceMock || !hasCredentials;
+    console.log('[SMS] Mock mode check:', { provider, useMock, forceMock, hasCredentials });
     return useMock;
 }
 
@@ -229,7 +350,7 @@ export async function sendSmsOtp(mobile, userType = 'Delivery') {
         // Real mode - Send via SMS India HUB
         await saveOtpToDb(mobile, otp, userType);
         const message = buildOtpMessage(otp);
-        await sendSmsViaApi(mobile, message);
+        await sendSmsViaApi(mobile, message, { otp });
 
         return {
             success: true,
@@ -302,7 +423,7 @@ export async function sendOTP(mobile, userType) {
 
         await saveOtpToDb(mobile, otp, userType);
         const message = buildOtpMessage(otp);
-        await sendSmsViaApi(mobile, message);
+        await sendSmsViaApi(mobile, message, { otp });
 
         return { success: true, message: 'OTP sent successfully' };
     } catch (error) {
@@ -343,9 +464,16 @@ export async function generateDeliveryOtp(orderId, customerPhone) {
         await order.save();
 
         try {
-            // Use SMS India HUB for Delivery OTPs as well
-            const appName = process.env.APP_NAME || 'Indian Kart';
-            const message = `Welcome to the ${appName} powered by SMSINDIAHUB. Your Delivery OTP for Order #${orderId.slice(-6).toUpperCase()} is ${otp}`;
+            // Use configured SMS provider for Delivery OTPs
+            const appName = process.env.APP_NAME || 'VRUSOY';
+            const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
+            let message;
+            
+            if (provider === 'PRP') {
+                message = `Your Delivery OTP for Order #${orderId.slice(-6).toUpperCase()} at ${appName} is ${otp}. - ${appName}`;
+            } else {
+                message = `Welcome to the ${appName} powered by SMSINDIAHUB. Your Delivery OTP for Order #${orderId.slice(-6).toUpperCase()} is ${otp}`;
+            }
             
             if (process.env.USE_MOCK_OTP !== 'true') {
                  await sendSmsViaApi(customerPhone, message);
