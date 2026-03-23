@@ -15,9 +15,9 @@ const TopBar = () => {
             </div>
 
             <div className="hidden md:flex items-center gap-6">
-                <Link to="/about-us" className="hover:text-primary transition-colors">About Us</Link>
-                <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-                <Link to="/contact-us" className="flex items-center gap-1 hover:text-primary transition-colors">
+                <Link to="/about-us" className="hover:text-[#0B1221] transition-colors duration-200">About Us</Link>
+                <Link to="/privacy-policy" className="hover:text-[#0B1221] transition-colors duration-200">Privacy Policy</Link>
+                <Link to="/contact-us" className="flex items-center gap-1 hover:text-[#0B1221] transition-colors duration-200">
                     <Phone size={13} />
                     Contact Us
                 </Link>

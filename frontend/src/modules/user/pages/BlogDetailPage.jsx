@@ -8,6 +8,7 @@ import { useBlogBySlug } from '../../../hooks/useContent';
 const BlogDetailPage = () => {
     const { slug } = useParams();
     const { data: blog, isLoading, error } = useBlogBySlug(slug);
+    const displayAuthor = (blog?.author || '').toLowerCase() === 'farmlyf' ? 'Vrushahi Group' : (blog?.author || 'Vrushahi Group');
 
     const handleShare = async () => {
         const shareData = {
@@ -83,7 +84,7 @@ const BlogDetailPage = () => {
                         </span>
                         <span className="flex items-center gap-2">
                             <User size={14} />
-                            {blog.author}
+                            {displayAuthor}
                         </span>
                     </div>
 
@@ -91,7 +92,7 @@ const BlogDetailPage = () => {
                         {blog.title}
                     </h1>
 
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden max-w-3xl">
                         <div
                             className="prose prose-base md:prose-lg max-w-none prose-img:rounded-3xl prose-headings:font-black prose-headings:text-gray-900 prose-p:text-gray-600 prose-p:leading-relaxed"
                             dangerouslySetInnerHTML={{ __html: blog.content }}
@@ -120,6 +121,7 @@ const BlogDetailPage = () => {
                 .prose {
                     color: #4b5563;
                     text-align: left;
+                    max-width: 100%;
                 }
                 .prose h1, .prose h2, .prose h3, .prose h4 {
                     color: #111827;
@@ -130,8 +132,11 @@ const BlogDetailPage = () => {
                 .prose p, .prose li {
                     margin-bottom: 1.5em;
                     line-height: 1.8;
-                    font-size: 1.25rem;
+                    font-size: 1.05rem;
                     text-align: left;
+                }
+                .prose p {
+                    max-width: 68ch;
                 }
                 .prose li {
                     margin-bottom: 0.5em;
@@ -146,6 +151,15 @@ const BlogDetailPage = () => {
                     list-style-type: disc;
                     padding-left: 1.5em;
                     margin-bottom: 1.5em;
+                }
+                @media (max-width: 768px) {
+                    .prose p, .prose li {
+                        font-size: 0.98rem;
+                        line-height: 1.75;
+                    }
+                    .prose p {
+                        max-width: 100%;
+                    }
                 }
             `}</style>
         </div>
