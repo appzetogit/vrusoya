@@ -9,12 +9,19 @@ import shiprocketService from '../utils/shiprocketService.js';
 import { validateOrderStock, deductStock } from '../utils/stockUtils.js';
 import { sendAdminOrderNotification } from '../utils/notificationUtils.js';
 
-// Initialize Razorpay
-// Note: These will be undefined until the user adds them to .env
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'placeholder_id',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret',
-});
+const getRazorpayClient = () => {
+  const keyId = (process.env.RAZORPAY_KEY_ID || '').trim();
+  const keySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+
+  if (!keyId || !keySecret) {
+    return null;
+  }
+
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+};
 
 
 const isNonEmpty = (value) => typeof value === 'string' && value.trim().length > 0;
@@ -56,11 +63,14 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
       }
   }
 
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      // In development, if keys are missing, we might want to throw a specific error or 
-      // return a mock response if the user just wants to see the UI.
-      // But for production safety, we should error.
-      // return res.status(400).json({ message: 'Razorpay keys not configured' });
+  const razorpay = getRazorpayClient();
+  if (!razorpay) {
+    return res.status(500).json({ message: 'Razorpay keys are not configured on server.' });
+  }
+
+  const amountNumber = Number(amount);
+  if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+    return res.status(400).json({ message: 'Invalid payment amount.' });
   }
 
   if (!orderData?.items?.length) {
@@ -73,7 +83,7 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
   }
 
   const options = {
-    amount: Math.round(amount * 100), // amount in the smallest currency unit (paise for INR)
+    amount: Math.round(amountNumber * 100), // amount in the smallest currency unit (paise for INR)
     currency,
     receipt,
   };
@@ -99,8 +109,12 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   } = req.body;
 
   const sign = razorpay_order_id + "|" + razorpay_payment_id;
+  const keySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+  if (!keySecret) {
+    return res.status(500).json({ message: 'Razorpay keys are not configured on server.' });
+  }
   const expectedSign = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || 'placeholder_secret')
+    .createHmac("sha256", keySecret)
     .update(sign.toString())
     .digest("hex");
 
