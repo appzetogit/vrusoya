@@ -500,11 +500,11 @@ const Navbar = () => {
                 </button>
 
                 {/* Centered Logo */}
-                <div className="absolute left-16 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
                     <Link to="/" className="flex-shrink-0">
                         <img src={logo} alt="FarmLyf" className="h-10 w-auto object-contain" />
                     </Link>
-                    <div className="flex flex-col items-start leading-none text-left">
+                    <div className="hidden flex-col items-start leading-none text-left">
                         <span className="font-brand font-black text-[20px] tracking-[0.02em] text-primary uppercase">VRUSHAHI</span>
                         <span className="font-brand font-bold text-[11px] tracking-[0.34em] text-secondary uppercase">SOya products</span>
                     </div>
@@ -680,7 +680,12 @@ const Navbar = () => {
                             <div className="flex flex-col h-full text-white">
                                 {/* Header */}
                                 <div className="flex items-center justify-between p-5 border-b border-gray-800">
-                                    <img src={logo} alt="FarmLyf" className="h-6 w-auto object-contain brightness-0 invert" />
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <img src={logo} alt="Vrusoya" className="h-9 w-auto object-contain brightness-0 invert shrink-0" />
+                                        <span className="text-base font-extrabold tracking-[0.18em] uppercase text-[#25D366] truncate">
+                                            Vrusoya
+                                        </span>
+                                    </div>
                                     <button
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors text-white"
