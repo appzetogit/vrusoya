@@ -6,6 +6,7 @@ import Pagination from '../components/Pagination';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 import { useAdminReviews, useAddAdminReview, useUpdateAdminReview, useDeleteAdminReview, useAllUserReviews, useUpdateReviewStatus } from '../../../hooks/useContent';
 import { API_BASE_URL } from '@/lib/apiUrl';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const AdminReviewsPage = () => {
     const location = useLocation();
@@ -52,9 +53,10 @@ const AdminReviewsPage = () => {
         const list = activeTab === 'user' ? userReviews : adminReviews;
         return list.filter(r => {
             const matchesStatus = statusFilter === 'All' || r.status === statusFilter;
-            const searchStr = (activeTab === 'user' ? `${r.user?.name} ${r.product?.name} ${r.title}` : `${r.name} ${r.comment}`).toLowerCase();
-            const matchesSearch = searchStr.includes(searchTerm.toLowerCase());
-            return matchesStatus && matchesSearch;
+            const searchStr = activeTab === 'user'
+                ? `${r.user?.name || ''} ${r.product?.name || ''} ${r.title || ''}`
+                : `${r.name || ''} ${r.comment || ''}`;
+            return matchesStatus && matchesSearch(searchStr, searchTerm);
         });
     }, [activeTab, userReviews, adminReviews, statusFilter, searchTerm]);
 
@@ -258,7 +260,7 @@ const AdminReviewsPage = () => {
                         type="text"
                         placeholder="Search reviews..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-[#2c5336] transition-all"
                     />
                 </div>

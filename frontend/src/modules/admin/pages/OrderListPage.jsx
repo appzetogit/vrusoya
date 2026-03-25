@@ -17,8 +17,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Pagination from '../components/Pagination';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const API_URL = API_BASE_URL;
+
+const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+}).format(Number(amount || 0));
 
 const OrderListPage = () => {
     const navigate = useNavigate();
@@ -51,10 +59,10 @@ const OrderListPage = () => {
     const filteredOrders = useMemo(() => {
         return allOrders.filter(order => {
             const matchesSearch =
-                order._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+                matchesSearch(
+                    `${order._id || ''} ${order.id || ''} ${order.user?.name || ''} ${order.userName || ''}`,
+                    searchTerm
+                );
 
             const normalizedStatus = order.status === 'pending' ? 'Processing' : order.status;
             const matchesStatus = statusFilter === 'All' || normalizedStatus === statusFilter;
@@ -133,7 +141,7 @@ const OrderListPage = () => {
                         type="text"
                         placeholder="Search by Order ID or Name..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>
@@ -203,7 +211,7 @@ const OrderListPage = () => {
                                         {order.items?.length || 0}
                                     </AdminTableCell>
                                     <AdminTableCell className="font-black text-footerBg text-sm">
-                                        ₹{order.amount?.toLocaleString()}
+                                        {formatINR(order.amount)}
                                     </AdminTableCell>
                                     <AdminTableCell>
                                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${getStatusStyles(order.status)}`}>

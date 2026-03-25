@@ -19,6 +19,7 @@ import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const API_URL = API_BASE_URL;
 
@@ -60,10 +61,7 @@ const OfferListPage = () => {
 
     const filteredOffers = useMemo(() => {
         return offers
-            .filter(o =>
-                o.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                o.slug?.toLowerCase().includes(searchTerm.toLowerCase())
-            )
+            .filter(o => matchesSearch(`${o.title || ''} ${o.slug || ''}`, searchTerm))
             .sort((a, b) => b.createdAt?.localeCompare(a.createdAt) || 0);
     }, [offers, searchTerm]);
 
@@ -109,7 +107,7 @@ const OfferListPage = () => {
                         type="text"
                         placeholder="Search by title or slug..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>

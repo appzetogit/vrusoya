@@ -15,6 +15,10 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
 import { API_BASE_URL } from '@/lib/apiUrl';
 
+const NAME_REGEX = /^[A-Za-z ]+$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_REGEX = /^\d{10}$/;
+
 const AdminProfilePage = () => {
     const { user, getAuthHeaders } = useAuth();
     const API_URL = API_BASE_URL;
@@ -47,6 +51,18 @@ const AdminProfilePage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'phone') {
+            const digitsOnly = String(value || '').replace(/\D/g, '').slice(0, 10);
+            setFormData(prev => ({ ...prev, phone: digitsOnly }));
+            return;
+        }
+
+        if (name === 'name') {
+            const lettersAndSpacesOnly = String(value || '').replace(/[^A-Za-z ]/g, '');
+            setFormData(prev => ({ ...prev, name: lettersAndSpacesOnly }));
+            return;
+        }
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -56,12 +72,39 @@ const AdminProfilePage = () => {
     };
 
     const handleSave = async () => {
+        const normalizedData = {
+            name: String(formData.name || '').trim(),
+            email: String(formData.email || '').trim(),
+            phone: String(formData.phone || '').trim()
+        };
+
+        if (!normalizedData.name) {
+            toast.error('Name is required');
+            return;
+        }
+        if (!NAME_REGEX.test(normalizedData.name)) {
+            toast.error('Name should contain alphabets only');
+            return;
+        }
+        if (!normalizedData.email) {
+            toast.error('Email is required');
+            return;
+        }
+        if (!EMAIL_REGEX.test(normalizedData.email)) {
+            toast.error('Please enter a valid email address');
+            return;
+        }
+        if (!PHONE_REGEX.test(normalizedData.phone)) {
+            toast.error('Phone number must be exactly 10 digits');
+            return;
+        }
+
         setIsSaving(true);
         try {
             const response = await fetch(`${API_URL}/users/profile`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify(formData),
+                body: JSON.stringify(normalizedData),
                 credentials: 'include'
             });
 
@@ -180,6 +223,8 @@ const AdminProfilePage = () => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 disabled={!isEditing}
+                                maxLength={60}
+                                autoComplete="name"
                                 className={`w-full border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none transition-all ${isEditing ? 'bg-gray-50 focus:ring-1 focus:ring-black/5' : 'bg-transparent pl-0'}`}
                             />
                         </div>
@@ -191,6 +236,7 @@ const AdminProfilePage = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 disabled={!isEditing}
+                                autoComplete="email"
                                 className={`w-full border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none transition-all ${isEditing ? 'bg-gray-50 focus:ring-1 focus:ring-black/5' : 'bg-transparent pl-0'}`}
                             />
                         </div>
@@ -202,6 +248,11 @@ const AdminProfilePage = () => {
                                 value={formData.phone}
                                 onChange={handleChange}
                                 disabled={!isEditing}
+                                inputMode="numeric"
+                                maxLength={10}
+                                minLength={10}
+                                pattern="\d{10}"
+                                autoComplete="tel"
                                 className={`w-full border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none transition-all ${isEditing ? 'bg-gray-50 focus:ring-1 focus:ring-black/5' : 'bg-transparent pl-0'}`}
                             />
                         </div>

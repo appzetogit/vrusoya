@@ -27,6 +27,7 @@ import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
+import { matchesSearch, normalizeSearchInput, toSearchKey } from '../utils/search';
 
 const API_URL = API_BASE_URL;
 
@@ -69,17 +70,14 @@ const CouponListPage = () => {
 
     const filteredCoupons = useMemo(() => {
         return coupons
-            .filter(c =>
-                c.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                c.description?.toLowerCase().includes(searchTerm.toLowerCase())
-            )
+            .filter(c => matchesSearch(`${c.code || ''} ${c.description || ''}`, searchTerm))
             .sort((a, b) => b.createdAt?.localeCompare(a.createdAt) || 0);
     }, [coupons, searchTerm]);
 
     const suggestions = useMemo(() => {
-        if (searchTerm.length < 2) return [];
+        if (toSearchKey(searchTerm).length < 2) return [];
         return coupons
-            .filter(c => c.code?.toLowerCase().includes(searchTerm.toLowerCase()))
+            .filter(c => matchesSearch(c.code || '', searchTerm))
             .slice(0, 5);
     }, [coupons, searchTerm]);
 
@@ -171,7 +169,7 @@ const CouponListPage = () => {
                         placeholder="Filter by code or description..."
                         value={searchTerm}
                         onChange={(e) => {
-                            setSearchTerm(e.target.value);
+                            setSearchTerm(normalizeSearchInput(e.target.value));
                             setShowSuggestions(true);
                         }}
                         onFocus={() => setShowSuggestions(true)}

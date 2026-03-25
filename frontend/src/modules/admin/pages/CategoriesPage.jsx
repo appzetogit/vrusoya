@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 import Pagination from '../components/Pagination';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const CategoriesPage = () => {
     const queryClient = useQueryClient();
@@ -209,11 +210,9 @@ const CategoriesPage = () => {
 
         return subCategories
             .filter((sub) => {
-                const matchesSearch =
-                    sub.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    sub.slug?.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearchTerm = matchesSearch(`${sub.name || ''} ${sub.slug || ''}`, searchTerm);
                 const matchesStatus = statusFilter === 'All' || sub.status === statusFilter;
-                return matchesSearch && matchesStatus;
+                return matchesSearchTerm && matchesStatus;
             })
             .sort((a, b) => {
                 const createdDiff = getCreatedMs(b) - getCreatedMs(a);
@@ -293,7 +292,7 @@ const CategoriesPage = () => {
                         placeholder="Search categories..."
                         value={searchTerm}
                         onChange={(e) => {
-                            setSearchTerm(e.target.value);
+                            setSearchTerm(normalizeSearchInput(e.target.value));
                             setCurrentPage(1);
                         }}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-[#2c5336] transition-all"

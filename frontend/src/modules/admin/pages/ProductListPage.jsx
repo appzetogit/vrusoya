@@ -13,6 +13,7 @@ import {
     Copy,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
     Star,
     Calendar,
     Settings,
@@ -26,6 +27,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
+import { matchesSearch, normalizeSearchInput, toSearchKey } from '../utils/search';
 
 
 const ProductListPage = () => {
@@ -131,27 +133,28 @@ const ProductListPage = () => {
 
         return products
             .filter(product => {
-                const matchesSearch =
-                    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    product.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    String(product._id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (typeof product.category === 'string' ? product.category : product.category?.name)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    product.subcategory?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearchText = [
+                    product.name,
+                    product.brand,
+                    String(product._id || ''),
+                    typeof product.category === 'string' ? product.category : product.category?.name,
+                    product.subcategory?.name
+                ].join(' ');
+                const matchesSearchTerm = matchesSearch(matchesSearchText, searchTerm);
 
                 const matchesCategory = filterCategory === 'All' || 
                     (typeof product.category === 'string' ? product.category === filterCategory : product.category?.name === filterCategory);
 
-                return matchesSearch && matchesCategory;
+                return matchesSearchTerm && matchesCategory;
             })
             .sort((a, b) => getCreatedMs(b) - getCreatedMs(a));
     }, [products, searchTerm, filterCategory]);
 
     const suggestions = useMemo(() => {
-        if (searchTerm.length < 2) return [];
+        if (toSearchKey(searchTerm).length < 2) return [];
         return products
             .filter(p =>
-                p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.brand?.toLowerCase().includes(searchTerm.toLowerCase())
+                matchesSearch(`${p.name || ''} ${p.brand || ''}`, searchTerm)
             )
             .slice(0, 6);
     }, [products, searchTerm]);
@@ -239,7 +242,7 @@ const ProductListPage = () => {
                         placeholder="Search products, brands..."
                         value={searchTerm}
                         onChange={(e) => {
-                            setSearchTerm(e.target.value);
+                            setSearchTerm(normalizeSearchInput(e.target.value));
                             setShowSuggestions(true);
                         }}
                         onFocus={() => setShowSuggestions(true)}

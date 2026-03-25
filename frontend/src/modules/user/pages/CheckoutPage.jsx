@@ -49,7 +49,8 @@ const CheckoutPage = () => {
     const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
-        maximumFractionDigits: 0
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     }).format(Number(amount || 0));
 
     // Helpers
@@ -160,6 +161,18 @@ const CheckoutPage = () => {
         pincode: '',
     });
     const [selectedAddressId, setSelectedAddressId] = useState('manual');
+
+    useEffect(() => {
+        setSelectedAddressId('manual');
+        setFormData({
+            fullName: '',
+            phone: '',
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+        });
+    }, [user?.id]);
 
     const userAddresses = Array.isArray(userData?.addresses) ? userData.addresses : [];
 
@@ -407,12 +420,15 @@ const CheckoutPage = () => {
     const feeConfig = (feeConfigValue && typeof feeConfigValue === 'object' && !Array.isArray(feeConfigValue))
         ? feeConfigValue
         : {};
-    const paymentHandlingFee = parseFeeAmount(feeConfig.paymentHandlingFee);
-    const platformFee = parseFeeAmount(feeConfig.platformFee);
-    const handlingFee = parseFeeAmount(feeConfig.handlingFee);
+    const paymentHandlingFee = feeConfig.applyPaymentHandlingFee === false ? 0 : parseFeeAmount(feeConfig.paymentHandlingFee);
+    const platformFee = feeConfig.applyPlatformFee === false ? 0 : parseFeeAmount(feeConfig.platformFee);
+    const handlingFee = feeConfig.applyHandlingFee === false ? 0 : parseFeeAmount(feeConfig.handlingFee);
+    const gstPercentage = feeConfig.applyGstFee === false ? 0 : parseFeeAmount(feeConfig.gstPercentage);
+    const taxableAmount = Math.max(0, subtotal - couponDiscount);
+    const gstAmount = Math.round((taxableAmount * gstPercentage) / 100);
     const totalAdditionalFees = paymentHandlingFee + platformFee + handlingFee + shippingCharge;
     const mrpDiscount = Math.max(0, mrpTotal - subtotal);
-    const total = Math.max(0, subtotal + totalAdditionalFees - couponDiscount);
+    const total = Math.max(0, taxableAmount + gstAmount + totalAdditionalFees);
 
     const getActiveCoupons = () => {
         if (!activeCoupons) return [];
@@ -434,10 +450,33 @@ const CheckoutPage = () => {
     };
     const availableCoupons = getActiveCoupons();
 
+    const namePattern = /^[A-Za-z\s]+$/;
+    const cityStatePattern = /^[A-Za-z\s]+$/;
+    const phonePattern = /^\d{10}$/;
+    const pincodePattern = /^\d{6}$/;
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        let nextValue = value;
+
+        if (name === 'fullName') {
+            nextValue = value.replace(/[^A-Za-z\s]/g, '');
+        }
+
+        if (name === 'phone') {
+            nextValue = value.replace(/\D/g, '').slice(0, 10);
+        }
+
+        if (name === 'pincode') {
+            nextValue = value.replace(/\D/g, '').slice(0, 6);
+        }
+
+        if (name === 'city' || name === 'state') {
+            nextValue = value.replace(/[^A-Za-z\s]/g, '');
+        }
+
         setSelectedAddressId('manual');
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({ ...prev, [name]: nextValue }));
     };
 
     const handleApplyCoupon = async () => {
@@ -498,6 +537,37 @@ const CheckoutPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const trimmedName = String(formData.fullName || '').trim();
+        const trimmedPhone = String(formData.phone || '').trim();
+        const trimmedCity = String(formData.city || '').trim();
+        const trimmedState = String(formData.state || '').trim();
+        const trimmedPincode = String(formData.pincode || '').trim();
+
+        if (!trimmedName || !namePattern.test(trimmedName)) {
+            toast.error('Please enter a valid full name using letters only.');
+            return;
+        }
+
+        if (!phonePattern.test(trimmedPhone)) {
+            toast.error('Phone number must be exactly 10 digits.');
+            return;
+        }
+
+        if (!trimmedCity || !cityStatePattern.test(trimmedCity)) {
+            toast.error('City should contain only letters.');
+            return;
+        }
+
+        if (!trimmedState || !cityStatePattern.test(trimmedState)) {
+            toast.error('State should contain only letters.');
+            return;
+        }
+
+        if (!pincodePattern.test(trimmedPincode)) {
+            toast.error('Pincode must be exactly 6 digits.');
+            return;
+        }
+
         const insufficientItem = enrichedCart.find(item => (Number(item.qty) || 0) > (Number(item.stock) || 0));
         if (insufficientItem) {
             toast.error(`Insufficient stock for ${insufficientItem.name}. Available: ${insufficientItem.stock || 0}`);
@@ -508,11 +578,18 @@ const CheckoutPage = () => {
 
         const orderData = {
             userId: user?.id,
-            userName: formData.fullName,
+            userName: trimmedName,
             items: enrichedCart,
-            shippingAddress: formData,
+            shippingAddress: {
+                ...formData,
+                fullName: trimmedName,
+                phone: trimmedPhone,
+                pincode: trimmedPincode
+            },
             paymentMethod: paymentMethod,
             subtotal,
+            gstPercentage,
+            gstAmount,
             deliveryCharges: shippingCharge,
             additionalFees: {
                 paymentHandlingFee,
@@ -580,8 +657,8 @@ const CheckoutPage = () => {
                         }
                     },
                     prefill: {
-                        name: formData.fullName,
-                        contact: formData.phone,
+                        name: trimmedName,
+                        contact: trimmedPhone,
                     },
                     theme: {
                         color: '#4ADE80', // Match FarmLyf primary
@@ -737,6 +814,9 @@ const CheckoutPage = () => {
                                                     name="fullName"
                                                     value={formData.fullName}
                                                     onChange={handleInputChange}
+                                                    inputMode="text"
+                                                    pattern="[A-Za-z ]+"
+                                                    title="Name should contain only letters and spaces"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                                     placeholder="Ex: John Doe"
                                                 />
@@ -748,8 +828,11 @@ const CheckoutPage = () => {
                                                     name="phone"
                                                     value={formData.phone}
                                                     onChange={handleInputChange}
+                                                    inputMode="numeric"
+                                                    maxLength={10}
+                                                    pattern="[0-9]{10}"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                                    placeholder="+91"
+                                                    placeholder="9876543210"
                                                 />
                                             </div>
                                         </div>
@@ -773,6 +856,9 @@ const CheckoutPage = () => {
                                                     name="city"
                                                     value={formData.city}
                                                     onChange={handleInputChange}
+                                                    inputMode="text"
+                                                    pattern="[A-Za-z ]+"
+                                                    title="City should contain only letters and spaces"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                                 />
                                             </div>
@@ -783,6 +869,9 @@ const CheckoutPage = () => {
                                                     name="pincode"
                                                     value={formData.pincode}
                                                     onChange={handleInputChange}
+                                                    inputMode="numeric"
+                                                    maxLength={6}
+                                                    pattern="[0-9]{6}"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                                 />
                                             </div>
@@ -793,6 +882,9 @@ const CheckoutPage = () => {
                                                     name="state"
                                                     value={formData.state}
                                                     onChange={handleInputChange}
+                                                    inputMode="text"
+                                                    pattern="[A-Za-z ]+"
+                                                    title="State should contain only letters and spaces"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                                 />
                                             </div>
@@ -944,29 +1036,50 @@ const CheckoutPage = () => {
                             </div>
 
                             <div className="space-y-3 pt-3 md:pt-4 border-t border-secondary/20">
-                                <div className="flex justify-between text-[13px] md:text-base text-textPrimary/80">
-                                    <span className="font-medium">MRP (incl. of all taxes)</span>
-                                    <span className="font-semibold text-textPrimary">{formatINR(mrpTotal)}</span>
+                                {mrpDiscount > 0 && (
+                                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-[12px] md:text-sm text-textPrimary/60">
+                                        <span className="min-w-0">MRP Total</span>
+                                        <span className="min-w-[56px] text-right font-semibold text-textPrimary/80">{formatINR(mrpTotal)}</span>
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 text-[13px] md:text-base text-textPrimary/80">
+                                    <span className="min-w-0 font-medium">Items Total (Selling Price)</span>
+                                    <span className="min-w-[56px] text-right font-semibold text-textPrimary">{formatINR(subtotal)}</span>
                                 </div>
 
                                 <div className="pt-1">
                                     <p className="text-[13px] md:text-sm font-semibold text-textPrimary/80 mb-2">Fees</p>
-                                    <div className="space-y-2 text-[12px] md:text-sm text-textPrimary/65">
-                                        <div className="flex justify-between">
-                                            <span>Payment Handling Fee</span>
-                                            <span className="font-semibold text-textPrimary">{formatINR(paymentHandlingFee)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Platform Fee</span>
-                                            <span className="font-semibold text-textPrimary">{formatINR(platformFee)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Handling Fee</span>
-                                            <span className="font-semibold text-textPrimary">{formatINR(handlingFee)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Delivery Fee</span>
-                                            <span className={`${shippingCharge > 0 ? 'text-textPrimary' : 'text-emerald-500'} font-semibold`}>
+                                    <div className="space-y-2.5 text-[13px] md:text-[15px] text-textPrimary/75">
+                                        {/*
+                                          Keep fee label/value typography identical so rows read as one aligned pair.
+                                        */}
+                                        {gstAmount > 0 && (
+                                            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                                <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">GST ({gstPercentage}%)</span>
+                                                <span className="min-w-[56px] text-right text-[15px] leading-6 font-semibold text-textPrimary">{formatINR(gstAmount)}</span>
+                                            </div>
+                                        )}
+                                        {paymentHandlingFee > 0 && (
+                                            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                                <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">Payment Handling Fee</span>
+                                                <span className="min-w-[56px] text-right text-[15px] leading-6 font-semibold text-textPrimary">{formatINR(paymentHandlingFee)}</span>
+                                            </div>
+                                        )}
+                                        {platformFee > 0 && (
+                                            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                                <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">Platform Fee</span>
+                                                <span className="min-w-[56px] text-right text-[15px] leading-6 font-semibold text-textPrimary">{formatINR(platformFee)}</span>
+                                            </div>
+                                        )}
+                                        {handlingFee > 0 && (
+                                            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                                <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">Handling Fee</span>
+                                                <span className="min-w-[56px] text-right text-[15px] leading-6 font-semibold text-textPrimary">{formatINR(handlingFee)}</span>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                            <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">Delivery Fee</span>
+                                            <span className={`min-w-[56px] text-right text-[15px] leading-6 font-semibold ${shippingCharge > 0 ? 'text-textPrimary' : 'text-emerald-500'}`}>
                                                 {shippingQuote.loading ? 'Calculating...' : shippingCharge > 0 ? formatINR(shippingCharge) : 'FREE'}
                                             </span>
                                         </div>
@@ -992,17 +1105,17 @@ const CheckoutPage = () => {
                                 </div>
 
                                 <div className="pt-2 border-t border-secondary/20">
-                                    <p className="text-[13px] md:text-sm font-semibold text-textPrimary/80 mb-2">Discounts</p>
+                                    <p className="text-[13px] md:text-sm font-semibold text-textPrimary/80 mb-2">Savings</p>
                                     <div className="space-y-2 text-[12px] md:text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-textPrimary/65">MRP Discount</span>
-                                            <span className={`${mrpDiscount > 0 ? 'text-emerald-600' : 'text-textPrimary/55'} font-semibold`}>
+                                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                            <span className="min-w-0 text-textPrimary/65">Product Savings on MRP</span>
+                                            <span className={`min-w-[56px] text-right ${mrpDiscount > 0 ? 'text-emerald-600' : 'text-textPrimary/55'} font-semibold`}>
                                                 {mrpDiscount > 0 ? `-${formatINR(mrpDiscount)}` : formatINR(0)}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-textPrimary/65">Coupons for you</span>
-                                            <span className={`${couponDiscount > 0 ? 'text-emerald-600' : 'text-textPrimary/55'} font-semibold`}>
+                                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                                            <span className="min-w-0 text-textPrimary/65">Coupon Discount</span>
+                                            <span className={`min-w-[56px] text-right ${couponDiscount > 0 ? 'text-emerald-600' : 'text-textPrimary/55'} font-semibold`}>
                                                 {couponDiscount > 0 ? `-${formatINR(couponDiscount)}` : formatINR(0)}
                                             </span>
                                         </div>
@@ -1025,7 +1138,7 @@ const CheckoutPage = () => {
                             </button>
 
                             <p className="text-[9px] md:text-xs text-center text-textPrimary/55 mt-3 md:mt-4">
-                                Secure Checkout with FarmLyf
+                                Secure Checkout with Vrusoya
                             </p>
                         </div>
                     </div>

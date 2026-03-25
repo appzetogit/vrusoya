@@ -19,6 +19,8 @@ import {
 import toast from 'react-hot-toast';
 
 const API_URL = API_BASE_URL;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const STORE_NAME_REGEX = /^[A-Za-z ]+$/;
 
 const SettingsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -32,7 +34,12 @@ const SettingsPage = () => {
     const [checkoutFees, setCheckoutFees] = useState({
         paymentHandlingFee: 0,
         platformFee: 0,
-        handlingFee: 0
+        handlingFee: 0,
+        gstPercentage: 0,
+        applyPaymentHandlingFee: true,
+        applyPlatformFee: true,
+        applyHandlingFee: true,
+        applyGstFee: true
     });
     const [invoiceSettings, setInvoiceSettings] = useState({
         sellerName: '',
@@ -42,9 +49,16 @@ const SettingsPage = () => {
         panNumber: '',
         fssai: ''
     });
+    const [storeGeneralSettings, setStoreGeneralSettings] = useState({
+        storeName: 'FarmLyf Dryfruits',
+        supportEmail: 'admin@farmlyf.com',
+        currency: 'INR (â‚¹)',
+        timezone: 'Asia/Kolkata (GMT +5:30)'
+    });
 
     const { data: checkoutFeeConfigSetting } = useSetting('checkout_fee_config');
     const { data: invoiceSettingsData } = useSetting('invoice_settings');
+    const { data: storeGeneralSetting } = useSetting('store_general');
     const updateSettingMutation = useUpdateSetting();
 
     useEffect(() => {
@@ -60,7 +74,12 @@ const SettingsPage = () => {
         setCheckoutFees({
             paymentHandlingFee: Number(value.paymentHandlingFee || 0),
             platformFee: Number(value.platformFee || 0),
-            handlingFee: Number(value.handlingFee || 0)
+            handlingFee: Number(value.handlingFee || 0),
+            gstPercentage: Number(value.gstPercentage || 0),
+            applyPaymentHandlingFee: value.applyPaymentHandlingFee !== false,
+            applyPlatformFee: value.applyPlatformFee !== false,
+            applyHandlingFee: value.applyHandlingFee !== false,
+            applyGstFee: value.applyGstFee !== false
         });
     }, [checkoutFeeConfigSetting]);
 
@@ -77,8 +96,72 @@ const SettingsPage = () => {
         });
     }, [invoiceSettingsData]);
 
+    useEffect(() => {
+        const value = storeGeneralSetting?.value;
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+        setStoreGeneralSettings((prev) => ({
+            ...prev,
+            storeName: value.storeName || prev.storeName,
+            supportEmail: value.supportEmail || prev.supportEmail,
+            currency: value.currency || prev.currency,
+            timezone: value.timezone || prev.timezone
+        }));
+    }, [storeGeneralSetting]);
+
+    const handleStoreGeneralChange = (field, value) => {
+        if (field === 'storeName') {
+            setStoreGeneralSettings((prev) => ({
+                ...prev,
+                storeName: String(value || '').replace(/[^A-Za-z ]/g, '')
+            }));
+            return;
+        }
+
+        setStoreGeneralSettings((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const saveStoreGeneralSettings = async () => {
+        const response = await fetch(`${API_BASE_URL}/settings/store_general`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ value: storeGeneralSettings })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update store general settings');
+        }
+    };
+
     const handleSave = async () => {
-        toast.success("Settings preferences saved! (Simulated)");
+        try {
+            if (activeTab === 'general') {
+                const storeName = String(storeGeneralSettings.storeName || '').trim();
+                const supportEmail = String(storeGeneralSettings.supportEmail || '').trim();
+
+                if (!storeName) {
+                    toast.error('Store name is required');
+                    return;
+                }
+                if (!STORE_NAME_REGEX.test(storeName)) {
+                    toast.error('Store name should contain alphabets only');
+                    return;
+                }
+                if (!EMAIL_REGEX.test(supportEmail)) {
+                    toast.error('Please enter a valid support email');
+                    return;
+                }
+
+                await saveStoreGeneralSettings();
+            }
+
+            await updateSettingMutation.mutateAsync({
+                key: 'checkout_fee_config',
+                value: checkoutFees
+            });
+        } catch (error) {
+            // Error toast handled in hook
+        }
     };
 
     const handleSendPush = () => {
@@ -97,17 +180,40 @@ const SettingsPage = () => {
         }));
     };
 
-    const handleSaveCheckoutFees = async () => {
-        try {
-            await updateSettingMutation.mutateAsync({
-                key: 'checkout_fee_config',
-                value: checkoutFees
-            });
-            toast.success("Checkout fees saved successfully!");
-        } catch (error) {
-            // Error toast already handled in hook
-        }
+    const handleCheckoutToggleChange = (field) => {
+        setCheckoutFees((prev) => ({
+            ...prev,
+            [field]: !prev[field]
+        }));
     };
+
+    const checkoutFeeItems = [
+        {
+            key: 'paymentHandlingFee',
+            label: 'Payment Handling Fee',
+            toggleKey: 'applyPaymentHandlingFee',
+            toggleLabel: 'Apply Payment Handling Fee'
+        },
+        {
+            key: 'platformFee',
+            label: 'Platform Fee',
+            toggleKey: 'applyPlatformFee',
+            toggleLabel: 'Apply Platform Fee'
+        },
+        {
+            key: 'handlingFee',
+            label: 'Handling Fee',
+            toggleKey: 'applyHandlingFee',
+            toggleLabel: 'Apply Handling Fee'
+        },
+        {
+            key: 'gstPercentage',
+            label: 'GST Percentage',
+            toggleKey: 'applyGstFee',
+            toggleLabel: 'Apply GST Fee',
+            step: '0.01'
+        }
+    ];
 
     const handleSaveInvoiceSettings = async () => {
         try {
@@ -115,7 +221,6 @@ const SettingsPage = () => {
                 key: 'invoice_settings',
                 value: invoiceSettings
             });
-            toast.success("Invoice settings saved successfully!");
         } catch (error) {
             // Error toast already handled in hook
         }
@@ -336,22 +441,41 @@ const SettingsPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Store Name</label>
-                                <input type="text" defaultValue="FarmLyf Dryfruits" className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" />
+                                <input
+                                    type="text"
+                                    value={storeGeneralSettings.storeName}
+                                    onChange={(e) => handleStoreGeneralChange('storeName', e.target.value)}
+                                    maxLength={60}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
+                                />
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Support Email</label>
-                                <input type="email" defaultValue="admin@farmlyf.com" className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" />
+                                <input
+                                    type="email"
+                                    value={storeGeneralSettings.supportEmail}
+                                    onChange={(e) => handleStoreGeneralChange('supportEmail', e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
+                                />
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Currency</label>
-                                <select className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all appearance-none">
+                                <select
+                                    value={storeGeneralSettings.currency}
+                                    onChange={(e) => handleStoreGeneralChange('currency', e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all appearance-none"
+                                >
                                     <option>INR (₹)</option>
                                     <option>USD ($)</option>
                                 </select>
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Timezone</label>
-                                <select className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all appearance-none">
+                                <select
+                                    value={storeGeneralSettings.timezone}
+                                    onChange={(e) => handleStoreGeneralChange('timezone', e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all appearance-none"
+                                >
                                     <option>Asia/Kolkata (GMT +5:30)</option>
                                     <option>UTC</option>
                                 </select>
@@ -361,48 +485,44 @@ const SettingsPage = () => {
                         <div className="border-t border-gray-100 pt-8">
                             <div className="mb-4">
                                 <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Checkout Fees</h4>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Used in checkout price details breakdown</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Used across checkout, order totals, and invoices</p>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Payment Handling Fee</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={checkoutFees.paymentHandlingFee}
-                                        onChange={(e) => handleFeeInputChange('paymentHandlingFee', e.target.value)}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Platform Fee</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={checkoutFees.platformFee}
-                                        onChange={(e) => handleFeeInputChange('platformFee', e.target.value)}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Handling Fee</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={checkoutFees.handlingFee}
-                                        onChange={(e) => handleFeeInputChange('handlingFee', e.target.value)}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
-                                    />
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                                {checkoutFeeItems.map((item) => (
+                                    <div key={item.key} className="rounded-2xl bg-gray-50 p-4 space-y-4">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{item.label}</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step={item.step || '1'}
+                                                value={checkoutFees[item.key]}
+                                                onChange={(e) => handleFeeInputChange(item.key, e.target.value)}
+                                                className="w-full bg-white border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{item.toggleLabel}</p>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                                    {checkoutFees[item.toggleKey] ? 'Enabled in checkout' : 'Disabled in checkout'}
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={checkoutFees[item.toggleKey]}
+                                                onClick={() => handleCheckoutToggleChange(item.toggleKey)}
+                                                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${checkoutFees[item.toggleKey] ? 'bg-black' : 'bg-gray-300'}`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${checkoutFees[item.toggleKey] ? 'translate-x-7' : 'translate-x-1'}`}
+                                                />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleSaveCheckoutFees}
-                                disabled={updateSettingMutation.isPending}
-                                className="mt-5 bg-black text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg active:scale-95 disabled:opacity-60"
-                            >
-                                {updateSettingMutation.isPending ? 'Saving...' : 'Save Checkout Fees'}
-                            </button>
                         </div>
                     </div>
                 )}

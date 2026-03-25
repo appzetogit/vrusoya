@@ -66,6 +66,7 @@ import BlogFormPage from './modules/admin/pages/BlogFormPage'; // New Page
 import BlogDetailPage from './modules/user/pages/BlogDetailPage'; // New Page
 import EnquiriesPage from './modules/admin/pages/EnquiriesPage';
 import ProtectedRoute from './components/ProtectedRoute'; // Auth Guard
+import UserProtectedRoute from './components/UserProtectedRoute';
 import { PAGES_CONFIG } from './config/pagesConfig';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -107,8 +108,8 @@ function App() {
                 <Route path="shop" element={<div className="p-20 text-center">Shop Page Coming Soon</div>} />
                 <Route path="category/:category" element={<CatalogPage />} />
                 <Route path="category/:category/:subCategory" element={<CatalogPage />} />
-                <Route path="cart" element={<CartPage />} />
-                <Route path="checkout" element={<CheckoutPage />} />
+                <Route path="cart" element={<UserProtectedRoute><CartPage /></UserProtectedRoute>} />
+                <Route path="checkout" element={<UserProtectedRoute><CheckoutPage /></UserProtectedRoute>} />
                 <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="order/:orderId" element={<OrderDetailPage />} />
@@ -116,7 +117,7 @@ function App() {
                 <Route path="return/:returnId" element={<ReturnDetailPage />} />
                 <Route path="replacement/:returnId" element={<ReturnDetailPage />} />
                 <Route path="request-return/:orderId" element={<ReturnRequestPage />} />
-                <Route path="wishlist" element={<WishlistPage />} />
+                <Route path="wishlist" element={<UserProtectedRoute><WishlistPage /></UserProtectedRoute>} />
                 <Route path="vault" element={<VaultPage />} />
                 <Route path="profile/:tab?" element={<ProfilePage />} />
                 {staticPageRoutes.map((pageSlug) => (

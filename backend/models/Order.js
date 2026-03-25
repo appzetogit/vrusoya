@@ -29,7 +29,14 @@ const orderSchema = new mongoose.Schema({
   razorpaySignature: String,
   amount: Number,
   subtotal: Number,
+  gstPercentage: { type: Number, default: 0 },
+  gstAmount: { type: Number, default: 0 },
   deliveryCharges: { type: Number, default: 0 },
+  additionalFees: {
+    paymentHandlingFee: { type: Number, default: 0 },
+    platformFee: { type: Number, default: 0 },
+    handlingFee: { type: Number, default: 0 }
+  },
   paymentMethod: String,
   courierPartner: String,
   trackingId: String,

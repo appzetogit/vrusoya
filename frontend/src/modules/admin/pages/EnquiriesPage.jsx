@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { AdminTable, AdminTableBody, AdminTableCell, AdminTableHead, AdminTableHeader, AdminTableRow } from '../components/AdminTable';
 import { AnimatePresence, motion } from 'framer-motion';
 import Pagination from '../components/Pagination';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const statusStyles = {
     new: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -50,13 +51,13 @@ const EnquiriesPage = () => {
 
     const filteredEnquiries = useMemo(() => {
         return enquiries.filter((enquiry) => {
-            const matchesSearch = [enquiry.name, enquiry.email, enquiry.phone, enquiry.company, enquiry.message]
+            const matchesSearchTerm = [enquiry.name, enquiry.email, enquiry.phone, enquiry.company, enquiry.message]
                 .filter(Boolean)
-                .some((value) => value.toLowerCase().includes(searchTerm.toLowerCase()));
+                .some((value) => matchesSearch(value, searchTerm));
 
             const matchesStatus = statusFilter === 'all' || enquiry.status === statusFilter;
 
-            return matchesSearch && matchesStatus;
+            return matchesSearchTerm && matchesStatus;
         });
     }, [enquiries, searchTerm, statusFilter]);
 
@@ -115,7 +116,7 @@ const EnquiriesPage = () => {
                     <input
                         type="text"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         placeholder="Search by name, email, phone..."
                         className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-12 pr-4 text-sm font-semibold outline-none transition-all focus:border-primary focus:bg-white"
                     />

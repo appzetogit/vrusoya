@@ -12,6 +12,7 @@ import { Reorder } from 'framer-motion';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 import { useAddFeaturedSection, useFeaturedSectionByName, useUpdateFeaturedSection } from '../../../hooks/useContent';
 import { useProducts } from '../../../hooks/useProducts';
@@ -225,9 +226,9 @@ const HomepageSectionPage = () => {
 
     const filteredSuggestions = allProducts.filter(p => {
         const name = p.name || '';
-        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearchTerm = matchesSearch(name, searchTerm);
         const notInSection = !products.some(sp => (sp._id || sp.id) === (p._id || p.id));
-        return matchesSearch && notInSection;
+        return matchesSearchTerm && notInSection;
     }).slice(0, 10);
 
     return (
@@ -334,7 +335,7 @@ const HomepageSectionPage = () => {
                                 type="text"
                                 placeholder="Search products by name or SKU..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                                 className="w-full bg-gray-50 border border-transparent rounded-xl py-3 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                             />
                         </div>

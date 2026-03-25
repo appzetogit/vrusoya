@@ -12,12 +12,10 @@ import {
     MapPin,
     CreditCard,
     Phone,
-    Mail,
     Building2,
     FileText,
     Check,
     X,
-    Send,
     User,
     ChevronRight,
     XCircle,
@@ -29,12 +27,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 import InvoiceGenerator from '../components/InvoiceGenerator';
+import { useSetting } from '../../../hooks/useSettings';
 
 const API_URL = API_BASE_URL;
+
+const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+}).format(Number(amount || 0));
 
 const OrderDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { data: checkoutFeeSetting } = useSetting('checkout_fee_config');
 
     // Fetch single order
     const { data: order, isLoading } = useQuery({
@@ -129,13 +136,26 @@ const OrderDetailPage = () => {
     const gstNumber = user?.gstNumber || order.gstNumber || null;
     const companyName = isBusiness ? (user?.name || order.userName || order.shippingAddress?.fullName) : null;
 
+    const normalizedStatus = String(status || '').toLowerCase();
+    const isCancelledOrder = normalizedStatus === 'cancelled';
+    const isPendingLike = ['pending', 'processing'].includes(normalizedStatus);
+    const isShippedLike = ['shipped', 'outfordelivery', 'delivered'].includes(normalizedStatus);
+    const isOutForDeliveryLike = ['outfordelivery', 'delivered'].includes(normalizedStatus);
+    const isDelivered = normalizedStatus === 'delivered';
+
     const timelineSteps = [
         { label: 'Order Placed', status: 'Processing', completed: true, date: new Date(order.date).toLocaleDateString() },
         { label: 'Payment Confirmed', status: 'Processing', completed: true, date: new Date(order.date).toLocaleDateString() },
-        { label: 'Admin Approved', status: 'Processing', completed: status !== 'Cancelled' && status !== 'Pending', date: 'Pending' },
-        { label: 'Shipment Created', status: 'Shipped', completed: status === 'Shipped' || status === 'Delivered', date: status === 'Shipped' ? new Date().toLocaleDateString() : 'Pending' },
-        { label: 'Out for Delivery', status: 'OutForDelivery', completed: status === 'Delivered', date: 'Pending' },
-        { label: 'Delivered', status: 'Delivered', completed: status === 'Delivered', date: status === 'Delivered' ? new Date().toLocaleDateString() : 'Pending' }
+        { label: 'Admin Approved', status: 'Processing', completed: !isCancelledOrder && !isPendingLike, date: !isCancelledOrder && !isPendingLike ? new Date(order.updatedAt || order.date).toLocaleDateString() : 'Pending' },
+        { label: 'Shipment Created', status: 'Shipped', completed: !isCancelledOrder && isShippedLike, date: !isCancelledOrder && isShippedLike ? new Date(order.updatedAt || order.date).toLocaleDateString() : 'Pending' },
+        { label: 'Out for Delivery', status: 'OutForDelivery', completed: !isCancelledOrder && isOutForDeliveryLike, date: !isCancelledOrder && isOutForDeliveryLike ? new Date(order.updatedAt || order.date).toLocaleDateString() : 'Pending' },
+        { label: 'Delivered', status: 'Delivered', completed: isDelivered, date: isDelivered ? new Date(order.updatedAt || order.date).toLocaleDateString() : 'Pending' },
+        ...(isCancelledOrder ? [{
+            label: 'Order Cancelled',
+            status: 'Cancelled',
+            completed: true,
+            date: new Date(order.cancelledAt || order.updatedAt || order.date).toLocaleDateString()
+        }] : [])
     ];
 
     const getStatusColor = (st) => {
@@ -171,7 +191,7 @@ const OrderDetailPage = () => {
                 queryClient.invalidateQueries({ queryKey: ['order', id] });
                 queryClient.invalidateQueries({ queryKey: ['all-orders'] });
                 const refundMsg = data.refund?.initiated 
-                    ? ` Refund of ₹${data.refund.amount} initiated.` 
+                    ? ` Refund of ${formatINR(data.refund.amount)} initiated.` 
                     : '';
                 toast.success(`Order cancelled successfully!${refundMsg}`);
             } else {
@@ -187,8 +207,7 @@ const OrderDetailPage = () => {
 
     // Check if order can be cancelled
     const cancellableStatuses = ['pending', 'Processing', 'Received', 'Processed'];
-    const canCancel = cancellableStatuses.includes(status) && status !== 'Cancelled';
-    const isCancelledOrder = status === 'Cancelled';
+    const canCancel = cancellableStatuses.includes(status) && !isCancelledOrder;
 
     const dummyItems = [
         {
@@ -225,8 +244,53 @@ const OrderDetailPage = () => {
         return acc + (item.price * q);
     }, 0);
     const derivedDiscount = order.discount || 0;
+    const defaultGstPercentage = Number(checkoutFeeSetting?.value?.gstPercentage || 0);
+    const derivedGstPercentage = Number(order.gstPercentage ?? defaultGstPercentage);
+    const derivedGstAmount = Math.round(Number(
+        order.gstAmount
+        ?? ((Math.max(0, derivedSubtotal - derivedDiscount) * derivedGstPercentage) / 100)
+    ));
     const derivedShipping = order.deliveryCharges || 0;
-    const derivedTotal = derivedSubtotal - derivedDiscount + derivedShipping;
+    const rawPaymentHandlingFee = Number(order.additionalFees?.paymentHandlingFee ?? 0);
+    const rawPlatformFee = Number(order.additionalFees?.platformFee ?? 0);
+    const rawHandlingFee = Number(order.additionalFees?.handlingFee ?? 0);
+    const rawFeesSum = rawPaymentHandlingFee + rawPlatformFee + rawHandlingFee;
+    const derivedTotal = Number(
+        order.amount
+        ?? (Math.max(0, derivedSubtotal - derivedDiscount) + derivedGstAmount + derivedShipping + rawFeesSum)
+    );
+    const taxableAmount = Math.max(0, derivedSubtotal - derivedDiscount);
+    const inferredHiddenFees = Math.max(
+        0,
+        Math.round(derivedTotal - (taxableAmount + derivedGstAmount + derivedShipping + rawFeesSum))
+    );
+
+    const configuredPaymentFee = Number(
+        checkoutFeeSetting?.value?.applyPaymentHandlingFee === false ? 0 : (checkoutFeeSetting?.value?.paymentHandlingFee || 0)
+    );
+    const configuredPlatformFee = Number(
+        checkoutFeeSetting?.value?.applyPlatformFee === false ? 0 : (checkoutFeeSetting?.value?.platformFee || 0)
+    );
+    const configuredHandlingFee = Number(
+        checkoutFeeSetting?.value?.applyHandlingFee === false ? 0 : (checkoutFeeSetting?.value?.handlingFee || 0)
+    );
+    const configuredFeesSum = configuredPaymentFee + configuredPlatformFee + configuredHandlingFee;
+
+    const canUseSettingsFallback = rawFeesSum === 0
+        && inferredHiddenFees > 0
+        && configuredFeesSum > 0
+        && Math.round(configuredFeesSum) === Math.round(inferredHiddenFees);
+
+    const derivedPaymentHandlingFee = rawPaymentHandlingFee > 0
+        ? rawPaymentHandlingFee
+        : (canUseSettingsFallback ? configuredPaymentFee : 0);
+    const derivedPlatformFee = rawPlatformFee > 0
+        ? rawPlatformFee
+        : (canUseSettingsFallback ? configuredPlatformFee : 0);
+    const derivedHandlingFee = rawHandlingFee > 0
+        ? rawHandlingFee
+        : (canUseSettingsFallback ? configuredHandlingFee : 0);
+    const derivedOtherFees = (!canUseSettingsFallback && rawFeesSum === 0) ? inferredHiddenFees : 0;
 
     return (
         <div className="space-y-6 pb-20 text-left font-['Inter']">
@@ -277,7 +341,7 @@ const OrderDetailPage = () => {
                 </div>
                 <div>
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Order Value</p>
-                    <p className="text-xl font-black text-footerBg">₹{derivedTotal.toLocaleString()}</p>
+                    <p className="text-xl font-black text-footerBg">{formatINR(derivedTotal)}</p>
                 </div>
             </div>
 
@@ -312,14 +376,14 @@ const OrderDetailPage = () => {
                             <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
                                 <Clock size={14} className="text-amber-600" />
                                 <span className="text-xs font-bold text-amber-700">Processing</span>
-                                {order.refundAmount && <span className="ml-auto text-sm font-black text-amber-700">₹{order.refundAmount}</span>}
+                                {order.refundAmount && <span className="ml-auto text-sm font-black text-amber-700">{formatINR(order.refundAmount)}</span>}
                             </div>
                         )}
                         {order.refundStatus === 'processed' && (
                             <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
                                 <CheckCircle2 size={14} className="text-green-600" />
                                 <span className="text-xs font-bold text-green-700">Completed</span>
-                                {order.refundAmount && <span className="ml-auto text-sm font-black text-green-700">₹{order.refundAmount}</span>}
+                                {order.refundAmount && <span className="ml-auto text-sm font-black text-green-700">{formatINR(order.refundAmount)}</span>}
                             </div>
                         )}
                         {order.refundStatus === 'failed' && (
@@ -386,11 +450,11 @@ const OrderDetailPage = () => {
                                             </td>
                                             <td className="p-4 text-right">
                                                 <span className="text-xs font-bold text-gray-600 whitespace-nowrap">
-                                                    {qty} x ₹{item.price}
+                                                    {qty} x {formatINR(item.price)}
                                                 </span>
                                             </td>
                                             <td className="p-4 text-right text-xs font-black text-footerBg">
-                                                ₹{(item.price * qty).toLocaleString()}
+                                                {formatINR(item.price * qty)}
                                             </td>
                                         </tr>
                                     );
@@ -407,25 +471,49 @@ const OrderDetailPage = () => {
                         <div className="space-y-3 text-xs">
                             <div className="flex justify-between text-gray-500">
                                 <span className="font-medium">Subtotal</span>
-                                <span className="font-bold text-footerBg">₹{derivedSubtotal.toLocaleString()}</span>
+                                <span className="font-bold text-footerBg">{formatINR(derivedSubtotal)}</span>
                             </div>
                             <div className="flex justify-between text-emerald-600">
                                 <span className="font-medium">Discount (Coupon)</span>
-                                <span className="font-bold">-₹{derivedDiscount.toLocaleString()}</span>
+                                <span className="font-bold">-{formatINR(derivedDiscount)}</span>
                             </div>
                             <div className="flex justify-between text-gray-500">
-                                <span className="font-medium">GST (18% Included)</span>
-                                <span className="font-bold text-footerBg">₹{Math.round(derivedSubtotal * 0.18).toLocaleString()}</span>
+                                <span className="font-medium">GST ({derivedGstPercentage}% Extra)</span>
+                                <span className="font-bold text-footerBg">{formatINR(derivedGstAmount)}</span>
                             </div>
+                            {derivedPaymentHandlingFee > 0 && (
+                                <div className="flex justify-between text-gray-500">
+                                    <span className="font-medium">Payment Handling Fee</span>
+                                    <span className="font-bold text-footerBg">{formatINR(derivedPaymentHandlingFee)}</span>
+                                </div>
+                            )}
+                            {derivedPlatformFee > 0 && (
+                                <div className="flex justify-between text-gray-500">
+                                    <span className="font-medium">Platform Fee</span>
+                                    <span className="font-bold text-footerBg">{formatINR(derivedPlatformFee)}</span>
+                                </div>
+                            )}
+                            {derivedHandlingFee > 0 && (
+                                <div className="flex justify-between text-gray-500">
+                                    <span className="font-medium">Handling Fee</span>
+                                    <span className="font-bold text-footerBg">{formatINR(derivedHandlingFee)}</span>
+                                </div>
+                            )}
+                            {derivedOtherFees > 0 && (
+                                <div className="flex justify-between text-gray-500">
+                                    <span className="font-medium">Other Checkout Fees</span>
+                                    <span className="font-bold text-footerBg">{formatINR(derivedOtherFees)}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-gray-500">
-                                <span className="font-medium">Shipping Charges</span>
+                                <span className="font-medium">Delivery Fee</span>
                                 <span className="font-bold text-footerBg">
-                                    {(derivedShipping === 0) ? <span className="text-emerald-600">Free</span> : `₹${derivedShipping}`}
+                                    {(derivedShipping === 0) ? <span className="text-emerald-600">Free</span> : formatINR(derivedShipping)}
                                 </span>
                             </div>
                             <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-sm">
                                 <span className="font-black text-footerBg uppercase tracking-tight">Final Payable Amount</span>
-                                <span className="text-xl font-black text-footerBg">₹{derivedTotal.toLocaleString()}</span>
+                                <span className="text-xl font-black text-footerBg">{formatINR(derivedTotal)}</span>
                             </div>
                         </div>
                     </div>
@@ -446,7 +534,7 @@ const OrderDetailPage = () => {
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] font-bold text-purple-600 bg-white px-2 py-1 rounded shadow-sm uppercase">Coupon Saved</p>
-                                <p className="text-lg font-black text-purple-600">₹{derivedDiscount.toLocaleString()}</p>
+                                <p className="text-lg font-black text-purple-600">{formatINR(derivedDiscount)}</p>
                             </div>
                         </div>
                     )}
@@ -660,16 +748,6 @@ const OrderDetailPage = () => {
                         </div>
                     )}
 
-                    {/* 10. Notifications */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <button className="flex items-center justify-center gap-2 py-3 bg-green-50 text-green-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-green-100 transition-all border border-green-100">
-                            <Send size={14} /> WhatsApp
-                        </button>
-                        <button className="flex items-center justify-center gap-2 py-3 bg-gray-50 text-gray-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-100">
-                            <Mail size={14} /> Resend Email
-                        </button>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -677,3 +755,4 @@ const OrderDetailPage = () => {
 };
 
 export default OrderDetailPage;
+

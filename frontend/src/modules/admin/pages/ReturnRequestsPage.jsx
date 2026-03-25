@@ -21,6 +21,7 @@ import Pagination from '../components/Pagination';
 import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const API_URL = API_BASE_URL;
 
@@ -143,14 +144,14 @@ const ReturnRequestsPage = () => {
 
     const filteredReturns = useMemo(() => {
         return allReturns.filter(ret => {
-            const matchesSearch =
-                ret.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ret.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ret.id?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearchTerm = matchesSearch(
+                `${ret.orderId || ''} ${ret.userName || ''} ${ret.id || ''}`,
+                searchTerm
+            );
 
             const matchesStatus = statusFilter === 'All' || ret.status === statusFilter;
 
-            return matchesSearch && matchesStatus;
+            return matchesSearchTerm && matchesStatus;
         });
     }, [allReturns, searchTerm, statusFilter]);
 
@@ -228,7 +229,7 @@ const ReturnRequestsPage = () => {
                         type="text"
                         placeholder="Search by ID or Customer..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>

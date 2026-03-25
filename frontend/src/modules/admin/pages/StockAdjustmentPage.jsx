@@ -17,11 +17,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 import Pagination from '../components/Pagination';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const StockAdjustmentPage = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { data: products = [], isLoading } = useProducts();
+    const { data: products = [], isLoading } = useProducts({
+        staleTime: 0,
+        refetchOnMount: 'always',
+        refetchOnWindowFocus: true
+    });
     const updateProductMutation = useUpdateProduct();
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -33,8 +38,7 @@ const StockAdjustmentPage = () => {
 
     const filteredProducts = useMemo(() => {
         return products.filter(p =>
-            p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+            matchesSearch(`${p.name || ''} ${p.sku || ''}`, searchTerm)
         );
     }, [products, searchTerm]);
 
@@ -154,7 +158,7 @@ const StockAdjustmentPage = () => {
                         type="text"
                         placeholder="Search products by Name or SKU..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>
@@ -190,7 +194,14 @@ const StockAdjustmentPage = () => {
                             paginatedProducts.map((p) => {
                                 const productId = p.id || p._id;
                                 const hasVariants = p.variants && p.variants.length > 0;
-                                const selectedVariantId = selectedVariants[productId] || (hasVariants ? p.variants[0].id || p.variants[0]._id : null);
+                                const defaultVariantId = hasVariants
+                                    ? (p.variants.reduce((lowest, variant) => {
+                                        const variantStock = Number(variant?.stock || 0);
+                                        const lowestStock = Number(lowest?.stock || 0);
+                                        return variantStock < lowestStock ? variant : lowest;
+                                    }, p.variants[0])?.id || p.variants[0]?._id)
+                                    : null;
+                                const selectedVariantId = selectedVariants[productId] || defaultVariantId;
                                 const selectedVariant = hasVariants ? p.variants.find(v => (v.id || v._id) === selectedVariantId) : null;
                                 
                                 const adjustmentKey = selectedVariantId ? `${productId}:${selectedVariantId}` : productId;
@@ -235,7 +246,9 @@ const StockAdjustmentPage = () => {
                                         </AdminTableCell>
                                         <AdminTableCell>
                                             <span className="text-xs font-black text-gray-400 uppercase tracking-widest font-mono">
-                                                {hasVariants ? (selectedVariant?.id?.slice(-6).toUpperCase()) : (p.sku || p.id?.slice(-6).toUpperCase() || '-')}
+                                                {hasVariants
+                                                    ? (selectedVariant?.sku || selectedVariant?.id || selectedVariant?._id || '-')
+                                                    : (p.sku || p.id?.slice(-6).toUpperCase() || '-')}
                                             </span>
                                         </AdminTableCell>
                                         <AdminTableCell className="text-center">

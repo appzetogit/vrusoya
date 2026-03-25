@@ -40,6 +40,34 @@ const hasProfileForCheckout = (user, orderData) => {
   return hasPhone && hasAddress;
 };
 
+const toSafeNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeOrderDataAmounts = (orderData = {}) => {
+  const normalized = { ...orderData };
+  const subtotal = toSafeNumber(orderData.subtotal);
+  const discount = toSafeNumber(orderData.discount);
+  const deliveryCharges = toSafeNumber(orderData.deliveryCharges);
+  const additionalFees = orderData.additionalFees || {};
+  const paymentHandlingFee = toSafeNumber(additionalFees.paymentHandlingFee);
+  const platformFee = toSafeNumber(additionalFees.platformFee);
+  const handlingFee = toSafeNumber(additionalFees.handlingFee);
+
+  const gstAmount = Math.round(toSafeNumber(orderData.gstAmount));
+  normalized.gstAmount = gstAmount;
+
+  const hasAmount = Number.isFinite(Number(orderData.amount));
+  const derivedTotal = Math.max(
+    0,
+    subtotal - discount + gstAmount + deliveryCharges + paymentHandlingFee + platformFee + handlingFee
+  );
+  normalized.amount = Math.round(hasAmount ? Number(orderData.amount) : derivedTotal);
+
+  return normalized;
+};
+
 // @desc    Create Razorpay Order
 // @route   POST /api/payments/order
 // @access  Public (or Private if auth is needed)
@@ -97,6 +125,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     razorpay_signature,
     orderData // Custom data sent from frontend to create our DB order record
   } = req.body;
+  const normalizedOrderData = normalizeOrderDataAmounts(orderData);
 
   const sign = razorpay_order_id + "|" + razorpay_payment_id;
   const expectedSign = crypto
@@ -119,9 +148,9 @@ export const verifyPayment = asyncHandler(async (req, res) => {
 
         // Create order in our database
         const newOrder = new Order({
-            ...orderData,
+            ...normalizedOrderData,
             id: orderId,
-            userName: orderData.shippingAddress?.fullName, // Added for quick access
+            userName: normalizedOrderData.shippingAddress?.fullName, // Added for quick access
             date: new Date(),
             paymentStatus: 'paid',
             status: 'pending', // Order received
@@ -141,13 +170,13 @@ export const verifyPayment = asyncHandler(async (req, res) => {
         }
 
         // Update Referral Stats if a coupon/code was used
-        if (orderData.appliedCoupon) {
-            const referral = await Referral.findOne({ code: orderData.appliedCoupon });
+        if (normalizedOrderData.appliedCoupon) {
+            const referral = await Referral.findOne({ code: normalizedOrderData.appliedCoupon });
             if (referral) {
                 referral.usageCount = (referral.usageCount || 0) + 1;
                 // Add the gross amount (subtotal before discount) to totalSales
                 // If subtotal isn't passed, we'll use total + discount as an estimate
-                const saleAmount = orderData.amount + (orderData.discount || 0);
+                const saleAmount = normalizedOrderData.amount + (normalizedOrderData.discount || 0);
                 referral.totalSales = (referral.totalSales || 0) + saleAmount;
                 await referral.save();
             }
@@ -226,6 +255,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
 // @access  Public
 export const createCODOrder = asyncHandler(async (req, res) => {
     const { orderData, userId } = req.body;
+    const normalizedOrderData = normalizeOrderDataAmounts(orderData);
     
     // Validation: Check if user profile is complete
     if (userId) {
@@ -249,9 +279,9 @@ export const createCODOrder = asyncHandler(async (req, res) => {
         const orderId = `ORD-${timestamp}-${randomSuffix}`;
 
         const newOrder = new Order({
-            ...orderData,
+            ...normalizedOrderData,
             id: orderId,
-            userName: orderData.shippingAddress?.fullName, // Added for quick access
+            userName: normalizedOrderData.shippingAddress?.fullName, // Added for quick access
             date: new Date(),
             paymentMethod: 'cod',
             paymentStatus: 'pending',
@@ -269,11 +299,11 @@ export const createCODOrder = asyncHandler(async (req, res) => {
         }
 
         // Update Referral Stats if a coupon/code was used
-        if (orderData.appliedCoupon) {
-            const referral = await Referral.findOne({ code: orderData.appliedCoupon });
+        if (normalizedOrderData.appliedCoupon) {
+            const referral = await Referral.findOne({ code: normalizedOrderData.appliedCoupon });
             if (referral) {
                 referral.usageCount = (referral.usageCount || 0) + 1;
-                const saleAmount = orderData.amount + (orderData.discount || 0);
+                const saleAmount = normalizedOrderData.amount + (normalizedOrderData.discount || 0);
                 referral.totalSales = (referral.totalSales || 0) + saleAmount;
                 await referral.save();
             }

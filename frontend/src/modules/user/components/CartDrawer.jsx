@@ -19,6 +19,12 @@ const CartDrawer = () => {
     const { data: products = [] } = useProducts();
 
     React.useEffect(() => {
+        if (!isCartDrawerOpen || user) return;
+        closeCartDrawer();
+        navigate('/login?redirect=%2Fcart');
+    }, [closeCartDrawer, isCartDrawerOpen, navigate, user]);
+
+    React.useEffect(() => {
         if (!isCartDrawerOpen) return undefined;
 
         const scrollY = window.scrollY;
@@ -128,7 +134,7 @@ const CartDrawer = () => {
         navigate(path);
     };
 
-    if (!isCartDrawerOpen) return null;
+    if (!isCartDrawerOpen || !user) return null;
 
     return (
         <div className="fixed inset-0 z-[11000] overscroll-none">

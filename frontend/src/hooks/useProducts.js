@@ -4,7 +4,7 @@ import { API_BASE_URL } from '@/lib/apiUrl';
 
 const API_URL = API_BASE_URL;
 
-export const useProducts = () => {
+export const useProducts = (queryOptions = {}) => {
     return useQuery({
         queryKey: ['products'],
         queryFn: async () => {
@@ -24,7 +24,8 @@ export const useProducts = () => {
                 };
             });
         },
-        staleTime: 5 * 60 * 1000
+        staleTime: 5 * 60 * 1000,
+        ...queryOptions
     });
 };
 

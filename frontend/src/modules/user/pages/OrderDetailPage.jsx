@@ -15,6 +15,13 @@ import { useProducts } from '../../../hooks/useProducts';
 
 const API_URL = API_BASE_URL;
 
+const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+}).format(Number(amount || 0));
+
 const OrderDetailPage = () => {
     const { orderId } = useParams();
     const navigate = useNavigate();
@@ -367,11 +374,11 @@ const OrderDetailPage = () => {
                                         <div className="flex-1 min-w-0">
                                             <h4 className="text-[13px] md:text-sm font-black text-textPrimary truncate mb-0.5">{item.name}</h4>
                                             <p className="text-[11px] font-bold text-slate-400 tracking-tight">
-                                                Qty: {item.qty} <span className="mx-1 opacity-20">×</span> ₹{item.price}
+                                                Qty: {item.qty} <span className="mx-1 opacity-20">|</span> {formatINR(item.price)}
                                             </p>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="text-[13px] md:text-sm font-black text-textPrimary">₹{item.price * item.qty}</p>
+                                            <p className="text-[13px] md:text-sm font-black text-textPrimary">{formatINR(item.price * item.qty)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -414,7 +421,7 @@ const OrderDetailPage = () => {
                             <div className="pt-5 border-t border-gray-50">
                                 <div className="flex justify-between items-end">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 pr-4 leading-none">Order Total</p>
-                                    <p className="text-2xl font-black text-textPrimary leading-none">₹{order.amount}</p>
+                                    <p className="text-2xl font-black text-textPrimary leading-none">{formatINR(order.amount)}</p>
                                 </div>
                             </div>
                         </div>
@@ -435,7 +442,7 @@ const OrderDetailPage = () => {
                                 </div>
                                 {getRefundStatusBadge()}
                                 {order.refundAmount && (
-                                    <p className="text-xs text-gray-500 text-center">Refund amount: ₹{order.refundAmount}</p>
+                                    <p className="text-xs text-gray-500 text-center">Refund amount: {formatINR(order.refundAmount)}</p>
                                 )}
                             </div>
                         )}
@@ -502,7 +509,7 @@ const OrderDetailPage = () => {
                             <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
                                 <p className="text-xs font-bold text-green-700 flex items-center gap-2">
                                     <CheckCircle size={14} />
-                                    Refund of ₹{order.amount} will be initiated
+                                    Refund of {formatINR(order.amount)} will be initiated
                                 </p>
                                 <p className="text-[10px] text-green-600 mt-1">Typically processed within 5-7 business days</p>
                             </div>

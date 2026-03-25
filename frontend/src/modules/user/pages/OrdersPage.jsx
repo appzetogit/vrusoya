@@ -6,6 +6,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Package, ChevronRight, Clock, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+}).format(Number(amount || 0));
+
 const OrdersPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -80,7 +87,7 @@ const OrdersPage = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-[8px] md:text-[10px] text-slate-300 uppercase font-black tracking-widest leading-none mb-1">Total</p>
-                                                <p className="text-base md:text-2xl font-black text-textPrimary leading-none">Rs. {order.amount}</p>
+                                                <p className="text-base md:text-2xl font-black text-textPrimary leading-none">{formatINR(order.amount)}</p>
                                             </div>
                                         </div>
 

@@ -38,7 +38,7 @@ const ContactUsPage = () => {
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const namePattern = /^[A-Za-z\s]+$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phonePattern = /^\+?[0-9\s\-()]{10,15}$/;
+    const phonePattern = /^\d{10}$/;
     const isFormFilled = [
         formData.name,
         formData.email,
@@ -48,7 +48,17 @@ const ContactUsPage = () => {
     ].every((value) => String(value || '').trim() !== '');
 
     const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        let nextValue = value;
+
+        if (field === 'name') {
+            nextValue = value.replace(/[^A-Za-z\s]/g, '');
+        }
+
+        if (field === 'phone') {
+            nextValue = value.replace(/\D/g, '').slice(0, 10);
+        }
+
+        setFormData(prev => ({ ...prev, [field]: nextValue }));
     };
 
     const handleSubmit = async (event) => {
@@ -70,7 +80,7 @@ const ContactUsPage = () => {
         }
 
         if (!phonePattern.test(formData.phone.trim())) {
-            toast.error('Please enter a valid phone number.');
+            toast.error('Phone number must be exactly 10 digits.');
             return;
         }
 
@@ -164,6 +174,9 @@ const ContactUsPage = () => {
                                             type="text"
                                             value={formData.name}
                                             onChange={(e) => handleChange('name', e.target.value)}
+                                            inputMode="text"
+                                            pattern="[A-Za-z\\s]+"
+                                            title="Name should contain only letters and spaces"
                                             className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
                                         />
                                     </label>
@@ -183,7 +196,11 @@ const ContactUsPage = () => {
                                             type="text"
                                             value={formData.phone}
                                             onChange={(e) => handleChange('phone', e.target.value)}
-                                            placeholder="+91 9876543210"
+                                            inputMode="numeric"
+                                            maxLength={10}
+                                            pattern="\\d{10}"
+                                            title="Phone number must be exactly 10 digits"
+                                            placeholder="9876543210"
                                             className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
                                         />
                                     </label>

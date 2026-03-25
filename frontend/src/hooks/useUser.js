@@ -6,9 +6,9 @@ import { API_BASE_URL } from '@/lib/apiUrl';
 const API_URL = API_BASE_URL;
 
 export const useUserProfile = () => {
-    const { getAuthHeaders } = useAuth();
+    const { getAuthHeaders, user } = useAuth();
     return useQuery({
-        queryKey: ['user-profile'],
+        queryKey: ['user-profile', user?.id || null],
         queryFn: async () => {
             const res = await fetch(`${API_URL}/users/profile`, { 
                 headers: getAuthHeaders()
@@ -16,7 +16,7 @@ export const useUserProfile = () => {
             if (!res.ok) throw new Error('Failed to fetch profile');
             return res.json();
         },
-        enabled: !!localStorage.getItem('farmlyf_token')
+        enabled: !!localStorage.getItem('farmlyf_token') && !!user?.id
     });
 };
 

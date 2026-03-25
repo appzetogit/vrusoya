@@ -743,13 +743,13 @@ const ProfilePage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2 text-left">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Gender</label>
-                                    <div className="flex bg-gray-50 rounded-none p-1 border border-gray-100">
+                                    <div className="grid grid-cols-3 bg-gray-50 rounded-none p-1 border border-gray-100">
                                         {['Male', 'Female', 'Other'].map((g) => (
                                             <button
                                                 key={g}
                                                 type="button"
                                                 onClick={() => setEditForm({ ...editForm, gender: g })}
-                                                className={`flex-1 py-3 px-1 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${editForm.gender === g ? 'bg-secondary text-white' : 'text-gray-400 hover:text-textPrimary'}`}
+                                                className={`min-w-0 py-3 px-1 rounded-none text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.12em] sm:tracking-widest text-center whitespace-nowrap transition-all ${editForm.gender === g ? 'bg-secondary text-white' : 'text-gray-400 hover:text-textPrimary'}`}
                                             >
                                                 {g}
                                             </button>
@@ -969,17 +969,17 @@ const ProfilePage = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3 md:gap-4">
+                                    <div className="grid grid-cols-1 gap-3 md:gap-4">
                                         <div className="space-y-1.5 text-left">
                                             <label className="text-[9px] font-bold text-white/50 uppercase tracking-widest ml-1">Gender</label>
                                             {isEditing ? (
-                                                <div className="flex bg-white/5 rounded-xl md:rounded-2xl p-1 border border-white/10">
+                                                <div className="grid grid-cols-3 bg-white/5 rounded-xl md:rounded-2xl p-1 border border-white/10">
                                                     {['Male', 'Female', 'Other'].map((g) => (
                                                         <button
                                                             key={g}
                                                             type="button"
                                                             onClick={() => setEditForm({ ...editForm, gender: g })}
-                                                            className={`flex-1 py-2 md:py-3 px-1 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all ${editForm.gender === g ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-white/40 hover:text-white'}`}
+                                                            className={`min-w-0 py-2 md:py-3 px-1 rounded-lg md:rounded-xl text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-[0.08em] sm:tracking-[0.12em] md:tracking-widest text-center whitespace-nowrap transition-all ${editForm.gender === g ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-white/40 hover:text-white'}`}
                                                         >
                                                             {g}
                                                         </button>

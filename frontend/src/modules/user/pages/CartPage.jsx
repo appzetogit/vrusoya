@@ -128,6 +128,10 @@ const CartPage = () => {
     const handleBuyNow = (e, item) => {
         e.stopPropagation();
         e.preventDefault();
+        if (!user) {
+            navigate('/login?redirect=/checkout');
+            return;
+        }
         addToCart(user?.id, item.id);
         navigate('/checkout');
     };
@@ -159,6 +163,21 @@ const CartPage = () => {
         if (pack) {
             return { ...item, ...pack };
         }
+        if (item.itemMeta) {
+            return {
+                ...item,
+                id: item.packId,
+                name: item.itemMeta.name || 'Cart Item',
+                weight: item.itemMeta.weight || '',
+                price: Number(item.itemMeta.price || 0),
+                mrp: Number(item.itemMeta.mrp || item.itemMeta.price || 0),
+                image: item.itemMeta.image || '',
+                category: item.itemMeta.category || '',
+                productId: item.itemMeta.productId || item.packId,
+                slug: item.itemMeta.slug || '',
+                stock: Number(item.itemMeta.stock || 0)
+            };
+        }
         return null;
     }).filter(Boolean);
 
@@ -182,6 +201,21 @@ const CartPage = () => {
         }
         const pack = getPackById(item.packId);
         if (pack) return { ...item, ...pack };
+        if (item.itemMeta) {
+            return {
+                ...item,
+                id: item.packId,
+                name: item.itemMeta.name || 'Saved Item',
+                weight: item.itemMeta.weight || '',
+                price: Number(item.itemMeta.price || 0),
+                mrp: Number(item.itemMeta.mrp || item.itemMeta.price || 0),
+                image: item.itemMeta.image || '',
+                category: item.itemMeta.category || '',
+                productId: item.itemMeta.productId || item.packId,
+                slug: item.itemMeta.slug || '',
+                stock: Number(item.itemMeta.stock || 0)
+            };
+        }
         return null;
     }).filter(Boolean);
 
@@ -276,9 +310,22 @@ const CartPage = () => {
                                                 Only {item.stock} left!
                                             </div>
                                         )}
-                                        <div className="text-right">
+                                        <div className="hidden text-right">
                                             <div className="text-textPrimary/55 text-[9px] md:text-sm line-through">₹{Math.round(item.price * 1.5) * item.qty}</div>
                                             <div className="text-sm md:text-xl font-black text-textPrimary">₹{item.price * item.qty}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            {Number(item.mrp || 0) > Number(item.price || 0) && (
+                                                <div className="text-textPrimary/55 text-[9px] md:text-sm line-through">
+                                                    ₹{(Number(item.mrp || 0) * item.qty).toLocaleString()}
+                                                </div>
+                                            )}
+                                            <div className="text-textPrimary/55 text-[9px] md:text-sm font-semibold">
+                                                ₹{Number(item.price || 0).toLocaleString()} each
+                                            </div>
+                                            <div className="text-sm md:text-xl font-black text-textPrimary">
+                                                ₹{(Number(item.price || 0) * item.qty).toLocaleString()}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

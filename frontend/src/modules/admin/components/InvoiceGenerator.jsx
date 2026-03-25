@@ -1,18 +1,24 @@
 import React, { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import { useSetting } from "../../../hooks/useSettings";
+const INVOICE_BRAND_NAME = "Vrusoya";
+
+const parseRate = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
+};
 
 /* ============================================
    INVOICE DISPLAY
 ============================================ */
 
 export const InvoiceDisplay = React.forwardRef(
-  ({ order, item, items, settings: apiSettings }, ref) => {
+  ({ order, item, items, settings: apiSettings, checkoutFeeConfig }, ref) => {
     if (!order) return null;
 
     // Specific seller requirements - prioritize apiSettings from DB
     const settings = {
-        sellerName: apiSettings?.sellerName || "Farmlyf",
+        sellerName: INVOICE_BRAND_NAME,
         sellerAddress: apiSettings?.sellerAddress || "123 E-com St, Digital City",
         companyOfficeAddress: apiSettings?.companyOfficeAddress || apiSettings?.sellerAddress || "123 E-com St, Digital City",
         gstNumber: apiSettings?.gstNumber || "123456789",
@@ -33,7 +39,38 @@ export const InvoiceDisplay = React.forwardRef(
     const subtotal = list.reduce((a, b) => a + (b.price * (b.qty || b.quantity || 1)), 0);
     const shipping = Number(order.deliveryCharges || 0);
     const discount = Number(order.discount || 0);
-    const totalAmount = subtotal + shipping - discount;
+    const rawPaymentHandlingFee = Number(order.additionalFees?.paymentHandlingFee ?? 0);
+    const rawPlatformFee = Number(order.additionalFees?.platformFee ?? 0);
+    const rawHandlingFee = Number(order.additionalFees?.handlingFee ?? 0);
+    const rawFeesSum = rawPaymentHandlingFee + rawPlatformFee + rawHandlingFee;
+    const gstRate = parseRate(order.gstPercentage ?? checkoutFeeConfig?.gstPercentage);
+    const gstAmount = Math.round(Number(
+      order.gstAmount ?? ((Math.max(0, subtotal - discount) * gstRate) / 100)
+    ));
+    const totalAmount = Number(order.amount || (subtotal + shipping - discount + gstAmount + rawFeesSum));
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const inferredHiddenFees = Math.max(
+      0,
+      Math.round(totalAmount - (taxableAmount + gstAmount + shipping + rawFeesSum))
+    );
+    const configuredPaymentFee = Number(
+      checkoutFeeConfig?.applyPaymentHandlingFee === false ? 0 : (checkoutFeeConfig?.paymentHandlingFee || 0)
+    );
+    const configuredPlatformFee = Number(
+      checkoutFeeConfig?.applyPlatformFee === false ? 0 : (checkoutFeeConfig?.platformFee || 0)
+    );
+    const configuredHandlingFee = Number(
+      checkoutFeeConfig?.applyHandlingFee === false ? 0 : (checkoutFeeConfig?.handlingFee || 0)
+    );
+    const configuredFeesSum = configuredPaymentFee + configuredPlatformFee + configuredHandlingFee;
+    const canUseSettingsFallback = rawFeesSum === 0
+      && inferredHiddenFees > 0
+      && configuredFeesSum > 0
+      && Math.round(configuredFeesSum) === Math.round(inferredHiddenFees);
+    const paymentHandlingFee = rawPaymentHandlingFee > 0 ? rawPaymentHandlingFee : (canUseSettingsFallback ? configuredPaymentFee : 0);
+    const platformFee = rawPlatformFee > 0 ? rawPlatformFee : (canUseSettingsFallback ? configuredPlatformFee : 0);
+    const handlingFee = rawHandlingFee > 0 ? rawHandlingFee : (canUseSettingsFallback ? configuredHandlingFee : 0);
+    const otherFees = (!canUseSettingsFallback && rawFeesSum === 0) ? inferredHiddenFees : 0;
 
     return (
       <div ref={ref} className="invoice-root">
@@ -173,7 +210,7 @@ export const InvoiceDisplay = React.forwardRef(
               <tr>
                 <td colSpan="4" style={{ padding: "8px 5px" }}>
                    <div style={{ fontSize: "9px", marginBottom: "3px" }}>Ordered through</div>
-                   <div className="brand">Farmlyf <span style={{ fontSize: "14px", transform: "scaleX(-1)", display: "inline-block" }}>f</span></div>
+                   <div className="brand">Vrusoya</div>
                 </td>
               </tr>
               <tr>
@@ -290,8 +327,8 @@ export const InvoiceDisplay = React.forwardRef(
             <tbody>
               {list.map((i, idx) => {
                 const gross = i.price * (i.qty || i.quantity || 1);
-                const taxable = gross / 1.18;
-                const tax = gross - taxable;
+                const taxable = gross;
+                const tax = Number(((gross * gstRate) / 100).toFixed(2));
 
                 return (
                   <tr key={idx}>
@@ -299,14 +336,14 @@ export const InvoiceDisplay = React.forwardRef(
                       <div><b>{i.name}</b></div>
                       {i.serialNumber && <div style={{ fontSize: "7px", color: "#666" }}>IMEI/SN: {i.serialNumber}</div>}
                     </td>
-                    <td>HSN: 90029000 | 18.00% | 0%</td>
+                    <td>HSN: 90029000 | {gstRate.toFixed(2)}% | 0%</td>
                     <td className="text-center">{i.qty || i.quantity}</td>
                     <td className="text-right">{format(gross)}</td>
                     <td className="text-right">0.00</td>
                     <td className="text-right">{format(taxable)}</td>
                     <td className="text-right">{format(tax)}</td>
                     <td className="text-right">0.00</td>
-                    <td className="text-right font-bold">{format(gross)}</td>
+                    <td className="text-right font-bold">{format(gross + tax)}</td>
                   </tr>
                 );
               })}
@@ -332,6 +369,66 @@ export const InvoiceDisplay = React.forwardRef(
                   <td className="text-right">0.00</td>
                   <td className="text-right">0.00</td>
                   <td className="text-right"><b>-{format(discount)}</b></td>
+                </tr>
+              )}
+              {gstAmount > 0 && (
+                <tr>
+                  <td colSpan="2"><b>GST ({gstRate.toFixed(2)}%)</b></td>
+                  <td className="text-center">1</td>
+                  <td className="text-right">{format(gstAmount)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">{format(gstAmount)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right"><b>{format(gstAmount)}</b></td>
+                </tr>
+              )}
+              {paymentHandlingFee > 0 && (
+                <tr>
+                  <td colSpan="2"><b>Payment Handling Fee</b></td>
+                  <td className="text-center">1</td>
+                  <td className="text-right">{format(paymentHandlingFee)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">{format(paymentHandlingFee)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right"><b>{format(paymentHandlingFee)}</b></td>
+                </tr>
+              )}
+              {platformFee > 0 && (
+                <tr>
+                  <td colSpan="2"><b>Platform Fee</b></td>
+                  <td className="text-center">1</td>
+                  <td className="text-right">{format(platformFee)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">{format(platformFee)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right"><b>{format(platformFee)}</b></td>
+                </tr>
+              )}
+              {handlingFee > 0 && (
+                <tr>
+                  <td colSpan="2"><b>Handling Fee</b></td>
+                  <td className="text-center">1</td>
+                  <td className="text-right">{format(handlingFee)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">{format(handlingFee)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right"><b>{format(handlingFee)}</b></td>
+                </tr>
+              )}
+              {otherFees > 0 && (
+                <tr>
+                  <td colSpan="2"><b>Other Checkout Fees</b></td>
+                  <td className="text-center">1</td>
+                  <td className="text-right">{format(otherFees)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">{format(otherFees)}</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right">0.00</td>
+                  <td className="text-right"><b>{format(otherFees)}</b></td>
                 </tr>
               )}
               <tr style={{ background: "#f5f5f5", fontWeight: "bold" }}>
@@ -371,7 +468,7 @@ export const InvoiceDisplay = React.forwardRef(
           
           <div style={{ marginTop: "20px", display: "flex", justifyContent: "space-between", fontSize: "9px", fontWeight: "bold", borderTop: "1px solid #eee", paddingTop: "10px" }}>
              <span>E. & O.E.</span>
-             <span>Ordered Through Farmlyf <span style={{ border: "1px solid black", padding: "0 1px", transform: "scaleX(-1)", display: "inline-block", fontSize: "8px" }}>f</span></span>
+             <span>Ordered Through Vrusoya</span>
           </div>
         </div>
       </div>
@@ -386,6 +483,7 @@ export const InvoiceDisplay = React.forwardRef(
 const InvoiceGenerator = ({ order, item, items, settings, customTrigger }) => {
   const componentRef = useRef(null);
   const { data: invoiceSettings } = useSetting('invoice_settings');
+  const { data: checkoutFeeSetting } = useSetting('checkout_fee_config');
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
@@ -418,6 +516,7 @@ const InvoiceGenerator = ({ order, item, items, settings, customTrigger }) => {
           item={item}
           items={items}
           settings={settings || invoiceSettings?.value}
+          checkoutFeeConfig={checkoutFeeSetting?.value}
         />
       </div>
       {trigger}
@@ -432,6 +531,7 @@ const InvoiceGenerator = ({ order, item, items, settings, customTrigger }) => {
 export const BulkInvoiceGenerator = ({ orders, settings, customTrigger }) => {
   const componentRef = useRef(null);
   const { data: invoiceSettings } = useSetting('invoice_settings');
+  const { data: checkoutFeeSetting } = useSetting('checkout_fee_config');
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
@@ -465,6 +565,7 @@ export const BulkInvoiceGenerator = ({ orders, settings, customTrigger }) => {
                 order={order}
                 items={order.items || order.orderItems}
                 settings={settings || invoiceSettings?.value}
+                checkoutFeeConfig={checkoutFeeSetting?.value}
               />
             </div>
           ))}

@@ -63,7 +63,7 @@ const CatalogPage = () => {
     const [selectedAvailability, setSelectedAvailability] = useState([]);
     const [selectedWeights, setSelectedWeights] = useState([]);
     const [selectedDiscounts, setSelectedDiscounts] = useState([]);
-    const [sortBy, setSortBy] = useState('featured');
+    const [sortBy, setSortBy] = useState('newest');
     const [searchQuery, setSearchQuery] = useState('');
     const [hoveredFilterCategory, setHoveredFilterCategory] = useState(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -86,8 +86,6 @@ const CatalogPage = () => {
     }, []);
 
     const sortOptions = [
-        { value: 'featured', label: 'Featured' },
-        { value: 'best-selling', label: 'Best Selling' },
         { value: 'alphabetical-az', label: 'Alphabetically: A-Z' },
         { value: 'alphabetical-za', label: 'Alphabetically: Z-A' },
         { value: 'price-low', label: 'Price: Low to High' },
@@ -304,19 +302,44 @@ const CatalogPage = () => {
 
         // Sorting
         const getDisplayPrice = (p) => {
-            if (p.variants && p.variants.length > 0) {
-                return Math.min(...p.variants.map(v => v.price || v.mrp || Infinity));
+            if (Array.isArray(p.variants) && p.variants.length > 0) {
+                const firstVariant = p.variants[0];
+                return Number(firstVariant?.price || firstVariant?.mrp || p.price || 0);
             }
-            return p.price || 0;
+            return Number(p.price || p.mrp || 0);
         };
 
         switch (sortBy) {
-            case 'price-low': result.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b)); break;
-            case 'price-high': result.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a)); break;
-            case 'newest': result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); break;
-            case 'alphabetical-az': result.sort((a, b) => a.name.localeCompare(b.name)); break;
-            case 'alphabetical-za': result.sort((a, b) => b.name.localeCompare(a.name)); break;
-            default: break;
+            case 'price-low':
+                result.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
+                break;
+            case 'price-high':
+                result.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
+                break;
+            case 'newest':
+                result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                break;
+            case 'alphabetical-az':
+                result.sort((a, b) =>
+                    String(a.name || '').trim().localeCompare(
+                        String(b.name || '').trim(),
+                        'en',
+                        { sensitivity: 'base', numeric: true }
+                    )
+                );
+                break;
+            case 'alphabetical-za':
+                result.sort((a, b) =>
+                    String(b.name || '').trim().localeCompare(
+                        String(a.name || '').trim(),
+                        'en',
+                        { sensitivity: 'base', numeric: true }
+                    )
+                );
+                break;
+            default:
+                result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                break;
         }
 
         return result;
@@ -721,7 +744,10 @@ const CatalogPage = () => {
                     {/* Product Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-4 md:gap-x-6 md:gap-y-10">
                         {filteredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
+                            <ProductCard
+                                key={product._id || product.id || product.slug || `${product.name}-${product.createdAt || ''}`}
+                                product={product}
+                            />
                         ))}
                     </div>
 

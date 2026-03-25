@@ -22,6 +22,7 @@ import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTabl
 
 import { useAuth } from '../../../context/AuthContext';
 import { API_BASE_URL } from '@/lib/apiUrl';
+import { normalizeSearchInput, toSearchKey } from '../utils/search';
 
 const UsersPage = () => {
     const navigate = useNavigate();
@@ -44,7 +45,7 @@ const UsersPage = () => {
     // Debounce search term
     useEffect(() => {
         const timer = setTimeout(() => {
-            setDebouncedSearch(searchTerm);
+            setDebouncedSearch(toSearchKey(searchTerm));
             setPage(1); // Reset to first page on new search
         }, 300);
         return () => clearTimeout(timer);
@@ -171,7 +172,7 @@ const UsersPage = () => {
                         type="text"
                         placeholder="Search by name, email or phone..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-[#2c5336] transition-all"
                     />
                 </div>

@@ -20,8 +20,8 @@ export const createEnquiry = async (req, res) => {
       return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
 
-    if (!/^\+?[0-9\s\-()]{10,15}$/.test(normalizedPhone)) {
-      return res.status(400).json({ message: 'Please enter a valid phone number.' });
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({ message: 'Phone number must be exactly 10 digits.' });
     }
 
     const enquiry = await Enquiry.create({

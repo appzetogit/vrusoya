@@ -8,13 +8,10 @@ import {
     Box,
     FileWarning,
     History,
-    TrendingUp,
     AlertTriangle,
     Layers,
     Boxes,
     CheckCircle2,
-    Truck,
-    MapPin,
     XCircle,
     TicketPercent,
     MessageSquare,
@@ -28,7 +25,7 @@ import { useAllOrders, useAllReturns } from '../../../hooks/useOrders';
 import { useProducts, useCategories, useSubCategories } from '../../../hooks/useProducts';
 import { useUsers } from '../../../hooks/useUsers';
 import { useCoupons } from '../../../hooks/useCoupons';
-import { useUserReviews, useAdminReviews } from '../../../hooks/useReviews';
+import { useAllUserReviews, useAdminReviews } from '../../../hooks/useContent';
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -42,49 +39,63 @@ const DashboardPage = () => {
     const { data: categories = [] } = useCategories();
     const { data: subcategories = [] } = useSubCategories();
     const { data: coupons = [] } = useCoupons();
-    const { data: userReviews = [] } = useUserReviews();
+    const { data: allReviews = [] } = useAllUserReviews();
     const { data: adminReviews = [] } = useAdminReviews();
 
     // Calculate Stats
     const stats = useMemo(() => {
+        const normalizeStatus = (value) => String(value || '').trim().toLowerCase();
+        const getAvailableStock = (product) => {
+            const variants = Array.isArray(product?.variants) ? product.variants : [];
+            if (variants.length > 0) {
+                return variants.reduce((sum, variant) => sum + Number(variant?.stock || 0), 0);
+            }
+            return Number(product?.stock?.quantity || 0);
+        };
+
         // Business Overview
         const totalRevenue = orders
-            .filter(order => order.status !== 'Cancelled')
+            .filter(order => normalizeStatus(order.status) !== 'cancelled')
             .reduce((acc, order) => acc + (order.amount || 0), 0);
 
         // Order Breakdown
-        const pendingOrders = orders.filter(o => o.status === 'Processing').length;
-        const deliveredOrders = orders.filter(o => o.status === 'Delivered').length;
-        const shippedOrders = orders.filter(o => o.status === 'Shipped').length;
-        const outForDelivery = orders.filter(o => o.status === 'OutForDelivery').length;
-        const cancelledOrders = orders.filter(o => o.status === 'Cancelled').length;
-        const processingOrders = orders.filter(o => ['Received', 'Processed'].includes(o.status)).length;
+        const pendingOrders = orders.filter(o =>
+            ['pending', 'processing', 'received', 'processed'].includes(normalizeStatus(o.status))
+        ).length;
+        const deliveredOrders = orders.filter(o => normalizeStatus(o.status) === 'delivered').length;
+        const cancelledOrders = orders.filter(o => normalizeStatus(o.status) === 'cancelled').length;
 
         // Inventory
-        const outOfStock = products.filter(p => !p.variants || p.variants.every(v => v.stock === 0)).length;
-        const lowStock = products.filter(p => p.variants && p.variants.some(v => v.stock > 0 && v.stock < 15)).length;
+        const outOfStock = products.filter((p) => getAvailableStock(p) <= 0).length;
+        const lowStock = products.filter((p) => {
+            const stock = getAvailableStock(p);
+            return stock > 0 && stock < 15;
+        }).length;
 
         // Returns
-        const pendingReturns = returns.filter(r => r.status === 'Pending').length;
+        const pendingReturns = returns.filter(r => normalizeStatus(r.status) === 'pending').length;
         const activeReplacements = returns.filter(r => r.type === 'replacement' && r.status !== 'Completed').length;
-        const completedReturns = returns.filter(r => r.status === 'Completed').length;
+        const completedReturns = returns.filter(r =>
+            ['completed', 'refunded'].includes(normalizeStatus(r.status))
+        ).length;
+        const userReviewCount = allReviews.filter((review) =>
+            Boolean(review?.product?.id || review?.product?.name || review?.product)
+        ).length;
+        const adminReviewCount = adminReviews.length;
 
         return [
             // Section 1: Business Overview
             { label: 'Total Users', value: totalUsersCount, icon: Users, color: 'text-blue-500', link: '/admin/users' },
             { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: Banknote, color: 'text-emerald-500', link: '/admin/orders' },
             { label: 'Total Categories', value: categories.length, icon: Layers, color: 'text-indigo-500', link: '/admin/categories' },
-            { label: 'Total Categories', value: subcategories.length, icon: Layers, color: 'text-violet-500', link: '/admin/categories' },
+            { label: 'Total Subcategories', value: subcategories.length, icon: Layers, color: 'text-violet-500', link: '/admin/categories' },
             { label: 'Total Products', value: products.length, icon: Box, color: 'text-amber-500', link: '/admin/products' },
 
             // Section 2: Order Analytics
-            { label: 'Total Orders', value: orders.length, icon: ShoppingBag, color: 'text-slate-500', link: '/admin/orders' },
-            { label: 'Pending Orders', value: pendingOrders, icon: Clock, color: 'text-amber-600', link: '/admin/orders?status=Processing', badge: 'Action Required' },
-            { label: 'Delivered Orders', value: deliveredOrders, icon: CheckCircle2, color: 'text-emerald-600', link: '/admin/orders?status=Delivered' },
-            { label: 'Shipped Orders', value: shippedOrders, icon: Truck, color: 'text-blue-600', link: '/admin/orders?status=Shipped' },
-            { label: 'Out for Delivery', value: outForDelivery, icon: MapPin, color: 'text-purple-600', link: '/admin/orders?status=OutForDelivery' },
-            { label: 'Cancelled Orders', value: cancelledOrders, icon: XCircle, color: 'text-red-500', link: '/admin/orders?status=Cancelled' },
-            { label: 'In-Process', value: processingOrders, icon: TrendingUp, color: 'text-teal-500', link: '/admin/orders' },
+            { label: 'All Order', value: orders.length, icon: ShoppingBag, color: 'text-slate-500', link: '/admin/orders' },
+            { label: 'Pending Order', value: pendingOrders, icon: Clock, color: 'text-amber-600', link: '/admin/orders?status=Processing', badge: 'Action Required' },
+            { label: 'Delivered Order', value: deliveredOrders, icon: CheckCircle2, color: 'text-emerald-600', link: '/admin/orders?status=Delivered' },
+            { label: 'Cancelled Order', value: cancelledOrders, icon: XCircle, color: 'text-red-500', link: '/admin/orders?status=Cancelled' },
 
             // Section 3: Inventory
             { label: 'Sold Out', value: outOfStock, icon: FileWarning, color: 'text-red-600', link: '/admin/inventory/alerts', badge: outOfStock > 0 ? 'Urgent' : null },
@@ -97,10 +108,10 @@ const DashboardPage = () => {
 
             // Section 5: Engagement
             { label: 'Active Coupons', value: coupons.filter(c => c.active).length, icon: TicketPercent, color: 'text-pink-500', link: '/admin/coupons' },
-            { label: 'User Reviews', value: userReviews.length, icon: MessageSquare, color: 'text-blue-400', link: '/admin/reviews' },
-            { label: 'Admin Reviews', value: adminReviews.length, icon: ShieldCheck, color: 'text-slate-600', link: '/admin/reviews' },
+            { label: 'User Reviews', value: userReviewCount, icon: MessageSquare, color: 'text-blue-400', link: '/admin/reviews' },
+            { label: 'Admin Reviews', value: adminReviewCount, icon: ShieldCheck, color: 'text-slate-600', link: '/admin/reviews' },
         ];
-    }, [orders, products, returns, userData, categories, subcategories, coupons, userReviews, adminReviews]);
+    }, [orders, products, returns, userData, categories, subcategories, coupons, allReviews, adminReviews]);
 
     const quickActions = [
         { label: 'Add Product', icon: Plus, link: '/admin/products/add', color: 'bg-emerald-50 text-emerald-600' },

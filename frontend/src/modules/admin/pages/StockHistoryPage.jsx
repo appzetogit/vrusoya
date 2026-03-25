@@ -14,6 +14,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import Pagination from '../components/Pagination';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const StockHistoryPage = () => {
     const navigate = useNavigate();
@@ -107,11 +108,12 @@ const StockHistoryPage = () => {
 
     const filteredHistory = useMemo(() => {
         return dummyHistory.filter(item => {
-            const matchesSearch = item.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.reason.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearchTerm = matchesSearch(
+                `${item.productName} ${item.sku} ${item.reason}`,
+                searchTerm
+            );
             const matchesType = filterType === 'all' || item.type === filterType;
-            return matchesSearch && matchesType;
+            return matchesSearchTerm && matchesType;
         });
     }, [searchTerm, filterType]);
 
@@ -173,7 +175,7 @@ const StockHistoryPage = () => {
                         type="text"
                         placeholder="Search history..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>

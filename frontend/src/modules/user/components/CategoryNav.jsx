@@ -94,15 +94,15 @@ const CategoryNav = () => {
                                 onMouseLeave={() => cat.hasMenu && setActiveMenu(null)}
                             >
                                 {cat.hasMenu ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveMenu(prev => (prev === cat.name ? null : cat.name))}
+                                    <Link
+                                        to={cat.path}
+                                        onClick={() => setActiveMenu(null)}
                                         className={`flex items-center gap-2 py-1 transition-all duration-300 ${activeMenu === cat.name ? 'text-white' : 'hover:text-white text-background/90'}`}
                                     >
                                         <Icon size={14} className={`transition-colors duration-300 ${activeMenu === cat.name ? 'text-white' : 'text-white/80'}`} />
                                         <span className="whitespace-nowrap">{cat.name}</span>
                                         <ChevronDown size={11} className={`ml-0.5 transition-transform duration-300 ${activeMenu === cat.name ? 'rotate-180' : ''}`} />
-                                    </button>
+                                    </Link>
                                 ) : (
                                     <Link
                                         to={cat.path}

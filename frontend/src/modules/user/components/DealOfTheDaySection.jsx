@@ -16,20 +16,7 @@ const DealOfTheDaySection = () => {
                 {/* Decorative Elements */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/20 rounded-full blur-3xl opacity-60 pointer-events-none" />
                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/40 rounded-full blur-3xl opacity-70 pointer-events-none" />
-                <div className="absolute top-0 right-0 md:top-6 md:right-6 z-20 bg-background px-2.5 py-1.5 md:px-4 md:py-2 rounded-bl-[20px] rounded-tr-[16px] md:rounded-2xl border-l border-b border-accent/40 md:border md:border-accent/40 shadow-sm">
-                    <div className="flex items-center justify-end gap-1 md:gap-2 mb-0.5 md:mb-1">
-                        <span className="bg-accent/30 text-primary px-1.5 md:px-2.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold tracking-widest uppercase border border-accent">
-                            Ends Soon
-                        </span>
-                    </div>
-                    <div className="flex gap-1 md:gap-1.5 text-primary font-bold text-[10px] md:text-sm">
-                        <span className="bg-white px-1.5 md:px-2 py-0.5 rounded border border-accent/40">12</span>:
-                        <span className="bg-white px-1.5 md:px-2 py-0.5 rounded border border-accent/40">45</span>:
-                        <span className="bg-white px-1.5 md:px-2 py-0.5 rounded border border-accent/40">30</span>
-                    </div>
-                </div>
-
-                <div className="text-center mb-6 md:mb-12 relative z-10 pt-12 md:pt-0">
+                <div className="text-center mb-6 md:mb-12 relative z-10">
                     <div className="flex flex-col items-center gap-1 md:gap-2 mb-2">
                         <motion.h2
                             initial={{ opacity: 0, y: 10 }}

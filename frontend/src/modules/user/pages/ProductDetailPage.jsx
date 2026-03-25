@@ -900,6 +900,11 @@ const ProductDetailPage = () => {
                                             return;
                                         }
 
+                                        if (!user) {
+                                            navigate('/login?redirect=/cart');
+                                            return;
+                                        }
+
                                         if (quantity > currentStock) {
                                             toast.error(`Requested quantity exceeds available stock (${currentStock})`);
                                             return;
@@ -949,6 +954,10 @@ const ProductDetailPage = () => {
 
                             <button
                                 onClick={() => {
+                                    if (!user) {
+                                        navigate('/login?redirect=/checkout');
+                                        return;
+                                    }
                                     const skuId = (isGroupProduct && selectedVariant) ? selectedVariant.id : product.id;
                                     if (quantity > currentStock) {
                                         toast.error(`Requested quantity exceeds available stock (${currentStock})`);

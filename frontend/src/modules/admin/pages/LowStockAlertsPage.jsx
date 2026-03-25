@@ -4,43 +4,95 @@ import {
     ArrowLeft,
     AlertTriangle,
     Search,
-    Filter,
     ArrowRight,
     Package,
-    ShoppingCart,
-    Bell
+    Bell,
+    CheckCircle
 } from 'lucide-react';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 
 import { useProducts } from '../../../hooks/useProducts';
+import { matchesSearch, normalizeSearchInput } from '../utils/search';
 
 const LowStockAlertsPage = () => {
     const navigate = useNavigate();
-    const { data: allProducts = [], isLoading } = useProducts();
+    const { data: allProducts = [], isLoading } = useProducts({
+        staleTime: 0,
+        refetchOnMount: 'always',
+        refetchOnWindowFocus: true
+    });
+
+    const getCategoryName = (category) => {
+        if (!category) return 'Uncategorized';
+        if (typeof category === 'string') return category;
+        return category.name || category.slug || 'Uncategorized';
+    };
+
+    const getVariantLabel = (variant) => {
+        if (!variant) return 'Base Product';
+        if (variant.weight) return variant.weight;
+        if (variant.quantity && variant.unit) return `${variant.quantity}${variant.unit}`;
+        return variant.sku || variant.id || variant._id || 'Variant';
+    };
 
     const products = useMemo(() => {
-        return allProducts.filter(p => {
-            const stock = p.stock?.quantity || 0;
-            const threshold = p.lowStockThreshold || 10;
-            return stock <= threshold;
-        }).map(p => ({
-            id: p._id,
-            name: p.name,
-            sku: p.sku,
-            category: p.category,
-            image: p.image,
-            stock: p.stock?.quantity || 0,
-            threshold: p.lowStockThreshold || 10,
-            status: (p.stock?.quantity || 0) === 0 ? 'out_of_stock' : 'low_stock'
-        }));
+        const alerts = [];
+
+        for (const p of allProducts) {
+            const threshold = Number(p.lowStockThreshold ?? 10);
+            const safeThreshold = Number.isFinite(threshold) && threshold >= 0 ? threshold : 10;
+            const categoryName = getCategoryName(p.category);
+            const variants = Array.isArray(p.variants) ? p.variants : [];
+
+            if (variants.length > 0) {
+                variants.forEach((variant, idx) => {
+                    const stock = Number(variant?.stock || 0);
+                    if (stock > safeThreshold) return;
+
+                    const variantId = String(variant?.id || variant?._id || idx);
+                    alerts.push({
+                        id: `${p._id || p.id}-${variantId}`,
+                        productId: p._id || p.id,
+                        variantId,
+                        name: `${p.name} (${getVariantLabel(variant)})`,
+                        sku: variant?.sku || p.sku || 'N/A',
+                        category: categoryName,
+                        image: p.image,
+                        stock,
+                        threshold: safeThreshold,
+                        status: stock === 0 ? 'out_of_stock' : 'low_stock'
+                    });
+                });
+            } else {
+                const stock = Number(p.stock?.quantity || 0);
+                if (stock > safeThreshold) continue;
+
+                alerts.push({
+                    id: String(p._id || p.id),
+                    productId: p._id || p.id,
+                    variantId: null,
+                    name: p.name,
+                    sku: p.sku || 'N/A',
+                    category: categoryName,
+                    image: p.image,
+                    stock,
+                    threshold: safeThreshold,
+                    status: stock === 0 ? 'out_of_stock' : 'low_stock'
+                });
+            }
+        }
+
+        return alerts.sort((a, b) => {
+            if (a.status !== b.status) return a.status === 'out_of_stock' ? -1 : 1;
+            return a.stock - b.stock;
+        });
     }, [allProducts]);
 
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredProducts = useMemo(() => {
         return products.filter(p =>
-            p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
+            matchesSearch(`${p.name || ''} ${p.sku || ''}`, searchTerm)
         );
     }, [products, searchTerm]);
 
@@ -113,7 +165,7 @@ const LowStockAlertsPage = () => {
                         type="text"
                         placeholder="Search alerts..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => setSearchTerm(normalizeSearchInput(e.target.value))}
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>
@@ -130,7 +182,7 @@ const LowStockAlertsPage = () => {
                     </AdminTableHeader>
                     <AdminTableBody>
                         {filteredProducts.map((p) => {
-                            const percent = Math.min(100, (p.stock / p.threshold) * 100);
+                            const percent = p.threshold > 0 ? Math.min(100, (p.stock / p.threshold) * 100) : 0;
                             const isCritical = p.stock === 0;
 
                             return (
@@ -202,8 +254,5 @@ const LowStockAlertsPage = () => {
         </div>
     );
 };
-
-// Helper Icon for empty state
-import { CheckCircle } from 'lucide-react';
 
 export default LowStockAlertsPage;
