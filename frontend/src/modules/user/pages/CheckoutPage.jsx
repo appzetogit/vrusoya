@@ -1145,11 +1145,7 @@ const CheckoutPage = () => {
                             </button>
 
                             <p className="text-[9px] md:text-xs text-center text-textPrimary/55 mt-3 md:mt-4">
-<<<<<<< HEAD
                                 Secure Checkout with Vrusoya
-=======
-                                Secure Checkout with Vru Soya Products
->>>>>>> 229e091d4301250c791378f9f244eca682dfdb0d
                             </p>
                         </div>
                     </div>
