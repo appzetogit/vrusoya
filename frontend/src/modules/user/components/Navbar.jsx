@@ -683,7 +683,7 @@ const Navbar = () => {
                                     <div className="flex items-center gap-1.5 min-w-0">
                                         <img src={logo} alt="Vrusoya" className="h-9 w-auto object-contain brightness-0 invert shrink-0" />
                                         <span className="text-base font-extrabold tracking-[0.18em] uppercase text-[#25D366] truncate">
-                                            Vrusoya
+                                            Vrusoya Products
                                         </span>
                                     </div>
                                     <button

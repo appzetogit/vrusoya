@@ -35,6 +35,7 @@ const CheckoutPage = () => {
     const { mutateAsync: validateReferralMutate } = useValidateReferral();
     const { mutateAsync: placeOrderMutate } = usePlaceOrder();
     const { mutateAsync: verifyPaymentMutate } = useVerifyPayment();
+    const razorpayKeyId = (import.meta.env.VITE_RAZORPAY_KEY_ID || '').trim();
 
     const loadRazorpayScript = () => {
         return new Promise((resolve) => {
@@ -617,6 +618,12 @@ const CheckoutPage = () => {
                 navigate(`/order-success/${res.orderId}`);
             } else {
                 // Online Payment
+                if (!razorpayKeyId) {
+                    toast.error('Razorpay is not configured. Missing VITE_RAZORPAY_KEY_ID.');
+                    setLoading(false);
+                    return;
+                }
+
                 const scriptLoaded = await loadRazorpayScript();
                 if (!scriptLoaded) {
                     toast.error('Razorpay SDK failed to load. Are you online?');
@@ -628,10 +635,10 @@ const CheckoutPage = () => {
                 const orderResponse = await placeOrderMutate({ userId: user?.id, orderData });
 
                 const options = {
-                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder', // User needs to provide this
+                    key: razorpayKeyId,
                     amount: orderResponse.amount,
                     currency: orderResponse.currency,
-                    name: 'FarmLyf',
+                    name: 'Vru Soya Products',
                     description: 'Order Payment',
                     image: logo,
                     order_id: orderResponse.id,
@@ -1138,7 +1145,11 @@ const CheckoutPage = () => {
                             </button>
 
                             <p className="text-[9px] md:text-xs text-center text-textPrimary/55 mt-3 md:mt-4">
+<<<<<<< HEAD
                                 Secure Checkout with Vrusoya
+=======
+                                Secure Checkout with Vru Soya Products
+>>>>>>> 229e091d4301250c791378f9f244eca682dfdb0d
                             </p>
                         </div>
                     </div>
