@@ -890,8 +890,6 @@ const CheckoutPage = () => {
                                                     value={formData.state}
                                                     onChange={handleInputChange}
                                                     inputMode="text"
-                                                    pattern="[A-Za-z ]+"
-                                                    title="State should contain only letters and spaces"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                                 />
                                             </div>
