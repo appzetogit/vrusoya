@@ -75,6 +75,71 @@ const normalizeOrderDataAmounts = (orderData = {}) => {
   return normalized;
 };
 
+const resolveOrderUserName = async (orderData = {}) => {
+  const payloadName = String(orderData?.userName || '').trim();
+  if (payloadName) return payloadName;
+
+  const uid = String(orderData?.userId || '').trim();
+  if (!uid) return '';
+
+  const user = await User.findOne({ id: uid }).select('name');
+  return String(user?.name || '').trim();
+};
+
+const normalizeAddressValue = (value = '') => String(value).trim();
+const normalizePhoneForAddress = (value = '') => String(value).replace(/\D/g, '').slice(-10);
+
+const buildShippingAddress = (shippingAddress = {}) => ({
+  fullName: normalizeAddressValue(shippingAddress.fullName),
+  phone: normalizePhoneForAddress(shippingAddress.phone),
+  address: normalizeAddressValue(shippingAddress.address),
+  city: normalizeAddressValue(shippingAddress.city),
+  state: normalizeAddressValue(shippingAddress.state),
+  pincode: normalizeAddressValue(shippingAddress.pincode),
+});
+
+const getAddressKey = (address = {}) => ([
+  String(address.address || '').trim().toLowerCase(),
+  String(address.city || '').trim().toLowerCase(),
+  String(address.state || '').trim().toLowerCase(),
+  String(address.pincode || '').trim(),
+].join('|'));
+
+const saveCheckoutAddressToUser = async (orderData = {}) => {
+  const userId = String(orderData?.userId || '').trim();
+  if (!userId) return;
+
+  const address = buildShippingAddress(orderData?.shippingAddress || {});
+  if (!address.address || !address.city || !address.state || !address.pincode) return;
+
+  const user = await User.findOne({ id: userId });
+  if (!user) return;
+
+  const existingAddresses = Array.isArray(user.addresses) ? user.addresses : [];
+  const incomingKey = getAddressKey(address);
+  const existingIndex = existingAddresses.findIndex((addr) => getAddressKey(addr) === incomingKey);
+
+  if (existingIndex >= 0) {
+    existingAddresses[existingIndex].fullName = address.fullName || existingAddresses[existingIndex].fullName;
+    existingAddresses[existingIndex].phone = address.phone || existingAddresses[existingIndex].phone;
+  } else {
+    const nextId = existingAddresses.reduce((max, addr) => {
+      const current = Number(addr?.id || 0);
+      return Number.isFinite(current) && current > max ? current : max;
+    }, 0) + 1;
+
+    existingAddresses.push({
+      id: nextId,
+      type: 'Home',
+      ...address,
+      isDefault: existingAddresses.length === 0,
+    });
+  }
+
+  user.addresses = existingAddresses;
+  await user.save();
+};
+
 // @desc    Create Razorpay Order
 // @route   POST /api/payments/order
 // @access  Public (or Private if auth is needed)
@@ -160,11 +225,13 @@ export const verifyPayment = asyncHandler(async (req, res) => {
         const randomSuffix = Math.floor(Math.random() * 1000);
         const orderId = `ORD-${timestamp}-${randomSuffix}`;
 
+        const resolvedUserName = await resolveOrderUserName(normalizedOrderData);
+
         // Create order in our database
         const newOrder = new Order({
             ...normalizedOrderData,
             id: orderId,
-            userName: normalizedOrderData.shippingAddress?.fullName, // Added for quick access
+            userName: resolvedUserName,
             date: new Date(),
             paymentStatus: 'paid',
             status: 'pending', // Order received
@@ -174,6 +241,11 @@ export const verifyPayment = asyncHandler(async (req, res) => {
         });
 
         await newOrder.save();
+        try {
+            await saveCheckoutAddressToUser(normalizedOrderData);
+        } catch (addressError) {
+            console.error('Failed to save checkout address to user profile:', addressError.message);
+        }
 
         // Deduct stock from products after order creation; delete order if stock changes during deduction.
         try {
@@ -292,10 +364,12 @@ export const createCODOrder = asyncHandler(async (req, res) => {
         const randomSuffix = Math.floor(Math.random() * 1000);
         const orderId = `ORD-${timestamp}-${randomSuffix}`;
 
+        const resolvedUserName = await resolveOrderUserName(normalizedOrderData);
+
         const newOrder = new Order({
             ...normalizedOrderData,
             id: orderId,
-            userName: normalizedOrderData.shippingAddress?.fullName, // Added for quick access
+            userName: resolvedUserName,
             date: new Date(),
             paymentMethod: 'cod',
             paymentStatus: 'pending',
@@ -303,6 +377,11 @@ export const createCODOrder = asyncHandler(async (req, res) => {
         });
 
         await newOrder.save();
+        try {
+            await saveCheckoutAddressToUser(normalizedOrderData);
+        } catch (addressError) {
+            console.error('Failed to save checkout address to user profile:', addressError.message);
+        }
 
         // Deduct stock from products after order creation; delete order if stock changes during deduction.
         try {

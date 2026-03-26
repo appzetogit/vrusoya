@@ -215,9 +215,6 @@ const Navbar = () => {
                         <span className="font-brand font-black text-[22px] tracking-[0.02em] leading-[0.9] text-primary uppercase">VRUSHAHI</span>
                         <span className="font-brand font-bold text-[13px] tracking-[0.34em] leading-normal text-secondary uppercase">SOya Products</span>
                     </div>
-                    {user?.accountType === 'Business' && (
-                        <span className="absolute top-0 -right-8 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">Business</span>
-                    )}
                 </Link>
 
                 {/* Search Bar - Functional */}
@@ -508,9 +505,6 @@ const Navbar = () => {
                         <span className="font-brand font-black text-[20px] tracking-[0.02em] text-primary uppercase">VRUSHAHI</span>
                         <span className="font-brand font-bold text-[11px] tracking-[0.34em] text-secondary uppercase">SOya products</span>
                     </div>
-                    {user?.accountType === 'Business' && (
-                        <span className="bg-black text-white text-[7px] font-black px-1 py-0.5 rounded uppercase leading-none">Business</span>
-                    )}
                 </div>
 
                 {/* Right Icons */}

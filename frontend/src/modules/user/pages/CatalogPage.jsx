@@ -70,6 +70,32 @@ const CatalogPage = () => {
     const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
     const [isDesktopSortOpen, setIsDesktopSortOpen] = useState(false);
 
+    const normalizeWeightValue = (value) => String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/grams?/g, 'g')
+        .replace(/millilitres?|milliliters?/g, 'ml')
+        .replace(/litres?|liters?/g, 'l');
+
+    const getProductWeightValues = (product) => {
+        if (!product) return [];
+
+        const rawWeights = Array.isArray(product.variants) && product.variants.length > 0
+            ? product.variants.flatMap((variant) => {
+                const combined = variant?.quantity && variant?.unit
+                    ? `${variant.quantity}${variant.unit}`
+                    : '';
+                return [variant?.weight, combined];
+            })
+            : [product.weight, product.quantity && product.unit ? `${product.quantity}${product.unit}` : ''];
+
+        return [...new Set(rawWeights
+            .map((weight) => normalizeWeightValue(weight))
+            .filter(Boolean)
+        )];
+    };
+
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth >= 1024) {
@@ -116,10 +142,7 @@ const CatalogPage = () => {
 
     // Unique values for filters
     const filterOptions = useMemo(() => {
-        const weights = [...new Set(products.flatMap(p => {
-            if (p.variants) return p.variants.map(v => v.weight);
-            return [p.weight];
-        }).filter(Boolean))];
+        const weights = [...new Set(products.flatMap((product) => getProductWeightValues(product)))];
 
         // Calculate price bounds from variants
         const allPrices = products.flatMap(p => {
@@ -279,8 +302,8 @@ const CatalogPage = () => {
         // Weight Filter
         if (selectedWeights.length > 0) {
             result = result.filter(p => {
-                const pWeights = p.variants ? p.variants.map(v => v.weight) : [p.weight];
-                return pWeights.some(w => selectedWeights.includes(w));
+                const productWeights = getProductWeightValues(p);
+                return selectedWeights.some((selectedWeight) => productWeights.includes(selectedWeight));
             });
         }
 

@@ -12,7 +12,6 @@ import {
     MapPin,
     CreditCard,
     Phone,
-    Building2,
     FileText,
     Check,
     X,
@@ -85,7 +84,7 @@ const OrderDetailPage = () => {
         fetchLiveTracking();
     }, [order?.awbCode, order?._id, order?.id]);
 
-    // Fetch user details to get accountType and gstNumber
+    // Fetch user details
     const { data: user } = useQuery({
         queryKey: ['order-user', order?.userId],
         queryFn: async () => {
@@ -130,11 +129,6 @@ const OrderDetailPage = () => {
             toast.error('Network error updating status');
         }
     };
-
-    // Use real user data if available, otherwise fallback to order fields
-    const isBusiness = user?.accountType === 'Business' || order.accountType === 'Business';
-    const gstNumber = user?.gstNumber || order.gstNumber || null;
-    const companyName = isBusiness ? (user?.name || order.userName || order.shippingAddress?.fullName) : null;
 
     const normalizedStatus = String(status || '').toLowerCase();
     const isCancelledOrder = normalizedStatus === 'cancelled';
@@ -590,36 +584,20 @@ const OrderDetailPage = () => {
                                 className={`flex items-center gap-4 p-2 -ml-2 rounded-xl transition-all ${(order.userId || order.user?.id || order.user?._id) ? 'cursor-pointer hover:bg-gray-50 group' : ''}`}
                             >
                                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center font-black text-sm text-gray-400 uppercase border border-gray-200 shrink-0 group-hover:border-gray-300 group-hover:bg-white transition-colors">
-                                    {(order.userName || order.shippingAddress?.fullName || 'U').charAt(0)}
+                                    {(user?.name || order.userName || 'U').charAt(0)}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <h3 className="font-bold text-footerBg text-sm truncate group-hover:text-primary group-hover:underline decoration-2 underline-offset-2 transition-all">
-                                        {order.userName || order.shippingAddress?.fullName || 'Unknown User'}
+                                        {user?.name || order.userName || 'Unknown User'}
                                     </h3>
                                     <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-1 truncate group-hover:text-gray-700">
                                         <Phone size={12} /> {order.user?.phone || order.address?.phone || order.shippingAddress?.phone || 'N/A'}
                                     </p>
-                                    <div className="flex gap-2 mt-2">
-                                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${isBusiness ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-                                            {isBusiness ? 'Business' : 'Individual'}
-                                        </span>
-                                    </div>
                                 </div>
                                 {(order.userId || order.user?.id || order.user?._id) && (
                                     <ChevronRight size={16} className="text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                 )}
                             </div>
-
-                            {isBusiness && (
-                                <div className="mt-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Building2 size={12} className="text-gray-400" />
-                                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Company Info</span>
-                                    </div>
-                                    <p className="text-xs font-bold text-footerBg">{companyName}</p>
-                                    <p className="text-[10px] font-mono text-gray-500 mt-0.5">GST: {gstNumber}</p>
-                                </div>
-                            )}
                         </div>
 
                         <div className="w-full h-px bg-gray-50"></div>

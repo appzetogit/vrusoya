@@ -4,6 +4,15 @@ import { useWebsiteContent } from '../../../hooks/useContent';
 
 const InfoPage = ({ type }) => {
     const { data: pageData, isLoading } = useWebsiteContent(type);
+    const isLegalPolicyPage = [
+        'privacy-policy',
+        'terms-conditions',
+        'refund-policy',
+        'shipping-policy',
+        'cancellation-policy',
+        'disclaimer',
+        'cookie-policy'
+    ].includes(type);
 
     // Default Fallback Content Config
     const defaultContentMap = {
@@ -54,7 +63,7 @@ const InfoPage = ({ type }) => {
     // content can be a string (HTML from Quill) or fallback JSX
     const displayContent = pageData?.content ? (
         <div
-            className="quill-content"
+            className={`quill-content ${isLegalPolicyPage ? 'policy-content' : ''}`}
             dangerouslySetInnerHTML={{ __html: pageData.content }}
         />
     ) : config.content;
@@ -67,7 +76,7 @@ const InfoPage = ({ type }) => {
                 className="max-w-7xl mx-auto md:px-0"
             >
                 <div className="text-center mb-6 md:mb-8">
-                    <h1 className="text-2xl md:text-3xl lg:text-5xl font-black text-footerBg uppercase tracking-tighter mb-2">{displayTitle}</h1>
+                    <h1 className={`${isLegalPolicyPage ? 'text-xl md:text-2xl lg:text-4xl' : 'text-2xl md:text-3xl lg:text-5xl'} font-black text-footerBg uppercase tracking-tighter mb-2`}>{displayTitle}</h1>
                     {displaySubtitle && <p className="text-primary font-black tracking-[0.2em] uppercase text-[10px] md:text-xs">{displaySubtitle}</p>}
                 </div>
 
@@ -175,6 +184,14 @@ const InfoPage = ({ type }) => {
                 .quill-content .ql-size-small { font-size: 0.875rem; }
                 .quill-content .ql-size-large { font-size: 1.25rem; }
                 .quill-content .ql-size-huge { font-size: 1.5rem; }
+                .quill-content.policy-content {
+                    font-size: 0.92rem;
+                    line-height: 1.7;
+                }
+                .quill-content.policy-content h1 { font-size: 1.7rem; }
+                .quill-content.policy-content h2 { font-size: 1.45rem; }
+                .quill-content.policy-content h3 { font-size: 1.2rem; }
+                .quill-content.policy-content h4 { font-size: 1.05rem; }
             `}</style>
         </div >
     );

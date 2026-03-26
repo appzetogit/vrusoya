@@ -103,6 +103,7 @@ export const usePlaceOrder = () => {
                 queryClient.invalidateQueries({ queryKey: ['orders', variables.userId] });
                 queryClient.invalidateQueries({ queryKey: ['products'] });
                 queryClient.invalidateQueries({ queryKey: ['product'] });
+                queryClient.invalidateQueries({ queryKey: ['user-profile'] });
                 toast.success('Order placed successfully!');
             }
         }
@@ -129,6 +130,7 @@ export const useVerifyPayment = () => {
             queryClient.invalidateQueries({ queryKey: ['orders', variables.userId] });
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['product'] });
+            queryClient.invalidateQueries({ queryKey: ['user-profile'] });
             toast.success('Payment verified and order placed!');
         }
     });

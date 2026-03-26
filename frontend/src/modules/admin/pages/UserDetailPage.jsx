@@ -20,8 +20,6 @@ import {
     Wallet,
     ChevronDown,
     ChevronUp,
-    Briefcase,
-    Building2,
     AlertCircle
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -155,10 +153,6 @@ const UserDetailPage = () => {
                                 }`}>
                                 {user.isBanned ? 'Restricted' : 'Verified Resident'}
                             </span>
-                            <span className={`w-fit mx-auto md:mx-0 px-2.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${user.accountType === 'Business' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
-                                }`}>
-                                {user.accountType || 'Individual'}
-                            </span>
                         </div>
                         <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-1">
                             <div className="flex items-center gap-1.5 text-footerBg text-xs font-bold">
@@ -173,12 +167,6 @@ const UserDetailPage = () => {
                                 <Calendar size={12} />
                                 Member since {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                             </div>
-                            {user.accountType === 'Business' && user.gstNumber && (
-                                <div className="flex items-center gap-1.5 text-blue-600 text-[8px] font-black uppercase tracking-widest">
-                                    <Building2 size={12} />
-                                    GST: {user.gstNumber}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

@@ -21,10 +21,13 @@ import toast from 'react-hot-toast';
 const API_URL = API_BASE_URL;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const STORE_NAME_REGEX = /^[A-Za-z ]+$/;
+const ALLOWED_TABS = ['general', 'invoice'];
 
 const SettingsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
+    const [activeTab, setActiveTab] = useState(
+        ALLOWED_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'general'
+    );
     const [showPassword, setShowPassword] = useState(false);
     const [pushMessage, setPushMessage] = useState({
         heading: '',
@@ -63,10 +66,16 @@ const SettingsPage = () => {
 
     useEffect(() => {
         const tab = searchParams.get('tab');
-        if (tab && tab !== activeTab) {
+        if (!ALLOWED_TABS.includes(tab)) {
+            setActiveTab('general');
+            setSearchParams({ tab: 'general' });
+            return;
+        }
+
+        if (tab !== activeTab) {
             setActiveTab(tab);
         }
-    }, [searchParams, activeTab]);
+    }, [searchParams, activeTab, setSearchParams]);
 
     useEffect(() => {
         const value = checkoutFeeConfigSetting?.value;
@@ -247,10 +256,8 @@ const SettingsPage = () => {
                 {/* Tab Bar Internal Navigation (Optional but helpful for UI) */}
                 <div className="flex items-center gap-6 border-b border-gray-100 mb-8 pb-4">
                     {[
-                        { id: 'profile', label: 'Profile', icon: User },
                         { id: 'general', label: 'Store General', icon: Globe },
-                        { id: 'invoice', label: 'Invoice Settings', icon: FileText },
-                        { id: 'notifications', label: 'Notifications', icon: Bell }
+                        { id: 'invoice', label: 'Invoice Settings', icon: FileText }
                     ].map(tab => (
                         <button
                             key={tab.id}

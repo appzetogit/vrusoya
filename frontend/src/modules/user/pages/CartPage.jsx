@@ -95,7 +95,7 @@ const CartPage = () => {
 
     const moveToCartFromSaved = (userId, packId) => {
         // Find item qty from saved
-        const savedItem = saveForLater(userId).find(i => i.packId === packId);
+        const savedItem = getSaveForLater(userId).find(i => String(i.packId) === String(packId));
         if (savedItem) {
             addToCart(userId, packId, savedItem.qty);
             removeFromSaved(userId, packId);
@@ -389,13 +389,13 @@ const CartPage = () => {
                                         </div>
                                         <div className="flex items-center gap-2 mt-2">
                                             <button
-                                                onClick={() => moveToCartFromSaved(user.id, item.id)}
+                                                onClick={() => moveToCartFromSaved(user.id, item.packId)}
                                                 className="flex-1 text-[9px] font-black text-white bg-secondary py-1.5 rounded-lg hover:bg-primary transition-all whitespace-nowrap uppercase tracking-widest"
                                             >
                                                 Move to Cart
                                             </button>
                                             <button
-                                                onClick={() => removeFromSaved(user.id, item.id)}
+                                                onClick={() => removeFromSaved(user.id, item.packId)}
                                                 className="w-8 h-8 flex items-center justify-center text-textPrimary/45 hover:text-red-500 transition-colors border border-secondary/20 rounded-lg hover:bg-red-50"
                                             >
                                                 <Trash2 size={12} />

@@ -322,22 +322,8 @@ const CheckoutPage = () => {
 
     useEffect(() => {
         if (userData) {
-            // Pre-fill address from saved addresses
-            if (userAddresses.length > 0) {
-                const defaultAddressIndex = userAddresses.findIndex(a => a.isDefault);
-                const selectedIndex = defaultAddressIndex >= 0 ? defaultAddressIndex : 0;
-                const defaultAddr = userAddresses[selectedIndex];
-                setSelectedAddressId(getAddressId(defaultAddr, selectedIndex));
-                applyAddressToForm(defaultAddr);
-            } else {
-                // Fallback to basic user info
-                setSelectedAddressId('manual');
-                setFormData(prev => ({
-                    ...prev,
-                    fullName: userData.name || '',
-                    phone: userData.phone || '',
-                }));
-            }
+            // Keep checkout form manual by default; do not auto-prefill from profile/saved addresses.
+            setSelectedAddressId('manual');
         }
     }, [userData]);
 
@@ -451,8 +437,8 @@ const CheckoutPage = () => {
     };
     const availableCoupons = getActiveCoupons();
 
-    const namePattern = /^[A-Za-z\s]+$/;
-    const cityStatePattern = /^[A-Za-z\s]+$/;
+    const namePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+    const cityStatePattern = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
     const phonePattern = /^\d{10}$/;
     const pincodePattern = /^\d{6}$/;
 
@@ -461,7 +447,7 @@ const CheckoutPage = () => {
         let nextValue = value;
 
         if (name === 'fullName') {
-            nextValue = value.replace(/[^A-Za-z\s]/g, '');
+            nextValue = value.replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ');
         }
 
         if (name === 'phone') {
@@ -473,7 +459,7 @@ const CheckoutPage = () => {
         }
 
         if (name === 'city' || name === 'state') {
-            nextValue = value.replace(/[^A-Za-z\s]/g, '');
+            nextValue = value.replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ');
         }
 
         setSelectedAddressId('manual');
@@ -579,7 +565,7 @@ const CheckoutPage = () => {
 
         const orderData = {
             userId: user?.id,
-            userName: trimmedName,
+            userName: String(userData?.name || user?.name || '').trim(),
             items: enrichedCart,
             shippingAddress: {
                 ...formData,
@@ -763,7 +749,17 @@ const CheckoutPage = () => {
                                             <p className="text-[10px] md:text-xs font-bold text-textPrimary/55 uppercase">Saved Addresses</p>
                                             <button
                                                 type="button"
-                                                onClick={() => setSelectedAddressId('manual')}
+                                                onClick={() => {
+                                                    setSelectedAddressId('manual');
+                                                    setFormData({
+                                                        fullName: '',
+                                                        phone: '',
+                                                        address: '',
+                                                        city: '',
+                                                        state: '',
+                                                        pincode: '',
+                                                    });
+                                                }}
                                                 className="text-[10px] md:text-xs font-bold text-primary hover:underline uppercase"
                                             >
                                                 Use Custom
@@ -890,6 +886,8 @@ const CheckoutPage = () => {
                                                     value={formData.state}
                                                     onChange={handleInputChange}
                                                     inputMode="text"
+                                                    pattern="[A-Za-z ]+"
+                                                    title="State should contain only letters and spaces"
                                                     className="w-full bg-background border border-secondary/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                                 />
                                             </div>

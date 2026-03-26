@@ -31,7 +31,7 @@ const StaticPageEditor = () => {
         setTitle(pageConfig?.title || '');
     }, [pageId, pageConfig]);
 
-    const isCurrentPageDataLoaded = !pageData || pageData.slug === pageId;
+    const isCurrentPageDataLoaded = !loading && (!pageData || !pageData.slug || pageData.slug === pageId);
 
     useEffect(() => {
         if (!pageConfig && !loading) {
@@ -40,7 +40,7 @@ const StaticPageEditor = () => {
             return;
         }
 
-        if (pageData?.slug === pageId) {
+        if (pageData && (!pageData.slug || pageData.slug === pageId)) {
             let initialContent = pageData.content || '';
 
             // Migrate structured data if found

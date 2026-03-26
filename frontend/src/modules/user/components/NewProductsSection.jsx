@@ -1,9 +1,13 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFeaturedSectionByName } from '../../../hooks/useContent';
 import ProductCard from './ProductCard';
 
 const NewProductsSection = () => {
+    const sectionRef = useRef(null);
+    const scrollRef = useRef(null);
+    const showArrows = useInView(sectionRef, { amount: 0.35 });
     const { data: sectionData } = useFeaturedSectionByName('new-products');
     const products = sectionData?.products || [];
 
@@ -26,10 +30,17 @@ const NewProductsSection = () => {
     const highlightedWord = titleWords.length > 1 ? titleWords[titleWords.length - 1] : '';
     const primaryTitle = titleWords.length > 1 ? titleWords.slice(0, -1).join(' ') : title;
 
+    const handleScroll = (direction = 'right') => {
+        const node = scrollRef.current;
+        if (!node) return;
+        const delta = Math.max(220, Math.floor(node.clientWidth * 0.75));
+        node.scrollBy({ left: direction === 'left' ? -delta : delta, behavior: 'smooth' });
+    };
+
     if (products.length === 0) return null;
 
     return (
-        <section className="bg-background py-6 md:py-8 px-4 md:px-24">
+        <section ref={sectionRef} className="bg-background py-6 md:py-8 px-4 md:px-24">
             <div className="container mx-auto">
                 <div className="flex items-center justify-center mb-4 md:mb-6">
                     <div className="text-center">
@@ -44,7 +55,31 @@ const NewProductsSection = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar scroll-smooth px-1 snap-x">
+                <div className="relative">
+                    {showArrows && (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => handleScroll('left')}
+                                className="absolute left-1 md:-left-14 top-1/2 -translate-y-1/2 z-20 bg-white shadow-lg p-2 md:p-3 rounded-full text-textPrimary hover:bg-secondary hover:text-white transition-all active:scale-90 border border-gray-100 hidden md:flex items-center justify-center"
+                                aria-label="Scroll new products left"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleScroll('right')}
+                                className="absolute right-1 md:-right-14 top-1/2 -translate-y-1/2 z-20 bg-white shadow-lg p-2 md:p-3 rounded-full text-textPrimary hover:bg-secondary hover:text-white transition-all active:scale-90 border border-gray-100 hidden md:flex items-center justify-center"
+                                aria-label="Scroll new products right"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </>
+                    )}
+                    <div
+                        ref={scrollRef}
+                        className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar scroll-smooth px-1 md:px-12 snap-x"
+                    >
                     {products.slice(0, 8).map((product, index) => (
                         <motion.div
                             key={product._id || product.id}
@@ -56,6 +91,7 @@ const NewProductsSection = () => {
                             <ProductCard product={product} showVault={false} />
                         </motion.div>
                     ))}
+                    </div>
                 </div>
             </div>
         </section>

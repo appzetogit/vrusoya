@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Plus, Search, Edit, Trash2, FileText, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -7,12 +7,45 @@ import { useBlogs, useDeleteBlog } from '../../../hooks/useContent';
 const BlogListPage = () => {
     const { data: blogs = [], isLoading } = useBlogs();
     const deleteBlogMutation = useDeleteBlog();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
 
     const handleDelete = (id) => {
         if (window.confirm("Are you sure you want to delete this blog?")) {
             deleteBlogMutation.mutate(id);
         }
     };
+
+    const categories = useMemo(() => {
+        const allCategories = blogs
+            .map((blog) => String(blog.category || '').trim())
+            .filter(Boolean);
+        return Array.from(new Set(allCategories)).sort((a, b) => a.localeCompare(b));
+    }, [blogs]);
+
+    const filteredBlogs = useMemo(() => {
+        const normalizedSearch = searchTerm.trim().toLowerCase();
+
+        return blogs.filter((blog) => {
+            const blogCategory = String(blog.category || '').trim();
+            const matchesCategory = selectedCategory === 'all' || blogCategory === selectedCategory;
+
+            if (!normalizedSearch) return matchesCategory;
+
+            const searchableText = [
+                blog.title,
+                blog.category,
+                blog.status,
+                blog.author,
+                blog.description
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
+
+            return matchesCategory && searchableText.includes(normalizedSearch);
+        });
+    }, [blogs, searchTerm, selectedCategory]);
 
     if (isLoading) {
         return (
@@ -45,21 +78,28 @@ const BlogListPage = () => {
                     <input
                         type="text"
                         placeholder="Search blogs..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5"
                     />
                 </div>
                 <div className="flex gap-2">
-                    <select className="px-4 py-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-600 outline-none cursor-pointer">
-                        <option>All Categories</option>
-                        <option>Health</option>
-                        <option>Recipes</option>
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="px-4 py-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-600 outline-none cursor-pointer"
+                    >
+                        <option value="all">All Categories</option>
+                        {categories.map((category) => (
+                            <option key={category} value={category}>{category}</option>
+                        ))}
                     </select>
                 </div>
             </div>
 
             {/* Blog List Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {blogs.map(blog => (
+                {filteredBlogs.map(blog => (
                     <div key={blog._id} className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all group">
                         {/* Image */}
                         <div className="h-40 overflow-hidden relative">
@@ -109,13 +149,13 @@ const BlogListPage = () => {
                 ))}
             </div>
 
-            {blogs.length === 0 && (
+            {filteredBlogs.length === 0 && (
                 <div className="text-center py-20 bg-gray-50 rounded-[2.5rem] border border-dashed border-gray-200">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                         <FileText size={32} />
                     </div>
                     <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">No Blogs Found</h3>
-                    <p className="text-gray-400 font-medium text-sm mt-1">Start by creating your first blog post</p>
+                    <p className="text-gray-400 font-medium text-sm mt-1">Try changing search or category filter</p>
                 </div>
             )}
         </div>

@@ -80,7 +80,7 @@ const ProductDetailPage = () => {
 
     // Hooks
     const { addToCart, getCart, openCartDrawer } = useCartStore();
-    const { toggleWishlist, addToRecentlyViewed, addToSaved, getWishlist, getRecentlyViewed, saveForLater } = useUserStore();
+    const { toggleWishlist, addToRecentlyViewed, addToSaved, removeFromSaved, getWishlist, getRecentlyViewed, saveForLater } = useUserStore();
     const { data: product, isLoading: isProductLoading, isError: isProductError } = useProduct(slug);
     const { data: allProducts = [] } = useProducts();
     const { data: activeCoupons = [] } = useActiveCoupons();
@@ -250,6 +250,35 @@ const ProductDetailPage = () => {
             setSelectedImage(allImages[0]);
         }
     }, [allImages, selectedImage]);
+
+    useEffect(() => {
+        if (!showImageLightbox) return undefined;
+
+        const scrollY = window.scrollY;
+        const previousBodyOverflow = document.body.style.overflow;
+        const previousBodyPosition = document.body.style.position;
+        const previousBodyTop = document.body.style.top;
+        const previousBodyWidth = document.body.style.width;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+        const preventTouchMove = (event) => event.preventDefault();
+
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.documentElement.style.overflow = 'hidden';
+        document.addEventListener('touchmove', preventTouchMove, { passive: false });
+
+        return () => {
+            document.body.style.overflow = previousBodyOverflow;
+            document.body.style.position = previousBodyPosition;
+            document.body.style.top = previousBodyTop;
+            document.body.style.width = previousBodyWidth;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+            document.removeEventListener('touchmove', preventTouchMove);
+            window.scrollTo(0, scrollY);
+        };
+    }, [showImageLightbox]);
 
     const currentImgIndex = allImages.indexOf(selectedImage);
 
@@ -486,6 +515,20 @@ const ProductDetailPage = () => {
     const userSaved = user ? (saveForLater[user.id] || []) : [];
     const skuId = (isGroupProduct && selectedVariant) ? selectedVariant.id : product.id;
     const isSaved = userSaved.some(item => String(item.packId) === String(skuId));
+    const handleToggleSaved = () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        if (isSaved) {
+            removeFromSaved(user.id, skuId);
+            toast.success('Removed from vault');
+            return;
+        }
+
+        addToSaved(user.id, skuId);
+    };
 
     const tabs = ['Description', 'Benefits', 'Specifications', 'Reviews', 'FAQ', 'Nutrition Info'];
 
@@ -940,11 +983,7 @@ const ProductDetailPage = () => {
 
                                 {/* Mobile Save Button */}
                                 <button
-                                    onClick={() => {
-                                        const skuId = (isGroupProduct && selectedVariant) ? selectedVariant.id : product.id;
-                                        if (!user) return navigate('/login');
-                                        addToSaved(user.id, skuId);
-                                    }}
+                                    onClick={handleToggleSaved}
                                     className={`md:hidden w-12 flex-shrink-0 rounded-lg border transition-all active:scale-95 flex items-center justify-center ${isSaved ? 'bg-secondary/10 border-secondary text-secondary' : 'border-accent/50 text-textPrimary/60 hover:text-secondary hover:border-secondary'}`}
                                     title={isSaved ? "Saved in Vault" : "Save to Vault"}
                                 >
@@ -987,11 +1026,7 @@ const ProductDetailPage = () => {
 
                             {/* Desktop Save Button */}
                             <button
-                                onClick={() => {
-                                    const skuId = (isGroupProduct && selectedVariant) ? selectedVariant.id : product.id;
-                                    if (!user) return navigate('/login');
-                                    addToSaved(user.id, skuId);
-                                }}
+                                onClick={handleToggleSaved}
                                 className={`hidden md:flex w-full sm:w-12 h-11 sm:h-auto items-center justify-center rounded-lg border transition-all active:scale-95 ${isSaved ? 'bg-secondary/10 border-secondary text-secondary' : 'border-accent/50 text-textPrimary/60 hover:text-secondary hover:border-secondary'}`}
                                 title={isSaved ? "Saved in Vault" : "Save to Vault"}
                             >
@@ -1305,7 +1340,7 @@ const ProductDetailPage = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-white/80 backdrop-blur-xl z-50 flex items-center justify-center p-4"
+                        className="fixed inset-0 bg-white/80 backdrop-blur-xl z-[20000] flex items-center justify-center p-4"
                         onClick={() => setShowImageLightbox(false)}
                     >
                         <button

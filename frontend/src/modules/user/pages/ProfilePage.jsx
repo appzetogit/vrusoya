@@ -26,9 +26,7 @@ const ProfilePage = () => {
         email: '',
         phone: '',
         gender: 'Male',
-        birthDate: '',
-        accountType: 'Individual',
-        gstNumber: ''
+        birthDate: ''
     });
     const profileSeedRef = useRef('');
     const [updateSuccess, setUpdateSuccess] = useState(false);
@@ -46,6 +44,13 @@ const ProfilePage = () => {
         pincode: '',
         isDefault: false
     });
+    const todayDate = new Date().toISOString().split('T')[0];
+
+    const formatAddressPhone = (value = '') => {
+        const digits = String(value || '').replace(/\D/g, '');
+        return digits ? digits.slice(-10) : '';
+    };
+    const formatProfilePhone = (value = '') => String(value || '').replace(/\D/g, '').slice(0, 10);
 
     // Check for auth and redirect if needed
     useEffect(() => {
@@ -72,9 +77,7 @@ const ProfilePage = () => {
             userData.email || '',
             userData.phone || '',
             userData.gender || '',
-            userData.birthDate || '',
-            userData.accountType || '',
-            userData.gstNumber || ''
+            userData.birthDate || ''
         ].join('|');
         if (profileSeedRef.current === nextSeed) return;
         profileSeedRef.current = nextSeed;
@@ -83,9 +86,7 @@ const ProfilePage = () => {
             email: userData.email || '',
             phone: userData.phone || '',
             gender: userData.gender || 'Male',
-            birthDate: userData.birthDate || '',
-            accountType: userData.accountType || 'Individual',
-            gstNumber: userData.gstNumber || ''
+            birthDate: userData.birthDate || ''
         });
     }, [userData]);
 
@@ -101,15 +102,22 @@ const ProfilePage = () => {
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
+        const normalizedPhone = formatProfilePhone(editForm.phone);
+        if (!/^\d{10}$/.test(normalizedPhone)) {
+            toast.error('Phone number must be exactly 10 digits.');
+            return;
+        }
+        if (editForm.birthDate && editForm.birthDate > todayDate) {
+            toast.error('Date of birth cannot be in the future.');
+            return;
+        }
         try {
             await updateProfileMutation.mutateAsync({
                 name: editForm.name,
                 email: editForm.email,
-                phone: editForm.phone,
+                phone: normalizedPhone,
                 gender: editForm.gender,
-                birthDate: editForm.birthDate,
-                accountType: editForm.accountType,
-                gstNumber: editForm.gstNumber
+                birthDate: editForm.birthDate
             });
             setUpdateSuccess(true);
             setTimeout(() => setUpdateSuccess(false), 3000);
@@ -143,16 +151,21 @@ const ProfilePage = () => {
     const handleSaveAddress = async (e) => {
         if (e) e.preventDefault();
         
+        const normalizedAddressForm = {
+            ...addressForm,
+            phone: formatAddressPhone(addressForm.phone),
+        };
+
         let updatedAddresses = [...(userData?.addresses || [])];
 
-        if (addressForm.isDefault) {
+        if (normalizedAddressForm.isDefault) {
             updatedAddresses = updatedAddresses.map(a => ({ ...a, isDefault: false }));
         }
 
         if (addressToEdit) {
-            updatedAddresses = updatedAddresses.map(a => a.id === addressToEdit.id ? { ...addressForm } : a);
+            updatedAddresses = updatedAddresses.map(a => a.id === addressToEdit.id ? { ...normalizedAddressForm } : a);
         } else {
-            const newAddress = { ...addressForm, id: Date.now() };
+            const newAddress = { ...normalizedAddressForm, id: Date.now() };
             updatedAddresses.push(newAddress);
         }
 
@@ -640,7 +653,7 @@ const ProfilePage = () => {
 
                                         <div className="pt-2 md:pt-5 border-t border-secondary/20 flex items-center gap-1.5 text-secondary">
                                             <div className="w-1 h-1 rounded-full bg-secondary" />
-                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest truncate">{addr.phone}</span>
+                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest truncate">{formatAddressPhone(addr.phone)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -714,31 +727,17 @@ const ProfilePage = () => {
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
-                            <input
-                                type="tel"
-                                value={editForm.phone}
-                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-none px-6 py-4 font-bold text-textPrimary focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                placeholder="+91"
-                            />
+                                            <input
+                                                type="tel"
+                                                value={editForm.phone}
+                                                onChange={(e) => setEditForm({ ...editForm, phone: formatProfilePhone(e.target.value) })}
+                                                inputMode="numeric"
+                                                maxLength={10}
+                                                pattern="[0-9]{10}"
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-none px-6 py-4 font-bold text-textPrimary focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                                placeholder="+91"
+                                            />
                         </div>
-
-
-                            <div className="space-y-2 text-left">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Type</label>
-                                <div className="flex bg-gray-50 rounded-none p-1 border border-gray-100">
-                                    {['Individual', 'Business'].map((type) => (
-                                        <button
-                                            key={type}
-                                            type="button"
-                                            onClick={() => setEditForm({ ...editForm, accountType: type })}
-                                            className={`flex-1 py-3 px-1 rounded-none text-[10px] font-bold uppercase tracking-widest transition-all ${editForm.accountType === type ? 'bg-secondary text-white' : 'text-gray-400 hover:text-textPrimary'}`}
-                                        >
-                                            {type}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2 text-left">
@@ -762,25 +761,12 @@ const ProfilePage = () => {
                                         type="date"
                                         value={editForm.birthDate}
                                         onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                                        max={todayDate}
                                         className="w-full bg-gray-50 border border-gray-100 rounded-none px-6 py-3 font-bold text-textPrimary focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-xs"
                                     />
                                 </div>
                             </div>
 
-                            {editForm.accountType === 'Business' && (
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">GST Number (Optional)</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.gstNumber}
-                                        onChange={(e) => setEditForm({ ...editForm, gstNumber: e.target.value.toUpperCase() })}
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-none px-6 py-4 font-bold text-textPrimary focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all uppercase"
-                                        placeholder="22AAAAA0000A1Z5"
-                                        maxLength={15}
-                                    />
-                                    <p className="text-[9px] text-gray-400 ml-1">Leave blank if you don't have a GST number</p>
-                                </div>
-                            )}
                         </div>
 
                     <div className="pt-4 flex items-center gap-6">
@@ -960,7 +946,10 @@ const ProfilePage = () => {
                                                 type="tel"
                                                 placeholder="+91"
                                                 value={editForm.phone}
-                                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                                onChange={(e) => setEditForm({ ...editForm, phone: formatProfilePhone(e.target.value) })}
+                                                inputMode="numeric"
+                                                maxLength={10}
+                                                pattern="[0-9]{10}"
                                                 className="w-full bg-white/10 border border-white/20 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold text-white outline-none focus:border-primary transition-all text-[13px]"
                                             />
                                         ) : (
@@ -999,6 +988,7 @@ const ProfilePage = () => {
                                                         type="date"
                                                         value={editForm.birthDate}
                                                         onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                                                        max={todayDate}
                                                         className="w-full bg-white/10 border border-white/20 rounded-xl md:rounded-2xl px-3 md:px-6 py-2.5 md:py-3.5 font-semibold text-white outline-none focus:border-primary transition-all text-[10px]"
                                                     />
                                                 </div>

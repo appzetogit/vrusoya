@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShieldCheck, RefreshCw, User, Mail, Briefcase } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, RefreshCw, User, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -15,8 +15,6 @@ const OTPPage = () => {
     const [isNewUser, setIsNewUser] = useState(false);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [accountType, setAccountType] = useState('Individual');
-    const [gstNumber, setGstNumber] = useState('');
     const inputRefs = useRef([]);
     const namePattern = /^[A-Za-z ]+$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,7 +87,7 @@ const OTPPage = () => {
             const trimmedName = name.trim();
             const trimmedEmail = email.trim().toLowerCase();
 
-            if (!trimmedName || !trimmedEmail || !accountType) {
+            if (!trimmedName || !trimmedEmail) {
                 toast.error('Please fill in all fields');
                 setIsLoading(false);
                 return;
@@ -105,7 +103,7 @@ const OTPPage = () => {
                 return;
             }
 
-            const result = await verifyOtp(phone, fullOtp, trimmedName, trimmedEmail, accountType, gstNumber);
+            const result = await verifyOtp(phone, fullOtp, trimmedName, trimmedEmail, 'Individual', '');
             setIsLoading(false);
             if (result.success) {
                 navigate(redirectPath);
@@ -241,45 +239,6 @@ const OTPPage = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="space-y-1 text-left">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Account Type</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAccountType('Individual')}
-                                        className={`flex items-center justify-center gap-2 py-2 rounded-lg border transition-all ${accountType === 'Individual' ? 'border-[#2c5336] bg-[#2c5336]/5 text-[#2c5336]' : 'border-gray-100 text-gray-400'}`}
-                                    >
-                                        <User size={14} />
-                                        <span className="text-[10px] font-bold uppercase">Individual</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAccountType('Business')}
-                                        className={`flex items-center justify-center gap-2 py-2 rounded-lg border transition-all ${accountType === 'Business' ? 'border-[#2c5336] bg-[#2c5336]/5 text-[#2c5336]' : 'border-gray-100 text-gray-400'}`}
-                                    >
-                                        <Briefcase size={14} />
-                                        <span className="text-[10px] font-bold uppercase">Business</span>
-                                    </button>
-                                </div>
-                            </div>
-                            {accountType === 'Business' && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    className="space-y-1 text-left"
-                                >
-                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">GST Number (Optional)</label>
-                                    <input
-                                        type="text"
-                                        value={gstNumber}
-                                        onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all uppercase"
-                                        placeholder="22AAAAA0000A1Z5"
-                                        maxLength={15}
-                                    />
-                                    <p className="text-[9px] text-gray-400 mt-1 ml-1">Leave blank if you don't have a GST number</p>
-                                </motion.div>
-                            )}
                         </motion.div>
                     )}
 

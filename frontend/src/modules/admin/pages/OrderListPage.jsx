@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import Pagination from '../components/Pagination';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 import { matchesSearch, normalizeSearchInput } from '../utils/search';
+import { useUsers } from '../../../hooks/useUsers';
 
 const API_URL = API_BASE_URL;
 
@@ -27,6 +28,14 @@ const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
 }).format(Number(amount || 0));
+
+const escapeCsvValue = (value) => {
+    const stringValue = String(value ?? '');
+    if (/[",\n]/.test(stringValue)) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+};
 
 const OrderListPage = () => {
     const navigate = useNavigate();
@@ -47,29 +56,55 @@ const OrderListPage = () => {
     });
 
     const [searchTerm, setSearchTerm] = useState('');
+    const { data: userData } = useUsers({ limit: 5000 });
 
     // Orders are already a flat list from API
     const allOrders = useMemo(() => {
         return [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
     }, [orders]);
 
+    const userOrderCounts = useMemo(() => {
+        return allOrders.reduce((acc, order) => {
+            const uid = String(order.userId || '').trim();
+            if (!uid) return acc;
+            acc[uid] = (acc[uid] || 0) + 1;
+            return acc;
+        }, {});
+    }, [allOrders]);
+
+    const userNameById = useMemo(() => {
+        const users = Array.isArray(userData?.users)
+            ? userData.users
+            : Array.isArray(userData)
+                ? userData
+                : [];
+
+        return users.reduce((acc, user) => {
+            const id = String(user?.id || user?._id || '').trim();
+            if (!id) return acc;
+            acc[id] = user?.name || '';
+            return acc;
+        }, {});
+    }, [userData]);
+
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
     const filteredOrders = useMemo(() => {
         return allOrders.filter(order => {
-            const matchesSearch =
+            const displayUserName = userNameById[order.userId] || order.user?.name || (order.userId ? 'Registered User' : 'Guest');
+            const isSearchMatch =
                 matchesSearch(
-                    `${order._id || ''} ${order.id || ''} ${order.user?.name || ''} ${order.userName || ''}`,
+                    `${order._id || ''} ${order.id || ''} ${displayUserName}`,
                     searchTerm
                 );
 
             const normalizedStatus = order.status === 'pending' ? 'Processing' : order.status;
             const matchesStatus = statusFilter === 'All' || normalizedStatus === statusFilter;
 
-            return matchesSearch && matchesStatus;
+            return isSearchMatch && matchesStatus;
         });
-    }, [allOrders, searchTerm, statusFilter]);
+    }, [allOrders, searchTerm, statusFilter, userNameById]);
 
     const paginatedOrders = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -101,6 +136,67 @@ const OrderListPage = () => {
         { label: 'Cancelled Order', value: allOrders.filter(o => o.status === 'Cancelled').length, icon: XCircle, color: 'bg-red-50 text-red-500' }
     ];
 
+    const handleExportReports = () => {
+        if (filteredOrders.length === 0) return;
+
+        const headers = [
+            'Order ID',
+            'Date',
+            'Customer',
+            'Customer Type',
+            'Payment',
+            'Items',
+            'Order Value',
+            'Order Status',
+            'Shipment',
+            'AWB'
+        ];
+
+        const rows = filteredOrders.map((order) => {
+            const customerName = userNameById[order.userId] || order.user?.name || (order.userId ? 'Registered User' : 'Guest');
+            const customerType = !order.userId
+                ? 'Guest'
+                : (userOrderCounts[order.userId] || 0) > 1
+                    ? 'Returning'
+                    : 'New';
+            const normalizedOrderStatus = order.status === 'pending' ? 'Processing' : order.status;
+            const shipment = order.deliveryStatus
+                ? (order.deliveryStatus === 'OutForDelivery' ? 'Out For Delivery' : order.deliveryStatus)
+                : order.awbCode
+                    ? (order.courierName || 'Courier')
+                    : 'Pending';
+
+            return [
+                order.id || order._id || '',
+                order.date ? new Date(order.date).toLocaleDateString('en-GB') : '',
+                customerName,
+                customerType,
+                order.paymentMethod === 'cod' ? 'COD' : 'Online',
+                order.items?.length || 0,
+                Number(order.amount || 0).toFixed(2),
+                normalizedOrderStatus,
+                shipment,
+                order.awbCode || ''
+            ];
+        });
+
+        const csvContent = [headers, ...rows]
+            .map((row) => row.map((cell) => escapeCsvValue(cell)).join(','))
+            .join('\n');
+
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+        const downloadLink = document.createElement('a');
+        const statusSlug = (statusFilter || 'all').toLowerCase().replace(/\s+/g, '-');
+        const dateSlug = new Date().toISOString().slice(0, 10);
+
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `orders-${statusSlug}-${dateSlug}.csv`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(downloadLink.href);
+    };
+
     return (
         <div className="space-y-8 text-left">
             {/* Header */}
@@ -109,7 +205,12 @@ const OrderListPage = () => {
                     <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">Order Management</h1>
                     <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">Monitor and fulfill customer dryfruit orders</p>
                 </div>
-                <button className="bg-footerBg text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-footerBg/20">
+                <button
+                    type="button"
+                    onClick={handleExportReports}
+                    disabled={filteredOrders.length === 0}
+                    className="bg-footerBg text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-lg shadow-footerBg/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     <Download size={18} /> Export Reports
                 </button>
             </div>
@@ -195,11 +296,11 @@ const OrderListPage = () => {
                                         {(new Date(order.date)).toLocaleDateString('en-GB')}
                                     </AdminTableCell>
                                     <AdminTableCell>
-                                        <span className="font-bold text-footerBg text-sm">{order.userName || order.shippingAddress?.fullName || 'Unknown'}</span>
+                                        <span className="font-bold text-footerBg text-sm">{userNameById[order.userId] || order.user?.name || (order.userId ? 'Registered User' : 'Guest')}</span>
                                     </AdminTableCell>
                                     <AdminTableCell>
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${(order.id?.charCodeAt(order.id.length - 1) || 0) % 2 === 0 ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
-                                            {(order.id?.charCodeAt(order.id.length - 1) || 0) % 2 === 0 ? 'Returning' : 'New'}
+                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${!order.userId ? 'bg-gray-50 text-gray-500 border-gray-100' : (userOrderCounts[order.userId] || 0) > 1 ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
+                                            {!order.userId ? 'Guest' : (userOrderCounts[order.userId] || 0) > 1 ? 'Returning' : 'New'}
                                         </span>
                                     </AdminTableCell>
                                     <AdminTableCell>

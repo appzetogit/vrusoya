@@ -16,12 +16,20 @@ const isAuthenticated = () => {
 
 const API_URL = API_BASE_URL;
 
-export const useUsers = () => {
+export const useUsers = ({ page, limit, search, status } = {}) => {
     const { getAuthHeaders } = useAuth();
     return useQuery({
-        queryKey: ['users'],
+        queryKey: ['users', page, limit, search, status],
         queryFn: async () => {
-            const res = await fetch(`${API_URL}/users`, { 
+            const params = new URLSearchParams();
+            if (page !== undefined) params.set('page', String(page));
+            if (limit !== undefined) params.set('limit', String(limit));
+            if (search) params.set('search', String(search));
+            if (status) params.set('status', String(status));
+
+            const query = params.toString();
+            const url = query ? `${API_URL}/users?${query}` : `${API_URL}/users`;
+            const res = await fetch(url, { 
                 headers: getAuthHeaders()
             });
             if (!res.ok) throw new Error('Failed to fetch users');

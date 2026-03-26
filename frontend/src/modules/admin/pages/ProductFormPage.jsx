@@ -12,6 +12,7 @@ import {
     Package,
     Info,
     ChevronRight,
+    ChevronDown,
     Search,
     Star
 } from 'lucide-react';
@@ -101,7 +102,8 @@ const ProductFormPage = () => {
     // Mutations
     const addProductMutation = useAddProduct();
     const updateProductMutation = useUpdateProduct();
-    const uploadImageMutation = useUploadImage();
+    const uploadMainImageMutation = useUploadImage();
+    const uploadGalleryImageMutation = useUploadImage();
     const { data: dbCategories = [] } = useCategories();
     const isEdit = Boolean(id);
 
@@ -174,7 +176,22 @@ const ProductFormPage = () => {
             variants: prev.variants.map(v => {
                 if (v.id !== vId) return v;
 
-                const updatedVariant = { ...v, [field]: value };
+                let sanitizedValue = value;
+
+                if (field === 'mrp') {
+                    if (value === '') sanitizedValue = '';
+                    else sanitizedValue = String(Math.max(0, Number(value)));
+                }
+                if (field === 'price') {
+                    if (value === '') sanitizedValue = '';
+                    else sanitizedValue = String(Math.max(1, Number(value)));
+                }
+                if (field === 'stock') {
+                    if (value === '') sanitizedValue = '';
+                    else sanitizedValue = String(Math.max(1, Math.floor(Number(value))));
+                }
+
+                const updatedVariant = { ...v, [field]: sanitizedValue };
 
                 // Auto-update legacy 'weight' string for compatibility
                 if (field === 'quantity' || field === 'unit') {
@@ -234,6 +251,23 @@ const ProductFormPage = () => {
         }
         if (!formData.category) {
             toast.error('Parent category is required');
+            return;
+        }
+
+        const invalidVariantIndex = formData.variants.findIndex((variant) => {
+            const mrp = Number(variant.mrp);
+            const price = Number(variant.price);
+            const stock = Number(variant.stock);
+
+            return (
+                !Number.isFinite(mrp) || mrp < 0 ||
+                !Number.isFinite(price) || price < 1 ||
+                !Number.isFinite(stock) || stock < 1
+            );
+        });
+
+        if (invalidVariantIndex !== -1) {
+            toast.error(`Variant ${invalidVariantIndex + 1}: MRP must be >= 0, Selling Price >= 1 and Stock >= 1`);
             return;
         }
 
@@ -359,18 +393,24 @@ const ProductFormPage = () => {
 
                             <div className="flex flex-col gap-2 text-left">
                                 <label className="text-xs font-black text-black uppercase tracking-widest ml-1">Best-Seller Tag</label>
-                                <select
-                                    name="tag"
-                                    value={formData.tag}
-                                    onChange={handleChange}
-                                    className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-sm font-bold text-black outline-none focus:border-black transition-all appearance-none cursor-pointer"
-                                >
-                                    <option value="">None</option>
-                                    <option value="PREMIUM">Premium</option>
-                                    <option value="BESTSELLER">Bestseller</option>
-                                    <option value="NEW LAUNCH">New Launch</option>
-                                    <option value="FRESH">Fresh</option>
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        name="tag"
+                                        value={formData.tag}
+                                        onChange={handleChange}
+                                        className="w-full bg-white border border-gray-300 rounded-2xl p-4 pr-11 text-sm font-bold text-black outline-none focus:border-black transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">None</option>
+                                        <option value="PREMIUM">Premium</option>
+                                        <option value="BESTSELLER">Bestseller</option>
+                                        <option value="NEW LAUNCH">New Launch</option>
+                                        <option value="FRESH">Fresh</option>
+                                    </select>
+                                    <ChevronDown
+                                        size={16}
+                                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex flex-col gap-2 text-left">
@@ -543,6 +583,7 @@ const ProductFormPage = () => {
                                             type="number"
                                             value={variant.mrp}
                                             onChange={(e) => handleVariantChange(variant.id, 'mrp', e.target.value)}
+                                            min="0"
                                             placeholder="MRP"
                                             className="w-full bg-white border border-gray-300 rounded-xl p-3 text-xs font-bold text-black outline-none focus:border-black transition-all"
                                         />
@@ -552,6 +593,7 @@ const ProductFormPage = () => {
                                             type="number"
                                             value={variant.price}
                                             onChange={(e) => handleVariantChange(variant.id, 'price', e.target.value)}
+                                            min="1"
                                             placeholder="Selling price"
                                             className="w-full bg-white border border-gray-300 rounded-xl p-3 text-xs font-bold text-black outline-none focus:border-black transition-all"
                                         />
@@ -561,6 +603,8 @@ const ProductFormPage = () => {
                                             type="number"
                                             value={variant.stock}
                                             onChange={(e) => handleVariantChange(variant.id, 'stock', e.target.value)}
+                                            min="1"
+                                            step="1"
                                             placeholder="Stock"
                                             className="w-full bg-white border border-gray-300 rounded-xl p-3 text-xs font-bold text-black outline-none focus:border-black transition-all"
                                         />
@@ -592,7 +636,7 @@ const ProductFormPage = () => {
                         </h3>
 
                         <div className="aspect-square bg-gray-50 rounded-3xl border border-dashed border-gray-200 flex flex-col items-center justify-center p-6 relative group overflow-hidden">
-                            {uploadImageMutation.isPending && (
+                            {uploadMainImageMutation.isPending && (
                                 <div className="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center space-y-3">
                                     <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                                     <p className="text-[10px] font-black text-primary uppercase tracking-widest">Uploading...</p>
@@ -620,7 +664,7 @@ const ProductFormPage = () => {
                                         onChange={async (e) => {
                                             const file = e.target.files?.[0];
                                             if (file) {
-                                                const res = await uploadImageMutation.mutateAsync(file);
+                                                const res = await uploadMainImageMutation.mutateAsync(file);
                                                 if (res?.url) {
                                                     setFormData(prev => ({ ...prev, image: res.url }));
                                                 }
@@ -679,7 +723,7 @@ const ProductFormPage = () => {
                                         onChange={async (e) => {
                                             const files = Array.from(e.target.files || []);
                                             for (const file of files) {
-                                                const res = await uploadImageMutation.mutateAsync(file);
+                                                const res = await uploadGalleryImageMutation.mutateAsync(file);
                                                 if (res?.url) {
                                                     setFormData(prev => ({
                                                         ...prev,
@@ -689,8 +733,17 @@ const ProductFormPage = () => {
                                             }
                                         }}
                                     />
-                                    <Plus size={16} className="text-gray-300 group-hover/gallery:text-primary transition-colors" />
-                                    <span className="text-[8px] font-black text-gray-400 uppercase mt-1">Add</span>
+                                    {uploadGalleryImageMutation.isPending ? (
+                                        <div className="flex flex-col items-center gap-1">
+                                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                            <span className="text-[8px] font-black text-primary uppercase">Uploading</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Plus size={16} className="text-gray-300 group-hover/gallery:text-primary transition-colors" />
+                                            <span className="text-[8px] font-black text-gray-400 uppercase mt-1">Add</span>
+                                        </>
+                                    )}
                                 </label>
                             </div>
                         </div>
