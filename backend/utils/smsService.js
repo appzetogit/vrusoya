@@ -5,6 +5,11 @@ import Order from '../models/Order.js';
 // SMS Providers Configuration
 const API_TIMEOUT = 30000; // 30 seconds
 
+function isPrpProvider(provider) {
+    const normalizedProvider = String(provider || '').trim().toUpperCase();
+    return normalizedProvider === 'PRP' || normalizedProvider === 'BULK_SMS';
+}
+
 /**
  * Generate numeric OTP
  */
@@ -41,7 +46,7 @@ function buildOtpMessage(otp) {
     const appName = process.env.APP_NAME || 'VRUSOY';
     const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
     
-    if (provider === 'PRP') {
+    if (isPrpProvider(provider)) {
         const prpTemplateText = process.env.PRP_SMS_TEMPLATE_TEXT;
         if (prpTemplateText && prpTemplateText.trim()) {
             return prpTemplateText.replace(/\{#var#\}/g, otp);
@@ -178,7 +183,7 @@ async function sendSmsViaPrpLegacy(mobile, message) {
 async function sendSmsViaApi(mobile, message, options = {}) {
     const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
 
-    if (provider === 'PRP' || provider === 'BULK_SMS') {
+    if (isPrpProvider(provider)) {
         if (options.otp) {
             return sendSmsViaPrpTemplate(mobile, options.otp);
         }
@@ -294,7 +299,7 @@ function isMockMode() {
     const forceMock = process.env.USE_MOCK_OTP === 'true';
     let hasCredentials = false;
 
-    if (provider === 'PRP') {
+    if (isPrpProvider(provider)) {
         const PRP_API_KEY = process.env.PRP_SMS_API_KEY;
         const PRP_SENDER = process.env.PRP_SMS_SENDER;
         const PRP_TEMPLATE_NAME = process.env.PRP_SMS_TEMPLATE_NAME;
@@ -469,7 +474,7 @@ export async function generateDeliveryOtp(orderId, customerPhone) {
             const provider = process.env.SMS_PROVIDER || 'SMS_INDIA_HUB';
             let message;
             
-            if (provider === 'PRP') {
+            if (isPrpProvider(provider)) {
                 message = `Your Delivery OTP for Order #${orderId.slice(-6).toUpperCase()} at ${appName} is ${otp}. - ${appName}`;
             } else {
                 message = `Welcome to the ${appName} powered by SMSINDIAHUB. Your Delivery OTP for Order #${orderId.slice(-6).toUpperCase()} is ${otp}`;
