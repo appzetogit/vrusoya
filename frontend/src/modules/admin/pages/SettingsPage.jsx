@@ -211,9 +211,9 @@ const SettingsPage = () => {
         },
         {
             key: 'handlingFee',
-            label: 'Handling Fee',
+            label: 'Packing Fee',
             toggleKey: 'applyHandlingFee',
-            toggleLabel: 'Apply Handling Fee'
+            toggleLabel: 'Apply Packing Fee'
         },
         {
             key: 'gstPercentage',

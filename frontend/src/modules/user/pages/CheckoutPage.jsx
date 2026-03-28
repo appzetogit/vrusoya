@@ -1076,7 +1076,7 @@ const CheckoutPage = () => {
                                         )}
                                         {handlingFee > 0 && (
                                             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-                                                <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">Handling Fee</span>
+                                                <span className="min-w-0 text-[15px] leading-6 font-semibold text-textPrimary">Packing Fee</span>
                                                 <span className="min-w-[56px] text-right text-[15px] leading-6 font-semibold text-textPrimary">{formatINR(handlingFee)}</span>
                                             </div>
                                         )}

@@ -6,11 +6,10 @@ import { useAuth } from '../../../context/AuthContext';
 import { API_BASE_URL } from '@/lib/apiUrl';
 import {
     ArrowLeft, Package, MapPin, Phone, CreditCard,
-    Truck, CheckCircle, Clock, Archive, RefreshCw, AlertCircle, ExternalLink, XCircle, Ban, FileText
+    Truck, CheckCircle, Clock, Archive, RefreshCw, AlertCircle, ExternalLink, Ban, FileText
 } from 'lucide-react';
 import OrderInvoice from '../components/OrderInvoice';
-import { motion } from 'framer-motion';
-import { useOrders, useReturns, useUpdateOrderStatus, useCancelOrder } from '../../../hooks/useOrders';
+import { useOrders, useReturns, useUpdateOrderStatus } from '../../../hooks/useOrders';
 import { useProducts } from '../../../hooks/useProducts';
 
 const API_URL = API_BASE_URL;
@@ -32,15 +31,12 @@ const OrderDetailPage = () => {
     const { data: returns = [] } = useReturns(user?.id);
 
     const { mutate: updateStatus } = useUpdateOrderStatus();
-    const { mutate: cancelOrderMutation, isPending: isCancelling } = useCancelOrder();
     const { data: products = [] } = useProducts();
 
     const [order, setOrder] = useState(null);
     const [availableItemsCount, setAvailableItemsCount] = useState(0);
     const [liveTracking, setLiveTracking] = useState(null);
     const [trackingLoading, setTrackingLoading] = useState(false);
-    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-    const [cancelReason, setCancelReason] = useState('');
     const [showInvoice, setShowInvoice] = useState(false);
 
     useEffect(() => {
@@ -137,24 +133,7 @@ const OrderDetailPage = () => {
 
     const canReturn = isDelivered && isWithinReturnWindow() && availableItemsCount > 0;
 
-    // Check if order can be cancelled
-    const cancellableStatuses = ['pending', 'Processing', 'Received', 'Processed'];
-    const canCancel = cancellableStatuses.includes(order.status) && order.status !== 'Cancelled';
     const isCancelled = order.status === 'Cancelled';
-
-    // Handle cancel order
-    const handleCancelOrder = () => {
-        cancelOrderMutation(
-            { orderId: order.id, reason: cancelReason || 'Customer requested cancellation' },
-            {
-                onSuccess: () => {
-                    setShowCancelConfirm(false);
-                    setCancelReason('');
-                    navigate('/orders');
-                }
-            }
-        );
-    };
 
     // Get refund status display
     const getRefundStatusBadge = () => {
@@ -447,18 +426,6 @@ const OrderDetailPage = () => {
                             </div>
                         )}
 
-                        {/* Cancel Order Action */}
-                        {canCancel && (
-                            <button
-                                onClick={() => setShowCancelConfirm(true)}
-                                disabled={isCancelling}
-                                className="w-full bg-red-50 text-red-600 border border-red-200 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 hover:bg-red-100 disabled:opacity-50"
-                            >
-                                <XCircle size={14} strokeWidth={3} />
-                                {isCancelling ? 'Cancelling...' : 'Cancel Order'}
-                            </button>
-                        )}
-
                         {/* Return Action (High Contrast) */}
                         {isDelivered && canReturn && (
                             <button
@@ -474,69 +441,6 @@ const OrderDetailPage = () => {
                 </div>
             </div>
 
-            {/* Cancel Confirmation Modal */}
-            {showCancelConfirm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                <XCircle size={24} className="text-red-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-black text-textPrimary">Cancel Order?</h3>
-                                <p className="text-xs text-gray-500">This action cannot be undone</p>
-                            </div>
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                                Reason (Optional)
-                            </label>
-                            <textarea
-                                value={cancelReason}
-                                onChange={(e) => setCancelReason(e.target.value)}
-                                placeholder="Tell us why you're cancelling..."
-                                className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                                rows={3}
-                            />
-                        </div>
-
-                        {order.paymentMethod !== 'cod' && order.paymentStatus === 'paid' && (
-                            <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
-                                <p className="text-xs font-bold text-green-700 flex items-center gap-2">
-                                    <CheckCircle size={14} />
-                                    Refund of {formatINR(order.amount)} will be initiated
-                                </p>
-                                <p className="text-[10px] text-green-600 mt-1">Typically processed within 5-7 business days</p>
-                            </div>
-                        )}
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowCancelConfirm(false)}
-                                className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-colors"
-                            >
-                                Keep Order
-                            </button>
-                            <button
-                                onClick={handleCancelOrder}
-                                disabled={isCancelling}
-                                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {isCancelling ? (
-                                    <><RefreshCw size={14} className="animate-spin" /> Cancelling...</>
-                                ) : (
-                                    'Yes, Cancel'
-                                )}
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
             {/* Invoice Modal */}
             <OrderInvoice
                 order={order}

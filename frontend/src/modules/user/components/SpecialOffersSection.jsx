@@ -3,12 +3,19 @@ import { motion } from 'framer-motion';
 import { Gift, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFeaturedSectionByName } from '../../../hooks/useContent';
+import { useProducts } from '../../../hooks/useProducts';
 import bgOffer from '../../../assets/special_offers_bg.png';
 
 const SpecialOffersSection = () => {
     const navigate = useNavigate();
     const { data: sectionData } = useFeaturedSectionByName('special-offers');
-    const productsToShow = sectionData?.products || [];
+    const { data: products = [] } = useProducts();
+    const featuredProducts = sectionData?.products || [];
+    const productsToShow = featuredProducts.length > 0
+        ? featuredProducts
+        : [...products]
+            .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+            .slice(0, 5);
 
     if (productsToShow.length === 0) return null;
 

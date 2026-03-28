@@ -3,13 +3,20 @@ import { motion, useInView } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFeaturedSectionByName } from '../../../hooks/useContent';
 import ProductCard from './ProductCard';
+import { useProducts } from '../../../hooks/useProducts';
 
 const NewProductsSection = () => {
     const sectionRef = useRef(null);
     const scrollRef = useRef(null);
     const showArrows = useInView(sectionRef, { amount: 0.35 });
     const { data: sectionData } = useFeaturedSectionByName('new-products');
-    const products = sectionData?.products || [];
+    const { data: allProducts = [] } = useProducts();
+    const featuredProducts = sectionData?.products || [];
+    const products = featuredProducts.length > 0
+        ? featuredProducts
+        : [...allProducts]
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+            .slice(0, 8);
 
     const SPECIAL_META_PREFIX = 'NP_META::';
     const parsedMeta = (() => {

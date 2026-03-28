@@ -409,7 +409,7 @@ export const InvoiceDisplay = React.forwardRef(
               )}
               {handlingFee > 0 && (
                 <tr>
-                  <td colSpan="2"><b>Handling Fee</b></td>
+                  <td colSpan="2"><b>Packing Fee</b></td>
                   <td className="text-center">1</td>
                   <td className="text-right">{format(handlingFee)}</td>
                   <td className="text-right">0.00</td>

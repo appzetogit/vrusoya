@@ -273,7 +273,7 @@ const OrderInvoice = ({ order, isOpen, onClose }) => {
                                         )}
                                         {handlingFee > 0 && (
                                             <div className="flex justify-between items-center text-xs">
-                                                <span className="font-bold text-slate-400 uppercase tracking-widest">Handling Fee</span>
+                                                <span className="font-bold text-slate-400 uppercase tracking-widest">Packing Fee</span>
                                                 <span className="font-bold text-footerBg">{formatINR(handlingFee)}</span>
                                             </div>
                                         )}
