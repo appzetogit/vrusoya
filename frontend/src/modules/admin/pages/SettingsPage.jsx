@@ -53,8 +53,8 @@ const SettingsPage = () => {
         fssai: ''
     });
     const [storeGeneralSettings, setStoreGeneralSettings] = useState({
-        storeName: 'FarmLyf Dryfruits',
-        supportEmail: 'admin@farmlyf.com',
+        storeName: 'Vrushahi',
+        supportEmail: 'admin@vrushahi.com',
         currency: 'INR (â‚¹)',
         timezone: 'Asia/Kolkata (GMT +5:30)'
     });
@@ -550,7 +550,7 @@ const SettingsPage = () => {
                                     value={invoiceSettings.sellerName}
                                     onChange={(e) => setInvoiceSettings({ ...invoiceSettings, sellerName: e.target.value })}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" 
-                                    placeholder="FarmLyf Dryfruits"
+                                    placeholder="Vrushahi"
                                 />
                             </div>
                             <div className="flex flex-col gap-2">
@@ -600,7 +600,7 @@ const SettingsPage = () => {
                                     value={invoiceSettings.companyOfficeAddress}
                                     onChange={(e) => setInvoiceSettings({ ...invoiceSettings, companyOfficeAddress: e.target.value })}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none" 
-                                    placeholder="FarmLyf PVT LTD, Corporate House, Mumbai - 400001"
+                                    placeholder="Vrushahi Soya Product Pvt Ltd, Corporate House, Mumbai - 400001"
                                 />
                             </div>
                         </div>

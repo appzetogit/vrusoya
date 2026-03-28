@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft,
-    Plus,
-    Trash2,
-    Save,
     Truck,
     Wallet,
     ShieldCheck,
@@ -15,8 +12,7 @@ import {
     Heart,
     Zap,
     CheckCircle2,
-    Edit2,
-    GripVertical
+    Edit2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -34,7 +30,7 @@ const ICON_OPTIONS = {
     CheckCircle2
 };
 
-import { useTrustSignals, useAddTrustSignal, useUpdateTrustSignal, useDeleteTrustSignal } from '../../../hooks/useContent';
+import { useTrustSignals, useUpdateTrustSignal } from '../../../hooks/useContent';
 
 const WhyChooseUsPage = () => {
     const navigate = useNavigate();
@@ -68,8 +64,6 @@ const WhyChooseUsPage = () => {
         } catch (error) { }
     };
 
-    const SelectedIcon = editForm ? ICON_OPTIONS[editForm.icon] : null;
-
     return (
         <div className="space-y-8 font-['Inter'] pb-32">
             {/* Header */}
@@ -98,10 +92,14 @@ const WhyChooseUsPage = () => {
                 {/* The Preview Component replicating the dark blue bar */}
                 <div className="w-full bg-[#0F172A] rounded-2xl p-8 shadow-xl">
                     <div className="flex flex-wrap items-center justify-center divide-x divide-gray-700/50">
-                        {features.slice(0, 4).map((feature) => {
+                        {loading ? (
+                            <div className="w-full py-10 text-center text-sm font-semibold text-slate-300">Loading trust signals...</div>
+                        ) : features.length === 0 ? (
+                            <div className="w-full py-10 text-center text-sm font-semibold text-slate-300">No trust signals found. Defaults will appear after the first API fetch.</div>
+                        ) : features.slice(0, 4).map((feature) => {
                             const IconComponent = ICON_OPTIONS[feature.icon] || Star;
                             return (
-                                <div key={feature.id} className="flex-1 min-w-[200px] px-6 py-4 flex flex-col items-center text-center gap-3 group cursor-default">
+                                <div key={feature._id || feature.id} className="flex-1 min-w-[200px] px-6 py-4 flex flex-col items-center text-center gap-3 group cursor-default">
                                     <div className="relative">
                                         <IconComponent size={32} className="text-white stroke-1" />
                                         <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#0F172A]"></span>
@@ -122,7 +120,7 @@ const WhyChooseUsPage = () => {
                 {features.slice(0, 4).map((feature) => {
                     const IconComponent = ICON_OPTIONS[feature.icon] || Star;
                     return (
-                        <div key={feature.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all group relative">
+                        <div key={feature._id || feature.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all group relative">
                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => handleEdit(feature)}
@@ -151,7 +149,7 @@ const WhyChooseUsPage = () => {
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
                         <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight mb-6">
-                            {editForm.id && features.find(f => f.id === editForm.id) ? 'Edit Feature' : 'Add New Feature'}
+                            {editForm._id || editForm.id ? 'Edit Feature' : 'Add New Feature'}
                         </h2>
 
                         <div className="space-y-4">
@@ -195,7 +193,7 @@ const WhyChooseUsPage = () => {
                                         type="text"
                                         value={editForm.bottomText}
                                         onChange={(e) => setEditForm(prev => ({ ...prev, bottomText: e.target.value }))}
-                                        placeholder="E.g. Orders Above ₹1499"
+                                        placeholder="E.g. Orders Above Rs 1499"
                                         className="w-full bg-gray-50 border border-gray-200 focus:bg-white focus:border-primary rounded-xl px-4 py-3 font-black text-sm outline-none transition-all placeholder:text-gray-300"
                                     />
                                 </div>
