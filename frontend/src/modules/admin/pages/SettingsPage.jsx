@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 const API_URL = API_BASE_URL;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const STORE_NAME_REGEX = /^[A-Za-z ]+$/;
+const WHATSAPP_REGEX = /^\+?[0-9]{10,15}$/;
 const ALLOWED_TABS = ['general', 'invoice'];
 
 const SettingsPage = () => {
@@ -55,6 +56,7 @@ const SettingsPage = () => {
     const [storeGeneralSettings, setStoreGeneralSettings] = useState({
         storeName: 'Vrushahi',
         supportEmail: 'admin@vrushahi.com',
+        whatsappNumber: '919970907005',
         currency: 'INR (â‚¹)',
         timezone: 'Asia/Kolkata (GMT +5:30)'
     });
@@ -112,6 +114,7 @@ const SettingsPage = () => {
             ...prev,
             storeName: value.storeName || prev.storeName,
             supportEmail: value.supportEmail || prev.supportEmail,
+            whatsappNumber: value.whatsappNumber || prev.whatsappNumber,
             currency: value.currency || prev.currency,
             timezone: value.timezone || prev.timezone
         }));
@@ -122,6 +125,14 @@ const SettingsPage = () => {
             setStoreGeneralSettings((prev) => ({
                 ...prev,
                 storeName: String(value || '').replace(/[^A-Za-z ]/g, '')
+            }));
+            return;
+        }
+
+        if (field === 'whatsappNumber') {
+            setStoreGeneralSettings((prev) => ({
+                ...prev,
+                whatsappNumber: String(value || '').replace(/[^\d+]/g, '')
             }));
             return;
         }
@@ -147,6 +158,7 @@ const SettingsPage = () => {
             if (activeTab === 'general') {
                 const storeName = String(storeGeneralSettings.storeName || '').trim();
                 const supportEmail = String(storeGeneralSettings.supportEmail || '').trim();
+                const whatsappNumber = String(storeGeneralSettings.whatsappNumber || '').trim();
 
                 if (!storeName) {
                     toast.error('Store name is required');
@@ -160,6 +172,10 @@ const SettingsPage = () => {
                     toast.error('Please enter a valid support email');
                     return;
                 }
+                if (!WHATSAPP_REGEX.test(whatsappNumber)) {
+                    toast.error('Please enter a valid WhatsApp number');
+                    return;
+                }
 
                 await saveStoreGeneralSettings();
             }
@@ -168,7 +184,7 @@ const SettingsPage = () => {
                 key: 'checkout_fee_config',
                 value: checkoutFees
             });
-        } catch (error) {
+        } catch {
             // Error toast handled in hook
         }
     };
@@ -230,7 +246,7 @@ const SettingsPage = () => {
                 key: 'invoice_settings',
                 value: invoiceSettings
             });
-        } catch (error) {
+        } catch {
             // Error toast already handled in hook
         }
     };
@@ -462,6 +478,16 @@ const SettingsPage = () => {
                                     type="email"
                                     value={storeGeneralSettings.supportEmail}
                                     onChange={(e) => handleStoreGeneralChange('supportEmail', e.target.value)}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">WhatsApp Number</label>
+                                <input
+                                    type="text"
+                                    value={storeGeneralSettings.whatsappNumber}
+                                    onChange={(e) => handleStoreGeneralChange('whatsappNumber', e.target.value)}
+                                    placeholder="919970907005"
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
                                 />
                             </div>
