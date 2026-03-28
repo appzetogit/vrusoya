@@ -3,13 +3,23 @@ import { motion, useInView } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { useFeaturedSectionByName } from '../../../hooks/useContent';
+import { useProducts } from '../../../hooks/useProducts';
 
 const DealOfTheDaySection = () => {
     const sectionRef = useRef(null);
     const scrollRef = useRef(null);
     const showArrows = useInView(sectionRef, { amount: 0.35 });
     const { data: sectionData } = useFeaturedSectionByName('today-top-deal');
-    const dealsToShow = sectionData?.products || [];
+    const { data: products = [] } = useProducts();
+    const featuredProducts = sectionData?.products || [];
+    const fallbackProducts = [...products]
+        .sort((a, b) => {
+            const aPrice = Number(a?.variants?.[0]?.price || a?.price || 0);
+            const bPrice = Number(b?.variants?.[0]?.price || b?.price || 0);
+            return aPrice - bPrice;
+        })
+        .slice(0, 6);
+    const dealsToShow = featuredProducts.length > 0 ? featuredProducts : fallbackProducts;
 
     const handleScroll = (direction = 'right') => {
         const node = scrollRef.current;

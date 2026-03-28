@@ -288,7 +288,7 @@ const ProductCard = ({ product, showVault = true, compact = false }) => {
                                 openCartDrawer();
                             }}
                             disabled={!selectionRequired && activeStock <= 0}
-                            className={`group/btn w-full py-3 md:py-3.5 rounded-t-none rounded-b-2xl md:rounded-b-3xl text-[8px] md:text-[10px] font-bold uppercase tracking-[0.18em] active:scale-[0.99] flex items-center justify-center border-t translate-y-0 md:translate-y-full group-hover/product:translate-y-0 transition-[transform,background-color] duration-300 ease-out shadow-inner ${!selectionRequired && activeStock <= 0
+                            className={`group/btn w-full py-3 md:py-3.5 rounded-t-none rounded-b-2xl md:rounded-b-3xl text-[8px] md:text-[10px] font-bold uppercase tracking-[0.18em] active:scale-[0.99] flex items-center justify-center border-t translate-y-0 xl:translate-y-full group-hover/product:translate-y-0 transition-[transform,background-color] duration-300 ease-out shadow-inner ${!selectionRequired && activeStock <= 0
                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
                                 : isInCart
                                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500'
@@ -303,12 +303,12 @@ const ProductCard = ({ product, showVault = true, compact = false }) => {
                                         ? 'Go to Cart'
                                         : (
                                             <div className="grid place-items-center">
-                                                <span className="col-start-1 row-start-1 transition-all duration-300 ease-out transform md:group-hover/btn:-translate-y-4 md:group-hover/btn:opacity-0 md:group-hover/btn:scale-75">
+                                                <span className="col-start-1 row-start-1 transition-all duration-300 ease-out transform xl:group-hover/btn:-translate-y-4 xl:group-hover/btn:opacity-0 xl:group-hover/btn:scale-75">
                                                     Add to Cart
                                                 </span>
                                                 <ShoppingCart
                                                     strokeWidth={2.5}
-                                                    className="col-start-1 row-start-1 w-4 h-4 md:w-5 md:h-5 transition-all duration-300 ease-out transform translate-y-4 opacity-0 scale-50 md:group-hover/btn:translate-y-0 md:group-hover/btn:opacity-100 md:group-hover/btn:scale-100 hidden md:block"
+                                                    className="col-start-1 row-start-1 w-4 h-4 lg:w-5 lg:h-5 transition-all duration-300 ease-out transform translate-y-4 opacity-0 scale-50 xl:group-hover/btn:translate-y-0 xl:group-hover/btn:opacity-100 xl:group-hover/btn:scale-100 hidden xl:block"
                                                 />
                                             </div>
                                         )}

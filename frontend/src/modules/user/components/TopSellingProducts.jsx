@@ -4,13 +4,19 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
 import LoadingSpinner from './LoadingSpinner';
 import { useFeaturedSectionByName } from '../../../hooks/useContent';
+import { useProducts } from '../../../hooks/useProducts';
 
 const TopSellingProducts = () => {
     const sectionRef = useRef(null);
     const scrollRef = useRef(null);
     const showArrows = useInView(sectionRef, { amount: 0.35 });
     const { data: sectionData, isLoading } = useFeaturedSectionByName('top-selling');
-    const topProducts = sectionData?.products || [];
+    const { data: products = [], isLoading: productsLoading } = useProducts();
+    const featuredProducts = sectionData?.products || [];
+    const fallbackProducts = [...products]
+        .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+        .slice(0, 8);
+    const topProducts = featuredProducts.length > 0 ? featuredProducts : fallbackProducts;
 
     const scroll = (direction) => {
         if (!scrollRef.current) return;
@@ -19,7 +25,7 @@ const TopSellingProducts = () => {
         scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     };
 
-    if (isLoading) {
+    if (isLoading || productsLoading) {
         return (
             <section className="bg-white pt-6 pb-4 md:py-6 px-4 md:px-24 relative overflow-hidden bg-gradient-to-b from-white to-gray-50/50">
                 <div className="container mx-auto">

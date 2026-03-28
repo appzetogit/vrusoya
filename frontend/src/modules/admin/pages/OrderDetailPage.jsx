@@ -489,7 +489,7 @@ const OrderDetailPage = () => {
                             )}
                             {derivedHandlingFee > 0 && (
                                 <div className="flex justify-between text-gray-500">
-                                    <span className="font-medium">Handling Fee</span>
+                                    <span className="font-medium">Packing Fee</span>
                                     <span className="font-bold text-footerBg">{formatINR(derivedHandlingFee)}</span>
                                 </div>
                             )}
