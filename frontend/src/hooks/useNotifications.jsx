@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { requestNotificationPermission, onMessageListener } from '../config/firebase';
+import { requestNotificationPermission, onMessageListener, isFirebaseConfigComplete } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import useUserStore from '../store/useUserStore';
 import toast from 'react-hot-toast';
@@ -13,7 +13,7 @@ export const useNotifications = () => {
   const [notificationPermission, setNotificationPermission] = useState(
     hasNotificationApi ? window.Notification.permission : 'unsupported'
   );
-  const { user } = useAuth();
+  const { user, getAuthHeaders } = useAuth();
   const addNotification = useUserStore((state) => state.addNotification);
   const targetUserId = user?.id || 'guest';
 
@@ -70,23 +70,25 @@ export const useNotifications = () => {
   // Register FCM token with backend
   const registerFcmToken = async (token) => {
     try {
+      const authHeaders = getAuthHeaders ? getAuthHeaders() : { 'Content-Type': 'application/json' };
       const response = await fetch(`${API_URL}/users/fcm-token`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
-        },
+        headers: authHeaders,
         credentials: 'include',
         body: JSON.stringify({ token })
       });
 
       if (response.ok) {
         console.log('FCM token registered successfully');
+        return true;
       } else {
-        console.error('Failed to register FCM token');
+        const errorBody = await response.text();
+        console.error('Failed to register FCM token', response.status, errorBody);
+        return false;
       }
     } catch (error) {
       console.error('Error registering FCM token:', error);
+      return false;
     }
   };
 
@@ -97,14 +99,20 @@ export const useNotifications = () => {
         setNotificationPermission('unsupported');
         return;
       }
+      if (!isFirebaseConfigComplete) {
+        console.warn('Skipping notification init because Firebase web config is incomplete.');
+        return;
+      }
       if (notificationPermission === 'denied') {
         console.log('Notification permission already denied');
         return;
       }
       const token = await requestNotificationPermission();
       if (token && user) {
-        await registerFcmToken(token);
-        setNotificationPermission('granted');
+        const saved = await registerFcmToken(token);
+        if (saved) {
+          setNotificationPermission('granted');
+        }
       }
     } catch (error) {
       console.error('Error initializing notifications:', error);
@@ -223,6 +231,7 @@ export const useNotifications = () => {
 
   return {
     notificationPermission,
-    initNotifications
+    initNotifications,
+    isFirebaseConfigComplete
   };
 };

@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, RotateCcw, Globe, Eye } from 'lucide-react';
-import ReactQuill, { Quill } from 'react-quill-new';
+import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import BlotFormatter from 'quill-blot-formatter';
 import toast from 'react-hot-toast';
-
-if (typeof window !== 'undefined' && Quill) {
-    Quill.register('modules/blotFormatter', BlotFormatter);
-}
+import { registerQuillModules } from '../../../utils/registerQuillModules';
 
 import { useWebsiteContent, useUpdateWebsiteContent } from '../../../hooks/useContent';
 import { useUploadImage } from '../../../hooks/useProducts';
 import { PAGES_CONFIG } from '../../../config/pagesConfig';
+
+registerQuillModules();
 
 const StaticPageEditor = () => {
     const { pageId } = useParams();

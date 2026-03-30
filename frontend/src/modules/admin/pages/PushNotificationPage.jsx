@@ -10,7 +10,7 @@ const API_URL = API_BASE_URL;
 const PushNotificationPage = () => {
     const [searchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'list';
-    const { notificationPermission, initNotifications } = useNotifications();
+    const { notificationPermission, initNotifications, isFirebaseConfigComplete } = useNotifications();
 
     // Push Notification State
     const [pushMessage, setPushMessage] = useState({
@@ -174,8 +174,29 @@ const PushNotificationPage = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Add New Button if needed, or leave empty if not requested, but I'll leave the header clean */}
+                    <button
+                        type="button"
+                        onClick={() => initNotifications()}
+                        className="px-4 py-3 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all"
+                    >
+                        Enable Browser Push
+                    </button>
                 </div>
+            </div>
+
+            <div className="bg-white border border-gray-100 rounded-[2rem] p-5 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Push Status</p>
+                <p className="text-sm font-bold text-gray-800 mt-2">
+                    Firebase Web Config: {isFirebaseConfigComplete ? 'Ready' : 'Missing'}
+                </p>
+                <p className="text-sm font-bold text-gray-800 mt-1">
+                    Browser Permission: {notificationPermission}
+                </p>
+                {!isFirebaseConfigComplete && (
+                    <p className="text-xs text-red-500 mt-2">
+                        Frontend Firebase web app values are incomplete or still pointing to the old project, so browser push cannot register a valid FCM token yet.
+                    </p>
+                )}
             </div>
 
             {/* List Tab (History) */}

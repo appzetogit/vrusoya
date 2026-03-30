@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import User from '../models/User.js';
+import Admin from '../models/Admin.js';
 import Notification from '../models/Notification.js';
 
 // Initialize Firebase Admin SDK
@@ -35,11 +36,15 @@ export const sendNotification = async (req, res) => {
       return res.status(400).json({ error: 'Heading and message are required' });
     }
 
-    // Get target users based on audience selection
+    // Get target users/admins based on audience selection
     let targetUsers = [];
+    let targetAdmins = [];
     
     if (target === 'all') {
       targetUsers = await User.find({ 
+        fcmToken: { $exists: true, $nin: [null, ''] }
+      });
+      targetAdmins = await Admin.find({
         fcmToken: { $exists: true, $nin: [null, ''] }
       });
     } else if (target === 'active') {
@@ -50,25 +55,37 @@ export const sendNotification = async (req, res) => {
         fcmToken: { $exists: true, $nin: [null, ''] },
         updatedAt: { $gte: thirtyDaysAgo }
       });
+      targetAdmins = await Admin.find({
+        fcmToken: { $exists: true, $nin: [null, ''] }
+      });
     } else if (target === 'cart') {
       // For now, send to all users with tokens
       targetUsers = await User.find({ 
+        fcmToken: { $exists: true, $nin: [null, ''] }
+      });
+      targetAdmins = await Admin.find({
         fcmToken: { $exists: true, $nin: [null, ''] }
       });
     }
 
     // Debug: Log all users with any fcmToken field
     const allUsersWithToken = await User.find({ fcmToken: { $exists: true } }).select('email fcmToken');
+    const allAdminsWithToken = await Admin.find({ fcmToken: { $exists: true } }).select('email fcmToken');
     console.log('DEBUG - Users with fcmToken field:', allUsersWithToken.length);
     console.log('DEBUG - Sample tokens:', allUsersWithToken.map(u => ({ email: u.email, hasToken: !!u.fcmToken, tokenPreview: u.fcmToken?.substring(0, 30) })));
+    console.log('DEBUG - Admins with fcmToken field:', allAdminsWithToken.length);
+    console.log('DEBUG - Admin token samples:', allAdminsWithToken.map(a => ({ email: a.email, hasToken: !!a.fcmToken, tokenPreview: a.fcmToken?.substring(0, 30) })));
     console.log('DEBUG - Target users found:', targetUsers.length);
+    console.log('DEBUG - Target admins found:', targetAdmins.length);
 
-    if (targetUsers.length === 0) {
-      return res.status(400).json({ error: 'No users found with notification tokens. Users must grant permission first.' });
+    const recipients = [...targetUsers, ...targetAdmins];
+
+    if (recipients.length === 0) {
+      return res.status(400).json({ error: 'No recipients found with notification tokens. Users must grant permission first and admins must be logged in with notifications enabled.' });
     }
 
-    // Extract FCM tokens
-    const tokens = targetUsers.map(user => user.fcmToken).filter(Boolean);
+    // Extract and dedupe FCM tokens across users/admins
+    const tokens = [...new Set(recipients.map((entry) => entry.fcmToken).filter(Boolean))];
 
     if (tokens.length === 0) {
       return res.status(400).json({ error: 'No valid tokens found' });
@@ -126,7 +143,7 @@ export const sendNotification = async (req, res) => {
       heading,
       message,
       target,
-      sentTo: targetUsers.map(u => u._id),
+      sentTo: recipients.map((entry) => entry._id),
       sentCount: tokens.length,
       successCount,
       failureCount,
