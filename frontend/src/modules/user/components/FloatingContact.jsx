@@ -1,9 +1,11 @@
 import React from 'react';
+import { useSetting } from '../../../hooks/useSettings';
 
 const FloatingContact = () => {
-    // Replace with actual number
-    const phoneNumber = "919000000000";
-    const message = "Hi FarmLyf, I have a query about your products!";
+    const { data: storeGeneralSetting } = useSetting('store_general');
+    const rawPhoneNumber = storeGeneralSetting?.value?.whatsappNumber || '919970907005';
+    const phoneNumber = String(rawPhoneNumber).replace(/\D/g, '') || '919970907005';
+    const message = 'Hi Vrushahi, I have a query about your products!';
 
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 

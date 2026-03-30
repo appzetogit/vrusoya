@@ -64,10 +64,10 @@ async function seed() {
 
         // 4. Trust Signals
         const trustSignals = [
-            { icon: "Truck", topText: "FREE SHIPPING", bottomText: "On orders above ₹1499", isActive: true },
-            { icon: "Wallet", topText: "SECURE PAYMENT", bottomText: "100% safe transactions", isActive: true },
-            { icon: "ShieldCheck", topText: "PREMIUM QUALITY", bottomText: "Sourced from best farms", isActive: true },
-            { icon: "Trophy", topText: "BEST PRICES", bottomText: "Unmatched value", isActive: true }
+            { icon: "Truck", topText: "FREE SHIPPING", bottomText: "On orders above Rs 1499", order: 0, isActive: true },
+            { icon: "Wallet", topText: "SECURE PAYMENT", bottomText: "100% safe transactions", order: 1, isActive: true },
+            { icon: "ShieldCheck", topText: "PREMIUM QUALITY", bottomText: "Sourced from best farms", order: 2, isActive: true },
+            { icon: "Trophy", topText: "BEST PRICES", bottomText: "Unmatched value", order: 3, isActive: true }
         ];
         for (const t of trustSignals) {
             await TrustSignal.findOneAndUpdate({ topText: t.topText }, t, { upsert: true });
