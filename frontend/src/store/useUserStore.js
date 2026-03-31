@@ -130,7 +130,7 @@ const useUserStore = create(
             // Or we keep it simple.
         }),
         {
-            name: 'farmlyf_user_prefs', 
+            name: 'vrushahi_user_prefs', 
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({ 
                 wishlist: state.wishlist, 
@@ -138,10 +138,10 @@ const useUserStore = create(
                 saveForLater: state.saveForLater,
                 notifications: state.notifications
             }), // Only persist these
-            // Note: We are migrating from keys 'farmlyf_wishlist', 'farmlyf_save_for_later' etc.
+            // Note: We are migrating from keys 'vrushahi_wishlist', 'vrushahi_save_for_later' etc.
             // Zustand persist uses one key for the whole store object usually.
             // If we want to keep backward compatibility with specific keys, we might need custom storage or migration.
-            // For now, we will start fresh with 'farmlyf_user_prefs' or manually load old keys in `onRehydrate` if needed.
+            // For now, we will start fresh with 'vrushahi_user_prefs' or manually load old keys in `onRehydrate` if needed.
             // Let's stick to standard behavior for simplicity, assuming data migration isn't critical for this refactor demo.
         }
     )
@@ -151,3 +151,4 @@ const useUserStore = create(
 // But simplest is to respect the new key.
 
 export default useUserStore;
+

@@ -53,7 +53,6 @@ const DEFAULT_FOOTER_CONFIG = {
             links: [
                 { label: 'About Us', url: '/about-us' },
                 { label: 'Track Order', url: '/orders' },
-                { label: 'Returns', url: '/returns' },
                 { label: 'Privacy Policy', url: '/privacy-policy' },
                 { label: 'Terms & Conditions', url: '/terms-conditions' }
             ]
@@ -62,7 +61,7 @@ const DEFAULT_FOOTER_CONFIG = {
     contact: {
         address: "Office No 501, Princess center, 5th Floor, New Palasia, Indore, 452001",
         phone: "+91 98765 43210",
-        email: "support@farmlyf.com"
+        email: "support@vrushahi.com"
     }
 };
 
@@ -87,7 +86,7 @@ const Footer = () => {
                 {/* Brand Column */}
                 <div className="col-span-2 lg:col-span-1 space-y-4 md:space-y-8 mb-4 md:mb-0">
                     <Link to="/" className="inline-block">
-                        <img src={logo} alt="FarmLyf" className="h-10 md:h-14 w-auto object-contain" />
+                        <img src={logo} alt="Vrushahi" className="h-10 md:h-14 w-auto object-contain" />
                     </Link>
                     <p className="text-white/70 text-xs md:text-base leading-relaxed">
                         {config.brand.description}
@@ -121,7 +120,9 @@ const Footer = () => {
                     <div key={col.id || index} className="col-span-1">
                         <h4 className="text-sm md:text-lg font-bold mb-4 md:mb-8 font-['Poppins']">{col.title}</h4>
                         <ul className="space-y-2 md:space-y-4 text-white/70">
-                            {col.links.map((link, i) => (
+                            {col.links
+                                .filter((link) => !['/returns', '/return', '/replacement', '/request-return'].includes(link.url))
+                                .map((link, i) => (
                                 <li key={i}>
                                     {isExternalUrl(link.url) ? (
                                         <a
@@ -172,7 +173,9 @@ const Footer = () => {
                     { icon: 'Truck', text: 'Pan-India Delivery' },
                     { icon: 'ShieldCheck', text: 'Secure Checkout' },
                     { icon: 'RotateCcw', text: '7-Day Return' }
-                ]).map((badge, index) => {
+                ])
+                    .filter((badge) => !/return|replacement/i.test(String(badge.text || '')))
+                    .map((badge, index) => {
                     const IconComponent = { Award, Truck, ShieldCheck, RotateCcw, Star, Leaf, Zap, Heart, ThumbsUp }[badge.icon] || Star;
                     return (
                         <div key={index} className="flex items-center gap-2 md:gap-3 text-[10px] md:text-sm text-white/70 bg-white/5 px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl border border-white/20">
@@ -203,3 +206,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

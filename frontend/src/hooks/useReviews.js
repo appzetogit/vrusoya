@@ -6,8 +6,8 @@ import { API_BASE_URL } from '@/lib/apiUrl';
 // Note: isAuthenticated is used for query enabling, keeping it for now but could also use useAuth() logic
 const isAuthenticated = () => {
     try {
-        const user = localStorage.getItem('farmlyf_current_user');
-        const token = localStorage.getItem('farmlyf_token');
+        const user = localStorage.getItem('vrushahi_current_user');
+        const token = localStorage.getItem('vrushahi_token');
         return !!(user && token);
     } catch {
         return false;
@@ -109,3 +109,4 @@ export const useAddAdminReview = () => {
         }
     });
 };
+

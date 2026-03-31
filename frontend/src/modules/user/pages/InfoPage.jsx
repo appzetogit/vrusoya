@@ -17,11 +17,11 @@ const InfoPage = ({ type }) => {
     // Default Fallback Content Config
     const defaultContentMap = {
         'about-us': {
-            title: "About FarmLyf",
+            title: "About Vrushahi",
             subtitle: "Delivering nature's finest to your doorstep",
             content: (
                 <div className="space-y-6 text-gray-600 leading-relaxed text-lg">
-                    <p>At FarmLyf, we believe in the power of pure, unadulterated nature. Our journey began with a simple mission: to bridge the gap between conscientious farmers and mindful consumers.</p>
+                    <p>At Vrushahi, we believe in the power of pure, unadulterated nature. Our journey began with a simple mission: to bridge the gap between conscientious farmers and mindful consumers.</p>
                     <p>We source premium dry fruits, nuts, seeds, and organic staples directly from growers who practice sustainable farming. Every product is handpicked, quality-checked, and packed with care to ensure you get nothing but the best.</p>
                 </div>
             )
@@ -31,7 +31,7 @@ const InfoPage = ({ type }) => {
             subtitle: "User Agreement",
             content: (
                 <div className="space-y-8 text-gray-600 leading-relaxed">
-                    <p>Welcome to FarmLyf. By accessing our website, you agree to be bound by these terms and conditions.</p>
+                    <p>Welcome to Vrushahi. By accessing our website, you agree to be bound by these terms and conditions.</p>
                     <h3 className="text-xl font-bold text-footerBg mb-2">1. Use of Service</h3>
                     <p>You agree to use our service for lawful purposes only and in a way that does not infringe the rights of, restrict or inhibit anyone else's use and enjoyment of the website.</p>
                 </div>
@@ -197,3 +197,4 @@ const InfoPage = ({ type }) => {
     );
 };
 export default InfoPage;
+

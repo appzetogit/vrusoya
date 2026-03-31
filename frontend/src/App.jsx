@@ -14,9 +14,6 @@ import CheckoutPage from './modules/user/pages/CheckoutPage';
 import OrderSuccessPage from './modules/user/pages/OrderSuccessPage';
 import OrdersPage from './modules/user/pages/OrdersPage';
 import OrderDetailPage from './modules/user/pages/OrderDetailPage';
-import ReturnsPage from './modules/user/pages/ReturnsPage';
-import ReturnDetailPage from './modules/user/pages/ReturnDetailPage';
-import ReturnRequestPage from './modules/user/pages/ReturnRequestPage';
 import ProfilePage from './modules/user/pages/ProfilePage';
 import InfoPage from './modules/user/pages/InfoPage';
 import ContactUsPage from './modules/user/pages/ContactUsPage';
@@ -31,10 +28,6 @@ import ProductListPage from './modules/admin/pages/ProductListPage';
 import ProductFormPage from './modules/admin/pages/ProductFormPage';
 import OrderListPage from './modules/admin/pages/OrderListPage';
 import AdminOrderDetailPage from './modules/admin/pages/OrderDetailPage';
-import ReturnRequestsPage from './modules/admin/pages/ReturnRequestsPage';
-import ReplacementRequestsPage from './modules/admin/pages/ReplacementRequestsPage';
-import AdminReturnDetailPage from './modules/admin/pages/ReturnDetailPage';
-import ReplacementDetailPage from './modules/admin/pages/ReplacementDetailPage';
 import CouponListPage from './modules/admin/pages/CouponListPage';
 import CouponFormPage from './modules/admin/pages/CouponFormPage';
 import SettingsPage from './modules/admin/pages/SettingsPage';
@@ -44,7 +37,6 @@ import ReelsPage from './modules/admin/pages/ReelsPage';
 import AdminReviewsPage from './modules/admin/pages/AdminReviewsPage';
 import AdminProfilePage from './modules/admin/pages/AdminProfilePage';
 import StockAdjustmentPage from './modules/admin/pages/StockAdjustmentPage';
-import StockHistoryPage from './modules/admin/pages/StockHistoryPage';
 import LowStockAlertsPage from './modules/admin/pages/LowStockAlertsPage';
 import OfferListPage from './modules/admin/pages/OfferListPage';
 import OfferFormPage from './modules/admin/pages/OfferFormPage';
@@ -113,10 +105,6 @@ function App() {
                 <Route path="order-success/:orderId" element={<OrderSuccessPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="order/:orderId" element={<OrderDetailPage />} />
-                <Route path="returns" element={<ReturnsPage />} />
-                <Route path="return/:returnId" element={<ReturnDetailPage />} />
-                <Route path="replacement/:returnId" element={<ReturnDetailPage />} />
-                <Route path="request-return/:orderId" element={<ReturnRequestPage />} />
                 <Route path="wishlist" element={<UserProtectedRoute><WishlistPage /></UserProtectedRoute>} />
                 <Route path="vault" element={<VaultPage />} />
                 <Route path="profile/:tab?" element={<ProfilePage />} />
@@ -146,15 +134,10 @@ function App() {
                 <Route path="banners" element={<BannerListPage />} />
                 <Route path="orders" element={<OrderListPage />} />
                 <Route path="orders/:id" element={<AdminOrderDetailPage />} />
-                <Route path="returns" element={<ReturnRequestsPage />} />
-                <Route path="returns/:id" element={<AdminReturnDetailPage />} />
-                <Route path="replacements" element={<ReplacementRequestsPage />} />
-                <Route path="replacements/:id" element={<ReplacementDetailPage />} />
                 <Route path="coupons" element={<CouponListPage />} />
                 <Route path="coupons/add" element={<CouponFormPage />} />
                 <Route path="coupons/edit/:id" element={<CouponFormPage />} />
                 <Route path="inventory/adjust" element={<StockAdjustmentPage />} />
-                <Route path="inventory/history" element={<StockHistoryPage />} />
                 <Route path="inventory/alerts" element={<LowStockAlertsPage />} />
                 <Route path="inventory/reports" element={<InventoryReportsPage />} />
                 <Route path="offers" element={<OfferListPage />} />

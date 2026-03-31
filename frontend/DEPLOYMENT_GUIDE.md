@@ -1,6 +1,6 @@
-# How to Deploy FarmLyf
+# How to Deploy Vrushahi
 
-Since FarmLyf is a **Single Page Application (SPA)** built with React and Vite, deploying it is very easy. The User implementation (`/`) and Admin Dashboard (`/admin`) are part of the same project, so you only need to deploy this one codebase, and both will work automatically.
+Since Vrushahi is a **Single Page Application (SPA)** built with React and Vite, deploying it is very easy. The User implementation (`/`) and Admin Dashboard (`/admin`) are part of the same project, so you only need to deploy this one codebase, and both will work automatically.
 
 I have already added two configuration files to your project to make this smooth:
 1. `vercel.json`: Configuration for Vercel.
@@ -15,7 +15,7 @@ These files ensure that when you refresh a page (like `/admin/dashboard`), it do
 Vercel is the creators of Next.js and provides excellent support for Vite apps.
 
 1.  **Create a GitHub Repository**:
-    *   Go to [GitHub.com](https://github.com) and create a new repository (e.g., `farmlyf`).
+    *   Go to [GitHub.com](https://github.com) and create a new repository (e.g., `vrushahi`).
     *   Push your code to this repository.
     *   *If you haven't pushed code before:*
         ```bash
@@ -23,14 +23,14 @@ Vercel is the creators of Next.js and provides excellent support for Vite apps.
         git add .
         git commit -m "Initial commit"
         git branch -M main
-        git remote add origin https://github.com/YOUR_USERNAME/farmlyf.git
+        git remote add origin https://github.com/YOUR_USERNAME/vrushahi.git
         git push -u origin main
         ```
 
 2.  **Connect to Vercel**:
     *   Go to [Vercel.com](https://vercel.com) and Sign Up/Login.
     *   Click **"Add New..."** -> **"Project"**.
-    *   Import your `farmlyf` repository from GitHub.
+    *   Import your `vrushahi` repository from GitHub.
 
 3.  **Configure & Deploy**:
     *   Vercel will auto-detect "Vite".
@@ -39,9 +39,9 @@ Vercel is the creators of Next.js and provides excellent support for Vite apps.
     *   Click **Deploy**.
 
 4.  **Done!**
-    *   You will get a URL like `https://farmlyf.vercel.app`.
-    *   Open `https://farmlyf.vercel.app/` for the User site.
-    *   Open `https://farmlyf.vercel.app/admin` for the Admin Dashboard.
+    *   You will get a URL like `https://vrushahi.vercel.app`.
+    *   Open `https://vrushahi.vercel.app/` for the User site.
+    *   Open `https://vrushahi.vercel.app/admin` for the Admin Dashboard.
 
 ---
 
@@ -51,7 +51,7 @@ Vercel is the creators of Next.js and provides excellent support for Vite apps.
 2.  **Connect to Netlify**:
     *   Go to [Netlify.com](https://netlify.com) and Sign Up/Login.
     *   Click **"Add new site"** -> **"Import an existing project"**.
-    *   Connect to GitHub and select your `farmlyf` repo.
+    *   Connect to GitHub and select your `vrushahi` repo.
 3.  **Configure**:
     *   **Build command**: `npm run build`
     *   **Publish directory**: `dist`
@@ -65,3 +65,4 @@ Both the User Website and Admin Panel are just different **Routes** in your Reac
 - When a user visits `/admin`, React shows the Admin Layout.
 
 You do NOT need to deploy them separately. One deployment handles everything!
+

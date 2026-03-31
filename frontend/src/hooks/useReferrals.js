@@ -5,8 +5,8 @@ import { API_BASE_URL } from '@/lib/apiUrl';
 // Helper to check if user is authenticated
 const isAuthenticated = () => {
     try {
-        const user = localStorage.getItem('farmlyf_current_user');
-        const token = localStorage.getItem('farmlyf_token');
+        const user = localStorage.getItem('vrushahi_current_user');
+        const token = localStorage.getItem('vrushahi_token');
         return !!(user && token);
     } catch {
         return false;
@@ -17,7 +17,7 @@ const API_URL = API_BASE_URL + '/referrals';
 
 // Helper function to handle fetch calls
 const fetchData = async (url, options = {}) => {
-    const token = localStorage.getItem('farmlyf_token');
+    const token = localStorage.getItem('vrushahi_token');
     const response = await fetch(url, {
         ...options,
         headers: {
@@ -164,3 +164,4 @@ export const useReferralOrders = (id) => {
         enabled: !!id,
     });
 };
+

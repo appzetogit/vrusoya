@@ -8,7 +8,7 @@ import { useBlogBySlug } from '../../../hooks/useContent';
 const BlogDetailPage = () => {
     const { slug } = useParams();
     const { data: blog, isLoading, error } = useBlogBySlug(slug);
-    const displayAuthor = (blog?.author || '').toLowerCase() === 'farmlyf' ? 'Vrushahi Group' : (blog?.author || 'Vrushahi Group');
+    const displayAuthor = (blog?.author || '').toLowerCase() === 'vrushahi' ? 'Vrushahi Group' : (blog?.author || 'Vrushahi Group');
 
     const handleShare = async () => {
         const shareData = {
@@ -167,3 +167,4 @@ const BlogDetailPage = () => {
 };
 
 export default BlogDetailPage;
+

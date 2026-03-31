@@ -12,8 +12,8 @@ export const createEnquiry = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required.' });
     }
 
-    if (!/^[A-Za-z\s]+$/.test(normalizedName)) {
-      return res.status(400).json({ message: 'Name should contain only letters and spaces.' });
+    if (!/^[^\d]+$/.test(normalizedName)) {
+      return res.status(400).json({ message: 'Name should not contain numbers.' });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {

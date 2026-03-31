@@ -10,6 +10,13 @@ const normalizeSelectedUsers = (selectedUsers = []) =>
     .map((id) => String(id || '').trim())
     .filter(Boolean)));
 
+const normalizePositiveNumber = (value, fallback) => {
+  if (value === '' || value === null || value === undefined) return fallback;
+  const numericValue = Number(value);
+  if (Number.isNaN(numericValue)) return fallback;
+  return Math.max(1, numericValue);
+};
+
 const isCouponEligibleForUser = async (coupon, userId) => {
   if (coupon.userEligibility === 'all') return true;
   if (!userId) return false;
@@ -33,13 +40,23 @@ const isCouponEligibleForUser = async (coupon, userId) => {
 export const createCoupon = async (req, res) => {
   try {
     const { code, id } = req.body;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    // Check for past end date
+    if (req.body.validFrom) {
+      const startDate = new Date(req.body.validFrom);
+      if (startDate < today) {
+        return res.status(400).json({ message: 'Start date cannot be in the past' });
+      }
+    }
+
     if (req.body.validUntil) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (new Date(req.body.validUntil) < today) {
+      const endDate = new Date(req.body.validUntil);
+      if (endDate < today) {
         return res.status(400).json({ message: 'End date cannot be in the past' });
+      }
+      if (req.body.validFrom && endDate < new Date(req.body.validFrom)) {
+        return res.status(400).json({ message: 'End date cannot be before start date' });
       }
     }
 
@@ -56,9 +73,13 @@ export const createCoupon = async (req, res) => {
     const selectedUsers = normalizedEligibility === 'selected'
       ? normalizeSelectedUsers(req.body.selectedUsers)
       : [];
+    const usageLimit = normalizePositiveNumber(req.body.usageLimit, 1000);
+    const perUserLimit = normalizePositiveNumber(req.body.perUserLimit, 1);
 
     const coupon = await Coupon.create({
       ...req.body,
+      usageLimit,
+      perUserLimit,
       userEligibility: normalizedEligibility,
       selectedUsers,
       id: couponId
@@ -115,11 +136,24 @@ export const updateCoupon = async (req, res) => {
     let coupon = await Coupon.findOne({ id: req.params.id }) || await Coupon.findById(req.params.id);
 
     if (coupon) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (req.body.validFrom) {
+        const startDate = new Date(req.body.validFrom);
+        if (startDate < today) {
+          return res.status(400).json({ message: 'Start date cannot be in the past' });
+        }
+      }
+
       if (req.body.validUntil) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (new Date(req.body.validUntil) < today) {
+        const endDate = new Date(req.body.validUntil);
+        if (endDate < today) {
           return res.status(400).json({ message: 'End date cannot be in the past' });
+        }
+        const effectiveStartDate = req.body.validFrom || coupon.validFrom;
+        if (effectiveStartDate && endDate < new Date(effectiveStartDate)) {
+          return res.status(400).json({ message: 'End date cannot be before start date' });
         }
       }
       coupon.code = req.body.code || coupon.code;
@@ -127,9 +161,14 @@ export const updateCoupon = async (req, res) => {
       coupon.value = req.body.value !== undefined ? req.body.value : coupon.value;
       coupon.minOrderValue = req.body.minOrderValue !== undefined ? req.body.minOrderValue : coupon.minOrderValue;
       coupon.maxDiscount = req.body.maxDiscount !== undefined ? req.body.maxDiscount : coupon.maxDiscount;
+      coupon.validFrom = req.body.validFrom || coupon.validFrom;
       coupon.validUntil = req.body.validUntil || coupon.validUntil;
-      coupon.usageLimit = req.body.usageLimit !== undefined ? req.body.usageLimit : coupon.usageLimit;
-      coupon.perUserLimit = req.body.perUserLimit !== undefined ? req.body.perUserLimit : coupon.perUserLimit;
+      coupon.usageLimit = req.body.usageLimit !== undefined
+        ? normalizePositiveNumber(req.body.usageLimit, coupon.usageLimit)
+        : coupon.usageLimit;
+      coupon.perUserLimit = req.body.perUserLimit !== undefined
+        ? normalizePositiveNumber(req.body.perUserLimit, coupon.perUserLimit)
+        : coupon.perUserLimit;
       coupon.active = req.body.active !== undefined ? req.body.active : coupon.active;
       coupon.userEligibility = req.body.userEligibility || coupon.userEligibility;
       coupon.selectedUsers = coupon.userEligibility === 'selected'
@@ -195,6 +234,7 @@ export const validateCoupon = async (req, res) => {
     }
     
     if (!coupon.active) return res.status(400).json({ valid: false, error: 'Coupon is no longer active' });
+    if (coupon.validFrom && new Date(coupon.validFrom) > new Date()) return res.status(400).json({ valid: false, error: 'Coupon is not active yet' });
     if (new Date(coupon.validUntil) < new Date()) return res.status(400).json({ valid: false, error: 'Coupon has expired' });
     if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) return res.status(400).json({ valid: false, error: 'Coupon usage limit reached' });
     if (cartTotal < coupon.minOrderValue) return res.status(400).json({ valid: false, error: `Minimum order value ₹${coupon.minOrderValue} required` });

@@ -16,7 +16,7 @@ export const useUserProfile = () => {
             if (!res.ok) throw new Error('Failed to fetch profile');
             return res.json();
         },
-        enabled: !!localStorage.getItem('farmlyf_token') && !!user?.id
+        enabled: !!localStorage.getItem('vrushahi_token') && !!user?.id
     });
 };
 
@@ -48,3 +48,4 @@ export const useUpdateProfile = () => {
         }
     });
 };
+

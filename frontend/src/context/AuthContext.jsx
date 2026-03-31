@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     // Initialize user from localStorage immediately to prevent redirect on refresh
     const [user, setUser] = useState(() => {
         try {
-            const savedUser = localStorage.getItem('farmlyf_current_user');
+            const savedUser = localStorage.getItem('vrushahi_current_user');
             return savedUser ? JSON.parse(savedUser) : null;
         } catch (error) {
             console.error('Failed to parse user from storage', error);
@@ -24,13 +24,13 @@ export const AuthProvider = ({ children }) => {
 
     // Loading should be false if we already have a user from storage (Optimistic UI)
     const [loading, setLoading] = useState(() => {
-        const savedUser = localStorage.getItem('farmlyf_current_user');
+        const savedUser = localStorage.getItem('vrushahi_current_user');
         return !savedUser;
     });
 
     // Helper function to get auth headers
     const getAuthHeaders = () => {
-        const token = localStorage.getItem('farmlyf_token');
+        const token = localStorage.getItem('vrushahi_token');
         return {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` })
@@ -49,14 +49,14 @@ export const AuthProvider = ({ children }) => {
                     const data = await response.json();
                     const updatedUser = { ...data, id: data._id };
                     setUser(updatedUser);
-                    localStorage.setItem('farmlyf_current_user', JSON.stringify(updatedUser));
+                    localStorage.setItem('vrushahi_current_user', JSON.stringify(updatedUser));
                 } else {
                     // Only logout if explicitly unauthorized (401/403)
                     // This prevents logout on temporary 500 errors or network issues
                     if (response.status === 401 || response.status === 403) {
                         setUser(null);
-                        localStorage.removeItem('farmlyf_current_user');
-                        localStorage.removeItem('farmlyf_token');
+                        localStorage.removeItem('vrushahi_current_user');
+                        localStorage.removeItem('vrushahi_token');
                     }
                 }
             } catch (error) {
@@ -86,10 +86,10 @@ export const AuthProvider = ({ children }) => {
 
                 // Store token in localStorage for cross-domain auth
                 if (data.token) {
-                    localStorage.setItem('farmlyf_token', data.token);
+                    localStorage.setItem('vrushahi_token', data.token);
                 }
 
-                localStorage.setItem('farmlyf_current_user', JSON.stringify(userObj));
+                localStorage.setItem('vrushahi_current_user', JSON.stringify(userObj));
                 
                 // Merge Guest Cart
                 try {
@@ -156,10 +156,10 @@ export const AuthProvider = ({ children }) => {
                 setUser(userObj);
 
                 if (data.token) {
-                    localStorage.setItem('farmlyf_token', data.token);
+                    localStorage.setItem('vrushahi_token', data.token);
                 }
 
-                localStorage.setItem('farmlyf_current_user', JSON.stringify(userObj));
+                localStorage.setItem('vrushahi_current_user', JSON.stringify(userObj));
 
                 // Merge Guest Cart
                 try {
@@ -198,10 +198,10 @@ export const AuthProvider = ({ children }) => {
 
                 // Store token in localStorage for cross-domain auth
                 if (data.token) {
-                    localStorage.setItem('farmlyf_token', data.token);
+                    localStorage.setItem('vrushahi_token', data.token);
                 }
 
-                localStorage.setItem('farmlyf_current_user', JSON.stringify(userObj));
+                localStorage.setItem('vrushahi_current_user', JSON.stringify(userObj));
 
                 // Merge Guest Cart
                 try {
@@ -226,7 +226,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         // Set a flag to indicate manual logout is in progress
         // This prevents redundant "Please login" toasts in protected pages
-        sessionStorage.setItem('farmlyf_logout_pending', 'true');
+        sessionStorage.setItem('vrushahi_logout_pending', 'true');
 
         try {
             await fetch(`${API_URL}/users/logout`, {
@@ -248,13 +248,13 @@ export const AuthProvider = ({ children }) => {
         }
 
         setUser(null);
-        localStorage.removeItem('farmlyf_current_user');
-        localStorage.removeItem('farmlyf_token');
-        localStorage.removeItem('farmlyf_wishlist');
-        localStorage.removeItem('farmlyf_recently_viewed');
-        localStorage.removeItem('farmlyf_save_for_later');
+        localStorage.removeItem('vrushahi_current_user');
+        localStorage.removeItem('vrushahi_token');
+        localStorage.removeItem('vrushahi_wishlist');
+        localStorage.removeItem('vrushahi_recently_viewed');
+        localStorage.removeItem('vrushahi_save_for_later');
 
-        // Note: farmlyf_logout_pending will be cleared by the protected pages
+        // Note: vrushahi_logout_pending will be cleared by the protected pages
         // that would otherwise show a login prompt.
     };
 
@@ -264,3 +264,4 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+

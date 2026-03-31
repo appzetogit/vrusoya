@@ -4,7 +4,7 @@ import Product from './models/Product.js';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi';
 
 const checkProducts = async () => {
   try {
@@ -18,3 +18,4 @@ const checkProducts = async () => {
 };
 
 checkProducts();
+

@@ -92,7 +92,12 @@ const OrderListPage = () => {
 
     const filteredOrders = useMemo(() => {
         return allOrders.filter(order => {
-            const displayUserName = userNameById[order.userId] || order.user?.name || (order.userId ? 'Registered User' : 'Guest');
+            const displayUserName =
+                userNameById[order.userId]
+                || order.userName
+                || order.user?.name
+                || order.shippingAddress?.fullName
+                || (order.userId ? 'Registered User' : 'Guest');
             const isSearchMatch =
                 matchesSearch(
                     `${order._id || ''} ${order.id || ''} ${displayUserName}`,
@@ -153,7 +158,12 @@ const OrderListPage = () => {
         ];
 
         const rows = filteredOrders.map((order) => {
-            const customerName = userNameById[order.userId] || order.user?.name || (order.userId ? 'Registered User' : 'Guest');
+            const customerName =
+                userNameById[order.userId]
+                || order.userName
+                || order.user?.name
+                || order.shippingAddress?.fullName
+                || (order.userId ? 'Registered User' : 'Guest');
             const customerType = !order.userId
                 ? 'Guest'
                 : (userOrderCounts[order.userId] || 0) > 1
@@ -162,6 +172,8 @@ const OrderListPage = () => {
             const normalizedOrderStatus = order.status === 'pending' ? 'Processing' : order.status;
             const shipment = order.deliveryStatus
                 ? (order.deliveryStatus === 'OutForDelivery' ? 'Out For Delivery' : order.deliveryStatus)
+                : order.status === 'Cancelled'
+                    ? 'Cancelled'
                 : order.awbCode
                     ? (order.courierName || 'Courier')
                     : 'Pending';
@@ -296,7 +308,13 @@ const OrderListPage = () => {
                                         {(new Date(order.date)).toLocaleDateString('en-GB')}
                                     </AdminTableCell>
                                     <AdminTableCell>
-                                        <span className="font-bold text-footerBg text-sm">{userNameById[order.userId] || order.user?.name || (order.userId ? 'Registered User' : 'Guest')}</span>
+                                        <span className="font-bold text-footerBg text-sm">
+                                            {userNameById[order.userId]
+                                                || order.userName
+                                                || order.user?.name
+                                                || order.shippingAddress?.fullName
+                                                || (order.userId ? 'Registered User' : 'Guest')}
+                                        </span>
                                     </AdminTableCell>
                                     <AdminTableCell>
                                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${!order.userId ? 'bg-gray-50 text-gray-500 border-gray-100' : (userOrderCounts[order.userId] || 0) > 1 ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-purple-50 text-purple-600 border-purple-100'}`}>
@@ -336,12 +354,13 @@ const OrderListPage = () => {
                                                 <span className="block text-[10px] font-mono text-gray-400">{order.awbCode}</span>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-medium text-gray-400 uppercase">Pending</span>
-                                                {order.status === 'Cancelled' && (
-                                                    <span className="text-[8px] font-black text-red-400 uppercase px-1.5 py-0.5 rounded border border-red-100 bg-red-50">Cancelled</span>
-                                                )}
-                                            </div>
+                                            order.status === 'Cancelled' ? (
+                                                <span className="text-[8px] font-black text-red-400 uppercase px-1.5 py-0.5 rounded border border-red-100 bg-red-50">Cancelled</span>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-medium text-gray-400 uppercase">Pending</span>
+                                                </div>
+                                            )
                                         )}
                                     </AdminTableCell>
                                     <AdminTableCell className="text-right">

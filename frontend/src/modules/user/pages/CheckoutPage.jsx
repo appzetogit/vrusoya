@@ -654,7 +654,7 @@ const CheckoutPage = () => {
                         contact: trimmedPhone,
                     },
                     theme: {
-                        color: '#4ADE80', // Match FarmLyf primary
+                        color: '#4ADE80', // Match Vrushahi primary
                     },
                     modal: {
                         ondismiss: () => {
@@ -1163,3 +1163,4 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
+

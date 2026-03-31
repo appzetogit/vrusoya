@@ -12,7 +12,7 @@ const DUMMY_PRODUCTS = [
         category: 'Spices',
         price: 599,
         mrp: 899,
-        brand: 'FARMLYF Premium',
+        brand: 'VRUSHAHI Premium',
         image: 'https://images.unsplash.com/photo-1564417539002-3f1912a520cb?auto=format&fit=crop&q=80&w=400',
         rating: 4.9
     },
@@ -22,7 +22,7 @@ const DUMMY_PRODUCTS = [
         category: 'Seeds',
         price: 249,
         mrp: 349,
-        brand: 'FARMLYF Organics',
+        brand: 'VRUSHAHI Organics',
         image: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?auto=format&fit=crop&q=80&w=400',
         rating: 4.5
     },
@@ -32,7 +32,7 @@ const DUMMY_PRODUCTS = [
         category: 'Oils',
         price: 399,
         mrp: 599,
-        brand: 'FARMLYF Oils',
+        brand: 'VRUSHAHI Oils',
         image: 'https://images.unsplash.com/photo-1585642652174-8b63e8a38a79?auto=format&fit=crop&q=80&w=400',
         rating: 4.7
     },
@@ -42,7 +42,7 @@ const DUMMY_PRODUCTS = [
         category: 'Sweeteners',
         price: 450,
         mrp: 650,
-        brand: 'FARMLYF Naturals',
+        brand: 'VRUSHAHI Naturals',
         image: 'https://images.unsplash.com/photo-1587049352851-8d4e1613d285?auto=format&fit=crop&q=80&w=400',
         rating: 4.8
     }
@@ -458,3 +458,4 @@ const CartPage = () => {
 };
 
 export default CartPage;
+

@@ -10,7 +10,7 @@ import Product from './models/Product.js';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/farmlyf';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/vrushahi';
 
 async function seed() {
     try {
@@ -36,7 +36,7 @@ async function seed() {
             title: "Freshness That",
             highlightedTitle: "Connects Us!",
             description1: "Our journey began with a simple mission: to bring the finest, farm-fresh dry fruits and nuts directly to your doorstep. We believe that healthy eating shouldn't be a luxury.",
-            description2: "Today, FarmLyf is a community of health enthusiasts. We source premium produce, ensuring every pack carries our promise of quality and nutrition.",
+            description2: "Today, Vrushahi is a community of health enthusiasts. We source premium produce, ensuring every pack carries our promise of quality and nutrition.",
             image: "https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&q=80&w=1600",
             stats: [
                 { label: 'Outlets', value: '15+' },
@@ -109,3 +109,4 @@ async function seed() {
 }
 
 seed();
+

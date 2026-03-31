@@ -75,12 +75,12 @@ const OrdersPage = () => {
                                         <div className="flex justify-between items-start">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-[9px] md:text-[11px] text-slate-400 tracking-wide">Order ID: {orderId}</span>
+                                                    <span className="font-mono text-[9px] md:text-[11px] text-textPrimary tracking-wide">Order ID: {orderId}</span>
                                                     <span className={`text-[8px] md:text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-widest ${order.status?.toLowerCase() === 'shipped' ? 'bg-indigo-50 text-indigo-500' : 'bg-green-50 text-green-500'}`}>
                                                         {order.status}
                                                     </span>
                                                 </div>
-                                                <div className="text-[9px] md:text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                                <div className="text-[9px] md:text-xs text-textPrimary font-bold uppercase tracking-wider flex items-center gap-1">
                                                     <Clock size={10} className="shrink-0" />
                                                     {new Date(order.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                 </div>

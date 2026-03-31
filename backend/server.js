@@ -6,7 +6,6 @@ import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
-import returnRoutes from './routes/returnRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
@@ -29,8 +28,8 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import shipmentRoutes from './routes/shipmentRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import offerRoutes from './routes/offerRoutes.js';
-import replacementRoutes from './routes/replacementRoutes.js';
 import enquiryRoutes from './routes/enquiryRoutes.js';
+import stockHistoryRoutes from './routes/stockHistoryRoutes.js';
 
 dotenv.config();
 
@@ -63,7 +62,7 @@ app.use(cors({
     const isAllowed = allowedOrigins.has(origin);
     const isVercel = origin.endsWith('.vercel.app');
     const isLocal = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
-    const isFarmlyf = origin.includes('farmlyf.in');
+    const isFarmlyf = origin.includes('vrushahi.in');
     const isVrusoya = origin.includes('vrusoya.com');
 
     if (isAllowed || isLocal || isVercel || isFarmlyf || isVrusoya || process.env.NODE_ENV === 'development') {
@@ -93,7 +92,6 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/returns', returnRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -117,8 +115,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/offers', offerRoutes);
-app.use('/api/replacements', replacementRoutes);
 app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/stock-history', stockHistoryRoutes);
 
 // 404 Handler
 app.use((req, res) => {
@@ -137,3 +135,4 @@ const startServer = async () => {
 };
 
 startServer();
+

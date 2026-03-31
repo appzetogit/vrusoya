@@ -36,7 +36,7 @@ const ContactUsPage = () => {
         message: ''
     });
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const namePattern = /^[A-Za-z\s]+$/;
+    const namePattern = /^[^\d]+$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phonePattern = /^\d{10}$/;
     const isFormFilled = [
@@ -51,7 +51,7 @@ const ContactUsPage = () => {
         let nextValue = value;
 
         if (field === 'name') {
-            nextValue = value.replace(/[^A-Za-z\s]/g, '');
+            nextValue = value.replace(/\d/g, '');
         }
 
         if (field === 'phone') {
@@ -70,7 +70,7 @@ const ContactUsPage = () => {
         }
 
         if (!namePattern.test(formData.name.trim())) {
-            toast.error('Name should contain only letters and spaces.');
+            toast.error('Name should not contain numbers.');
             return;
         }
 
@@ -166,7 +166,7 @@ const ContactUsPage = () => {
                                 <p className="text-sm md:text-base text-gray-600">Have a question or need support? We&apos;re just a message away.</p>
                             </div>
 
-                            <form className="space-y-4" onSubmit={handleSubmit}>
+                            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
                                 <div className="grid gap-3 md:grid-cols-2">
                                     <label className="block space-y-2">
                                         <span className="text-sm font-bold text-footerBg">Your Name</span>
@@ -175,8 +175,6 @@ const ContactUsPage = () => {
                                             value={formData.name}
                                             onChange={(e) => handleChange('name', e.target.value)}
                                             inputMode="text"
-                                            pattern="[A-Za-z\\s]+"
-                                            title="Name should contain only letters and spaces"
                                             className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
                                         />
                                     </label>
@@ -198,8 +196,6 @@ const ContactUsPage = () => {
                                             onChange={(e) => handleChange('phone', e.target.value)}
                                             inputMode="numeric"
                                             maxLength={10}
-                                            pattern="\\d{10}"
-                                            title="Phone number must be exactly 10 digits"
                                             placeholder="9876543210"
                                             className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
                                         />

@@ -6,8 +6,8 @@ import { API_BASE_URL } from '@/lib/apiUrl';
 // Helper to check if user is authenticated
 const isAuthenticated = () => {
     try {
-        const user = localStorage.getItem('farmlyf_current_user');
-        const token = localStorage.getItem('farmlyf_token');
+        const user = localStorage.getItem('vrushahi_current_user');
+        const token = localStorage.getItem('vrushahi_token');
         return !!(user && token);
     } catch {
         return false;
@@ -38,3 +38,4 @@ export const useUsers = ({ page, limit, search, status } = {}) => {
         enabled: isAuthenticated() // Only fetch if authenticated
     });
 };
+

@@ -5,7 +5,7 @@ const enquirySchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    match: [/^[A-Za-z\s]+$/, 'Name should contain only letters and spaces']
+    match: [/^[^\d]+$/, 'Name should not contain numbers']
   },
   email: {
     type: String,

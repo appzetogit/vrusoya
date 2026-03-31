@@ -89,7 +89,6 @@ const OfferListPage = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">Offers & Collections</h1>
-                    <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">Manage curated product collections for banners</p>
                 </div>
                 <button
                     onClick={() => navigate('/admin/offers/add')}

@@ -13,7 +13,7 @@ const testWebsiteContent = async () => {
       title: 'Privacy Policy',
       content: '<h1>Testing Privacy Policy Content</h1><p>This is a test.</p>',
       isActive: true,
-      metadata: { seoTitle: 'Privacy Policy - FarmLyf' }
+      metadata: { seoTitle: 'Privacy Policy - Vrushahi' }
     };
 
     console.log(`Upserting content for slug: ${slug}`);
@@ -36,3 +36,4 @@ const testWebsiteContent = async () => {
 };
 
 testWebsiteContent();
+

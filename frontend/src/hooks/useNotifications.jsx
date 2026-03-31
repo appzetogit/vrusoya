@@ -74,7 +74,7 @@ export const useNotifications = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
         },
         credentials: 'include',
         body: JSON.stringify({ token })
@@ -226,3 +226,4 @@ export const useNotifications = () => {
     initNotifications
   };
 };
+

@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import User from './models/User.js';
 import Product from './models/Product.js';
 import Order from './models/Order.js';
-import Return from './models/Return.js';
 import Coupon from './models/Coupon.js';
 import Admin from './models/Admin.js';
 import Category from './models/Category.js';
@@ -11,7 +10,7 @@ import SubCategory from './models/SubCategory.js';
 
 dotenv.config();
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi')
     .then(() => console.log('MongoDB Connected for Seeding'))
     .catch(err => {
         console.error(err);
@@ -23,7 +22,6 @@ const seedData = async () => {
         await User.deleteMany({});
         await Product.deleteMany({});
         await Order.deleteMany({});
-        await Return.deleteMany({});
         await Coupon.deleteMany({});
         await Admin.deleteMany({});
 
@@ -45,7 +43,7 @@ const seedData = async () => {
         const products = [
              {
                 id: 'p1',
-                brand: 'FARMLYF ANMOL',
+                brand: 'VRUSHAHI ANMOL',
                 name: 'Farmlyf Anmol Jumbo Size Sonora Almonds',
                 category: 'nuts',
                 rating: 4.9,
@@ -60,7 +58,7 @@ const seedData = async () => {
             },
             {
                 id: 'p2',
-                brand: 'FARMLYF PREMIUM',
+                brand: 'VRUSHAHI PREMIUM',
                 name: 'Farmlyf Jumbo Roasted Royale Cashews',
                 category: 'nuts',
                 rating: 4.8,
@@ -89,7 +87,7 @@ const seedData = async () => {
                 deliveryStatus: 'Delivered',
                 amount: 2540,
                 paymentMethod: 'Online',
-                courierPartner: 'FarmLyf Express',
+                courierPartner: 'Vrushahi Express',
                 trackingId: 'TRK-1001',
                 items: [
                     { id: 'p1-v2', name: 'Farmlyf Anmol Jumbo Size Sonora Almonds', qty: 2, price: 782 },
@@ -184,3 +182,4 @@ const seedData = async () => {
 };
 
 seedData();
+

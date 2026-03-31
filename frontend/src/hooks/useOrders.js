@@ -33,54 +33,6 @@ export const useAllOrders = () => {
     });
 };
 
-export const useReturns = (userId) => {
-    const { getAuthHeaders } = useAuth();
-    return useQuery({
-        queryKey: ['returns', userId],
-        queryFn: async () => {
-            const res = await fetch(`${API_URL}/returns`, { 
-                headers: getAuthHeaders()
-            });
-            const allReturns = await res.json();
-            return allReturns.filter(r => r.userId === userId);
-        },
-        enabled: !!userId
-    });
-};
-
-export const useAllReturns = () => {
-    const { getAuthHeaders } = useAuth();
-    return useQuery({
-        queryKey: ['all-returns'],
-        queryFn: async () => {
-            const res = await fetch(`${API_URL}/returns`, { 
-                headers: getAuthHeaders()
-            });
-            return res.json();
-        }
-    });
-};
-
-export const useCreateReturn = () => {
-    const queryClient = useQueryClient();
-    const { getAuthHeaders } = useAuth();
-    return useMutation({
-        mutationFn: async ({ userId, returnData }) => {
-            const res = await fetch(`${API_URL}/returns`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(returnData)
-            });
-            if (!res.ok) throw new Error('Failed to create return request');
-            return res.json();
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['returns', variables.userId] });
-            toast.success('Return request submitted successfully!');
-        }
-    });
-};
-
 export const usePlaceOrder = () => {
     const queryClient = useQueryClient();
     const { getAuthHeaders } = useAuth();
@@ -145,7 +97,7 @@ export const useUpdateOrderStatus = () => {
             
             // Local simulation
             /*
-            const storedOrders = JSON.parse(localStorage.getItem('farmlyf_orders')) || []; // usage depends on how data is mocked
+            const storedOrders = JSON.parse(localStorage.getItem('vrushahi_orders')) || []; // usage depends on how data is mocked
             // If data is just fetched from API in useOrders, we can't update it easily without API.
             // But since this is a "simulation" likely using LS or Mock API, I'll assume we can't real-persist if API is read-only.
             // However, the previous code likely used LS. I'll support LS update if possible or just return success.
@@ -189,3 +141,4 @@ export const useCancelOrder = () => {
         }
     });
 };
+

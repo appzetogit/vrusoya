@@ -1,4 +1,5 @@
 import Product from '../models/Product.js';
+import { createStockHistoryEntry } from '../utils/stockHistoryUtils.js';
 
 const normalizeVariants = (variants = []) => {
     if (!Array.isArray(variants)) return variants;
@@ -109,6 +110,7 @@ export const updateProduct = async (req, res) => {
         }
 
         if (product) {
+            const originalProduct = product.toObject();
             // Strip fields that shouldn't be manually updated
             const { _id, __v, createdAt, ...updateData } = req.body;
             if (updateData.variants) {
@@ -122,6 +124,50 @@ export const updateProduct = async (req, res) => {
 
             Object.assign(product, updateData);
             const updatedProduct = await product.save();
+
+            const originalVariants = Array.isArray(originalProduct.variants) ? originalProduct.variants : [];
+            const updatedVariants = Array.isArray(updatedProduct.variants) ? updatedProduct.variants : [];
+
+            if (updatedVariants.length > 0) {
+                for (const updatedVariant of updatedVariants) {
+                    const originalVariant = originalVariants.find((variant) =>
+                        String(variant?.id || variant?._id || '') === String(updatedVariant?.id || updatedVariant?._id || '')
+                    );
+                    const previousStock = Number(originalVariant?.stock || 0);
+                    const newStock = Number(updatedVariant?.stock || 0);
+                    const change = newStock - previousStock;
+
+                    if (change !== 0) {
+                        await createStockHistoryEntry({
+                            product: updatedProduct,
+                            variant: updatedVariant,
+                            type: 'adjustment',
+                            change,
+                            previousStock,
+                            newStock,
+                            performedBy: 'Admin',
+                            reason: change > 0 ? 'Manual stock increase' : 'Manual stock decrease'
+                        });
+                    }
+                }
+            } else {
+                const previousStock = Number(originalProduct?.stock?.quantity || 0);
+                const newStock = Number(updatedProduct?.stock?.quantity || 0);
+                const change = newStock - previousStock;
+
+                if (change !== 0) {
+                    await createStockHistoryEntry({
+                        product: updatedProduct,
+                        type: 'adjustment',
+                        change,
+                        previousStock,
+                        newStock,
+                        performedBy: 'Admin',
+                        reason: change > 0 ? 'Manual stock increase' : 'Manual stock decrease'
+                    });
+                }
+            }
+
             res.json(updatedProduct);
         } else {
             res.status(404).json({ message: 'Product not found' });

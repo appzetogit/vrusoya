@@ -55,10 +55,10 @@ const ProfilePage = () => {
     // Check for auth and redirect if needed
     useEffect(() => {
         if (!authLoading && !user) {
-            const isLoggingOut = sessionStorage.getItem('farmlyf_logout_pending');
+            const isLoggingOut = sessionStorage.getItem('vrushahi_logout_pending');
             if (isLoggingOut) {
                 // Clear the flag and redirect silently
-                sessionStorage.removeItem('farmlyf_logout_pending');
+                sessionStorage.removeItem('vrushahi_logout_pending');
                 navigate('/login', { state: { from: '/profile' } });
                 return;
             }
@@ -256,7 +256,6 @@ const ProfilePage = () => {
         // Mobile View Items
         const shoppingItems = [
             { id: 'orders', label: 'Order History', icon: Package, desc: 'Track shipments and reorder', action: () => navigate('/orders') },
-            { id: 'returns', label: 'Returns', icon: RefreshCw, desc: 'Refunds and exchanges', action: () => navigate('/returns') },
             { id: 'wishlist', label: 'Wishlist', icon: Heart, desc: 'Manage your favorite items', action: () => navigate('/wishlist') },
             { id: 'coupons', label: 'Coupons', icon: Ticket, desc: 'Discover extra discounts', action: () => navigate('/profile/coupons') },
         ];
@@ -269,7 +268,6 @@ const ProfilePage = () => {
         // Desktop View Items
         const desktopItems = [
             { id: 'orders', label: 'Orders', icon: Package, desc: 'Check your orders status and history here', action: () => navigate('/orders') },
-            { id: 'returns', label: 'Returns', icon: RefreshCw, desc: 'Manage refunds and exchanges requests', action: () => navigate('/returns') },
             { id: 'coupons', label: 'Coupons', icon: Ticket, desc: 'Explore great coupon deals to get extra discounts', action: () => navigate('/profile/coupons') },
             { id: 'settings', label: 'Profile Settings', icon: User, desc: 'Update your password, profile details and more', action: () => { setIsEditing(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
             { id: 'addresses', label: 'Addresses', icon: Home, desc: 'Add, edit, or manage your address easily', action: () => navigate('/profile/addresses') },
@@ -1076,3 +1074,4 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
+

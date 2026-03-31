@@ -9,7 +9,7 @@ import {
     Truck, CheckCircle, Clock, Archive, RefreshCw, AlertCircle, ExternalLink, Ban, FileText
 } from 'lucide-react';
 import OrderInvoice from '../components/OrderInvoice';
-import { useOrders, useReturns, useUpdateOrderStatus } from '../../../hooks/useOrders';
+import { useOrders, useUpdateOrderStatus, useCancelOrder } from '../../../hooks/useOrders';
 import { useProducts } from '../../../hooks/useProducts';
 
 const API_URL = API_BASE_URL;
@@ -28,13 +28,12 @@ const OrderDetailPage = () => {
 
     // Hooks
     const { data: orders = [] } = useOrders(user?.id);
-    const { data: returns = [] } = useReturns(user?.id);
 
     const { mutate: updateStatus } = useUpdateOrderStatus();
+    const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
     const { data: products = [] } = useProducts();
 
     const [order, setOrder] = useState(null);
-    const [availableItemsCount, setAvailableItemsCount] = useState(0);
     const [liveTracking, setLiveTracking] = useState(null);
     const [trackingLoading, setTrackingLoading] = useState(false);
     const [showInvoice, setShowInvoice] = useState(false);
@@ -44,19 +43,9 @@ const OrderDetailPage = () => {
             const foundOrder = orders.find(o => o.id === orderId);
             if (foundOrder) {
                 setOrder(foundOrder);
-
-                // Calculate returns
-                const orderReturns = returns.filter(r => r.orderId === orderId && r.status !== 'Rejected');
-                const returnedPackIds = new Set();
-                orderReturns.forEach(ret => {
-                    ret.items.forEach(item => returnedPackIds.add(item.packId));
-                });
-
-                const available = foundOrder.items.filter(item => !returnedPackIds.has(item.packId));
-                setAvailableItemsCount(available.length);
             }
         }
-    }, [orders, returns, orderId]);
+    }, [orders, orderId]);
 
     const getProductImage = (item) => {
         if (item.image) return item.image;
@@ -121,19 +110,30 @@ const OrderDetailPage = () => {
         );
     }
 
-    // Check if eligible for return (delivered and within 7 days)
-    const isDelivered = order.deliveryStatus === 'Delivered';
-    const isWithinReturnWindow = () => {
-        if (!order.deliveredDate) return false;
-        const deliveryDate = new Date(order.deliveredDate);
-        const now = new Date();
-        const diffDays = Math.ceil((now - deliveryDate) / (1000 * 60 * 60 * 24));
-        return diffDays <= 7;
-    };
-
-    const canReturn = isDelivered && isWithinReturnWindow() && availableItemsCount > 0;
-
     const isCancelled = order.status === 'Cancelled';
+    const cancellableStatuses = ['pending', 'processing', 'received', 'processed'];
+    const canCancelOrder = cancellableStatuses.includes(String(order.status || '').trim().toLowerCase()) && !isCancelled;
+
+    const handleCancelOrder = () => {
+        if (!canCancelOrder || !order?.id) return;
+        const confirmed = window.confirm('Are you sure you want to cancel this order?');
+        if (!confirmed) return;
+
+        cancelOrder(
+            { orderId: order.id, reason: 'Customer requested cancellation' },
+            {
+                onSuccess: () => {
+                    setOrder((prev) => prev ? ({
+                        ...prev,
+                        status: 'Cancelled',
+                        cancelledAt: new Date().toISOString(),
+                        cancellationReason: 'Customer requested cancellation',
+                        refundStatus: prev.paymentMethod === 'cod' ? 'not_applicable' : (prev.refundStatus || 'pending')
+                    }) : prev);
+                }
+            }
+        );
+    };
 
     // Get refund status display
     const getRefundStatusBadge = () => {
@@ -184,7 +184,22 @@ const OrderDetailPage = () => {
         { status: 'Delivered', label: 'Delivered', icon: CheckCircle }
     ];
 
-    const currentStepIndex = steps.findIndex(s => s.status === order.deliveryStatus);
+    const timelineSteps = isCancelled
+        ? [...steps, { status: 'Cancelled', label: 'Cancelled', icon: Ban }]
+        : steps;
+
+    const normalizedDeliveryStatus = (() => {
+        if (isCancelled) return 'Cancelled';
+        const value = String(order.deliveryStatus || order.status || '').trim().toLowerCase();
+        if (value === 'pending' || value === 'processing') return 'Processing';
+        if (value === 'packed') return 'Packed';
+        if (value === 'shipped') return 'Shipped';
+        if (value === 'out for delivery' || value === 'outfordelivery') return 'Out for Delivery';
+        if (value === 'delivered') return 'Delivered';
+        return 'Processing';
+    })();
+
+    const currentStepIndex = timelineSteps.findIndex((s) => s.status === normalizedDeliveryStatus);
     const trackingActivities = liveTracking?.tracking?.tracking_data?.shipment_track_activities || [];
     const latestTrackingActivity = trackingActivities[0];
 
@@ -201,13 +216,25 @@ const OrderDetailPage = () => {
                             <p className="text-[10px] md:text-sm font-mono text-slate-400 mt-1">#{order.id}</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowInvoice(true)}
-                        className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-gray-50 transition-all shadow-sm active:scale-95 shrink-0"
-                    >
-                        <FileText size={16} />
-                        View Invoice
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {canCancelOrder && (
+                            <button
+                                onClick={handleCancelOrder}
+                                disabled={isCancelling}
+                                className="flex items-center justify-center gap-2 px-5 py-3 bg-red-50 border border-red-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-100 transition-all shadow-sm active:scale-95 shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                <Ban size={16} />
+                                {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowInvoice(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-gray-50 transition-all shadow-sm active:scale-95 shrink-0"
+                        >
+                            <FileText size={16} />
+                            View Invoice
+                        </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
@@ -257,35 +284,39 @@ const OrderDetailPage = () => {
 
                             <div className="p-5 md:p-8">
                                 {/* Vertical Timeline for Mobile, Horizontal for Desktop */}
-                                <div className="flex flex-col md:flex-row justify-between gap-4 relative">
-                                    {steps.map((step, index) => {
+                                <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4 relative">
+                                    {timelineSteps.map((step, index) => {
                                         const isActive = index <= currentStepIndex;
-                                        const isCompleted = index < currentStepIndex || (index === currentStepIndex && order.deliveryStatus === 'Delivered');
+                                        const isCompleted = index < currentStepIndex || (index === currentStepIndex && ['Delivered', 'Cancelled'].includes(normalizedDeliveryStatus));
                                         const isCurrent = index === currentStepIndex;
                                         const Icon = step.icon;
+                                        const connectorFillClass = isCancelled ? 'bg-red-300' : 'bg-green-300';
+                                        const currentAccentClass = isCancelled ? 'border-red-400 text-red-500 bg-red-50 shadow-lg shadow-red-100' : 'border-primary text-primary bg-primary/5 shadow-lg shadow-primary/10';
+                                        const completedAccentClass = step.status === 'Cancelled' ? 'bg-red-50 border-red-200 text-red-500' : 'bg-green-50 border-green-100 text-green-600';
+                                        const liveTextClass = isCancelled ? 'text-red-500' : 'text-green-500';
 
                                         return (
-                                            <div key={index} className="flex md:flex-col items-center gap-4 md:gap-3 flex-1 relative min-h-[64px] md:min-h-0">
+                                            <div key={index} className="flex md:flex-col items-center gap-3 md:gap-3 flex-1 relative min-h-[54px] md:min-h-0">
                                                 {/* Vertical Connector Line (Mobile Only) */}
-                                                {index < steps.length - 1 && (
-                                                    <div className="md:hidden absolute top-[40px] left-[20px] w-0.5 h-[calc(100%-16px)] bg-gray-100 z-0">
-                                                        <div className={`w-full bg-green-500 transition-all duration-500 ${index < currentStepIndex ? 'h-full' : 'h-0'}`} />
+                                                {index < timelineSteps.length - 1 && (
+                                                    <div className="md:hidden absolute top-[34px] left-[16px] w-0.5 h-[calc(100%-10px)] bg-gray-100 z-0">
+                                                        <div className={`w-full transition-all duration-500 ${connectorFillClass} ${index < currentStepIndex ? 'h-full' : 'h-0'}`} />
                                                     </div>
                                                 )}
 
                                                 {/* Connector Lines (Desktop Only) */}
-                                                {index < steps.length - 1 && (
+                                                {index < timelineSteps.length - 1 && (
                                                     <div className="hidden md:block absolute top-5 left-[calc(50%+20px)] w-[calc(100%-40px)] h-0.5 bg-gray-100">
-                                                        <div className={`h-full bg-green-500 transition-all duration-500 ${index < currentStepIndex ? 'w-full' : 'w-0'}`} />
+                                                        <div className={`h-full transition-all duration-500 ${connectorFillClass} ${index < currentStepIndex ? 'w-full' : 'w-0'}`} />
                                                     </div>
                                                 )}
 
-                                                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center border-2 transition-all relative z-10 shrink-0
-                                                    ${isCompleted ? 'bg-green-50 border-green-100 text-green-600' : 'bg-white'}
-                                                    ${isCurrent && !isCompleted ? 'border-primary text-primary bg-primary/5 shadow-lg shadow-primary/10' : ''}
+                                                <div className={`w-8 h-8 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center border-2 transition-all relative z-10 shrink-0
+                                                    ${isCompleted ? completedAccentClass : 'bg-white'}
+                                                    ${isCurrent && !isCompleted ? currentAccentClass : ''}
                                                     ${!isCompleted && !isCurrent ? 'border-gray-50 text-gray-300' : ''}
                                                 `}>
-                                                    <Icon size={isCurrent ? 20 : 18} strokeWidth={isCurrent ? 3 : 2} />
+                                                    <Icon size={isCurrent ? 16 : 15} strokeWidth={isCurrent ? 3 : 2} className="md:w-[18px] md:h-[18px]" />
                                                 </div>
 
                                                 <div className="min-w-0">
@@ -294,7 +325,7 @@ const OrderDetailPage = () => {
                                                         {step.label}
                                                     </p>
                                                     {isCurrent && (
-                                                        <p className="text-[9px] font-bold text-green-500 mt-1 md:text-center">Live Update</p>
+                                                        <p className={`text-[9px] font-bold mt-1 md:text-center ${liveTextClass}`}>Live Update</p>
                                                     )}
                                                 </div>
                                             </div>
@@ -413,7 +444,7 @@ const OrderDetailPage = () => {
                                     <div>
                                         <p className="text-[10px] font-black text-red-700 uppercase tracking-widest">Order Cancelled</p>
                                         {order.cancelledAt && (
-                                            <p className="text-[9px] text-red-500 mt-0.5">
+                                            <p className="text-[9px] text-textPrimary mt-0.5 font-semibold">
                                                 {new Date(order.cancelledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </p>
                                         )}
@@ -424,17 +455,6 @@ const OrderDetailPage = () => {
                                     <p className="text-xs text-gray-500 text-center">Refund amount: {formatINR(order.refundAmount)}</p>
                                 )}
                             </div>
-                        )}
-
-                        {/* Return Action (High Contrast) */}
-                        {isDelivered && canReturn && (
-                            <button
-                                onClick={() => navigate(`/request-return/${order.id}`)}
-                                className="w-full bg-secondary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3 hover:bg-primary shadow-xl shadow-secondary/10"
-                            >
-                                <RefreshCw size={14} strokeWidth={3} />
-                                Return / Exchange
-                            </button>
                         )}
 
                     </div>

@@ -117,9 +117,14 @@ const CouponFormPage = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        const positiveFields = ['usageLimit', 'perUserLimit'];
+        const nextValue = positiveFields.includes(name)
+            ? (value === '' ? '' : String(Math.max(1, Number(value) || 1)))
+            : value;
+
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : nextValue
         }));
     };
 
@@ -175,11 +180,22 @@ const CouponFormPage = () => {
         if (formData.userEligibility === 'selected' && (!formData.selectedUsers || formData.selectedUsers.length === 0)) {
             return toast.error('Please select at least one user for selected-users coupon');
         }
+        if (Number(formData.usageLimit) <= 0 || Number(formData.perUserLimit) <= 0) {
+            return toast.error('Global cap and per user limit must be greater than 0');
+        }
         setLoading(true);
         
         // Date Validation
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+
+        if (formData.validFrom) {
+            const fromDate = new Date(formData.validFrom);
+            if (fromDate < today) {
+                setLoading(false);
+                return toast.error('Start date cannot be in the past');
+            }
+        }
         
         if (formData.validUntil) {
             const untilDate = new Date(formData.validUntil);
@@ -202,8 +218,8 @@ const CouponFormPage = () => {
             value: Number(formData.value),
             minOrderValue: Number(formData.minOrderValue),
             maxDiscount: Number(formData.maxDiscount) || null,
-            usageLimit: Number(formData.usageLimit) || 1000,
-            perUserLimit: Number(formData.perUserLimit) || 1,
+            usageLimit: formData.usageLimit === '' ? 1000 : Math.max(1, Number(formData.usageLimit) || 1),
+            perUserLimit: formData.perUserLimit === '' ? 1 : Math.max(1, Number(formData.perUserLimit) || 1),
             selectedUsers: formData.userEligibility === 'selected'
                 ? [...new Set((formData.selectedUsers || []).filter(Boolean))]
                 : []
@@ -282,7 +298,7 @@ const CouponFormPage = () => {
                                             value={formData.code}
                                             onChange={handleChange}
                                             placeholder="e.g., WELCOME10"
-                                            className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-sm font-black tracking-widest outline-none focus:bg-white focus:border-footerBg transition-all uppercase"
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-black tracking-widest outline-none focus:bg-white focus:border-footerBg transition-all uppercase"
                                         />
                                         <button
                                             type="button"
@@ -301,7 +317,7 @@ const CouponFormPage = () => {
                                             name="type"
                                             value={formData.type}
                                             onChange={handleChange}
-                                            className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all cursor-pointer"
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all cursor-pointer"
                                         >
                                             <option value="flat">Fixed (₹)</option>
                                             <option value="percent">Percent (%)</option>
@@ -318,7 +334,7 @@ const CouponFormPage = () => {
                                                 onChange={handleChange}
                                                 disabled={formData.type === 'free_shipping'}
                                                 placeholder="0.00"
-                                                className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-sm font-black outline-none focus:bg-white focus:border-primary transition-all disabled:opacity-50"
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-sm font-black outline-none focus:bg-white focus:border-primary transition-all disabled:opacity-50"
                                             />
                                             {formData.type !== 'free_shipping' && (
                                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-gray-300 text-xs">
@@ -337,7 +353,7 @@ const CouponFormPage = () => {
                                         onChange={handleChange}
                                         rows="2"
                                         placeholder="Internal campaign notes..."
-                                        className="w-full bg-gray-50 border border-transparent rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all resize-none"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs font-bold outline-none focus:bg-white focus:border-footerBg transition-all resize-none"
                                     ></textarea>
                                 </div>
                             </div>
@@ -478,11 +494,11 @@ const CouponFormPage = () => {
                         <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
                             <div className="space-y-1">
                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Starts</label>
-                                <input type="date" name="validFrom" value={formData.validFrom} onChange={handleChange} className="w-full bg-gray-50 border border-transparent rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
+                                <input type="date" min={new Date().toISOString().split('T')[0]} name="validFrom" value={formData.validFrom} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Ends</label>
-                                <input type="date" name="validUntil" value={formData.validUntil} onChange={handleChange} className="w-full bg-gray-50 border border-transparent rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
+                                <input type="date" min={formData.validFrom || new Date().toISOString().split('T')[0]} name="validUntil" value={formData.validUntil} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
                             </div>
                         </div>
                     </div>
@@ -499,20 +515,20 @@ const CouponFormPage = () => {
                         <div className="space-y-4">
                             <div className="space-y-1">
                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Min Order (₹)</label>
-                                <input type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} className="w-full bg-gray-50 border border-transparent rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
+                                <input type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Max Disc (₹)</label>
-                                <input type="number" name="maxDiscount" value={formData.maxDiscount} onChange={handleChange} disabled={formData.type === 'flat'} className="w-full bg-gray-50 border border-transparent rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg disabled:opacity-30" />
+                                <input type="number" name="maxDiscount" value={formData.maxDiscount} onChange={handleChange} disabled={formData.type === 'flat'} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg disabled:opacity-30" />
                             </div>
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-0.5">Global Cap</label>
-                                    <input type="number" name="usageLimit" value={formData.usageLimit} onChange={handleChange} className="w-full bg-gray-50 border border-transparent rounded-xl p-3 text-[10px] font-black outline-none" />
+                                    <input type="number" min="1" name="usageLimit" value={formData.usageLimit} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-0.5">Per User</label>
-                                    <input type="number" name="perUserLimit" value={formData.perUserLimit} onChange={handleChange} className="w-full bg-gray-50 border border-transparent rounded-xl p-3 text-[10px] font-black outline-none" />
+                                    <input type="number" min="1" name="perUserLimit" value={formData.perUserLimit} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-[10px] font-black outline-none focus:bg-white focus:border-footerBg" />
                                 </div>
                             </div>
                             <div className="flex items-center justify-between px-1 pt-2">

@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
 const API_URL = 'http://localhost:5000/api';
 const credentials = {
-    email: 'admin@farmlyf.com',
+    email: 'admin@vrushahi.com',
     password: 'admin'
 };
 
@@ -45,3 +45,4 @@ async function testAuth() {
 }
 
 testAuth();
+

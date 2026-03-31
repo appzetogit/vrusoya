@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, Bell, CheckCircle, RefreshCw } from 'lucide-react';
+import { Send, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNotifications } from '../../../hooks/useNotifications.jsx';
 import { API_BASE_URL } from '@/lib/apiUrl';
 
 const API_URL = API_BASE_URL;
@@ -10,7 +9,6 @@ const API_URL = API_BASE_URL;
 const PushNotificationPage = () => {
     const [searchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'list';
-    const { notificationPermission, initNotifications } = useNotifications();
 
     // Push Notification State
     const [pushMessage, setPushMessage] = useState({
@@ -41,7 +39,7 @@ const PushNotificationPage = () => {
             setHistoryLoading(true);
             const response = await fetch(`${API_URL}/notifications/history?page=${page}&limit=${pagination.limit}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 },
                 credentials: 'include'
             });
@@ -77,7 +75,7 @@ const PushNotificationPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify(pushMessage)
@@ -110,7 +108,7 @@ const PushNotificationPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify({
@@ -319,3 +317,4 @@ const PushNotificationPage = () => {
 };
 
 export default PushNotificationPage;
+

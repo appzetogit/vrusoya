@@ -19,7 +19,7 @@ export const SKUS = [
 export const PACKS = [
     {
         id: '1',
-        brand: 'FARMLYF ANMOL',
+        brand: 'VRUSHAHI ANMOL',
         name: 'Farmlyf Anmol Jumbo Size Sonora Almonds 500gm',
         category: 'nuts',
         subcategory: 'Almonds',
@@ -34,7 +34,7 @@ export const PACKS = [
     },
     {
         id: '2',
-        brand: 'FARMLYF PREMIUM',
+        brand: 'VRUSHAHI PREMIUM',
         name: 'Farmlyf Jumbo Roasted Royale Cashews 500g',
         category: 'nuts',
         subcategory: 'Cashews',
@@ -49,7 +49,7 @@ export const PACKS = [
     },
     {
         id: '3',
-        brand: 'FARMLYF CLASSIC',
+        brand: 'VRUSHAHI CLASSIC',
         name: 'Farmlyf Premium Walnuts (Akhrot) 250g',
         category: 'nuts',
         subcategory: 'Walnuts (Akhrot)',
@@ -64,7 +64,7 @@ export const PACKS = [
     },
     {
         id: '4',
-        brand: 'FARMLYF PREMIUM',
+        brand: 'VRUSHAHI PREMIUM',
         name: 'Farmlyf Medjool Dates Large (Imported) 500g',
         category: 'dried-fruits',
         subcategory: 'Dates',
@@ -79,7 +79,7 @@ export const PACKS = [
     },
     {
         id: '5',
-        brand: 'FARMLYF ANMOL',
+        brand: 'VRUSHAHI ANMOL',
         name: 'Farmlyf Premium Dried Figs (Anjeer) 250g',
         category: 'dried-fruits',
         subcategory: 'Dried Figs (Anjeer)',
@@ -97,7 +97,7 @@ export const PACKS = [
 export const PRODUCTS = [
     {
         id: 'p1',
-        brand: 'FARMLYF ANMOL',
+        brand: 'VRUSHAHI ANMOL',
         name: 'Farmlyf Anmol Jumbo Size Sonora Almonds',
         category: 'nuts',
         subcategory: 'Almonds',
@@ -124,7 +124,7 @@ export const PRODUCTS = [
     },
     {
         id: 'p2',
-        brand: 'FARMLYF PREMIUM',
+        brand: 'VRUSHAHI PREMIUM',
         name: 'Farmlyf Jumbo Roasted Royale Cashews',
         category: 'nuts',
         subcategory: 'Cashews',
@@ -150,7 +150,7 @@ export const PRODUCTS = [
     },
     {
         id: 'p3',
-        brand: 'FARMLYF CLASSIC',
+        brand: 'VRUSHAHI CLASSIC',
         name: 'Farmlyf Premium Walnuts (Akhrot)',
         category: 'nuts',
         subcategory: 'Walnuts (Akhrot)',
@@ -174,7 +174,7 @@ export const PRODUCTS = [
     },
     {
         id: 'p4',
-        brand: 'FARMLYF PREMIUM',
+        brand: 'VRUSHAHI PREMIUM',
         name: 'Farmlyf Medjool Dates Large (Imported)',
         category: 'dried-fruits',
         subcategory: 'Dates',
@@ -198,7 +198,7 @@ export const PRODUCTS = [
     },
     {
         id: 'p5',
-        brand: 'FARMLYF ANMOL',
+        brand: 'VRUSHAHI ANMOL',
         name: 'Farmlyf Premium Dried Figs (Anjeer)',
         category: 'dried-fruits',
         subcategory: 'Dried Figs (Anjeer)',
@@ -310,4 +310,5 @@ export const COUPONS = [
         description: 'Free shipping on all orders!'
     }
 ];
+
 

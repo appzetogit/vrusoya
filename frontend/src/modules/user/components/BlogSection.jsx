@@ -60,7 +60,7 @@ const BlogSection = () => {
                     >
                         {blogPosts.map((post) => (
                             (() => {
-                                const displayAuthor = (post.author || '').toLowerCase() === 'farmlyf' ? 'Vrushahi Group' : (post.author || 'Vrushahi Group');
+                                const displayAuthor = (post.author || '').toLowerCase() === 'vrushahi' ? 'Vrushahi Group' : (post.author || 'Vrushahi Group');
                                 return (
                             <motion.div
                                 key={post._id || post.id}
@@ -160,3 +160,4 @@ const BlogSection = () => {
 };
 
 export default BlogSection;
+

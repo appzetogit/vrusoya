@@ -1,4 +1,4 @@
-# FarmLyf - Dry Fruits E-commerce Implementation Plan
+# Vrushahi - Dry Fruits E-commerce Implementation Plan
 
 ## 1. Project Overview
 **Objective:** Build a pack-first dry fruits e-commerce web application.
@@ -77,3 +77,4 @@ src/
 
 ---
 *Created by Antigravity*
+

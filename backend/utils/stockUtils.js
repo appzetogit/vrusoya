@@ -1,5 +1,6 @@
 import Product from '../models/Product.js';
 import { sendAdminLowStockNotification } from './notificationUtils.js';
+import { createStockHistoryEntry } from './stockHistoryUtils.js';
 
 /**
  * Validates if there is enough stock for the given order items.
@@ -151,6 +152,17 @@ export const deductStock = async (orderItems = []) => {
                     throw new Error(`Insufficient stock for "${product.name}" (${variant.weight || variant.id}). Available: ${variant.stock}, requested: ${item.qty}`);
                 }
 
+                await createStockHistoryEntry({
+                    product,
+                    variant,
+                    type: 'order',
+                    change: -item.qty,
+                    previousStock: Number(variant.stock || 0),
+                    newStock: Math.max(0, Number(variant.stock || 0) - item.qty),
+                    performedBy: 'System',
+                    reason: 'Order fulfilled'
+                });
+
                 appliedDeductions.push({ productId: product.id, variantId: variant.id, qty: item.qty });
 
                 // Check for low stock alert
@@ -175,6 +187,16 @@ export const deductStock = async (orderItems = []) => {
                 if (!updateResult.modifiedCount) {
                     throw new Error(`Insufficient stock for "${product.name}". Available: ${product.stock?.quantity || 0}, requested: ${item.qty}`);
                 }
+
+                await createStockHistoryEntry({
+                    product,
+                    type: 'order',
+                    change: -item.qty,
+                    previousStock: Number(product.stock?.quantity || 0),
+                    newStock: Math.max(0, Number(product.stock?.quantity || 0) - item.qty),
+                    performedBy: 'System',
+                    reason: 'Order fulfilled'
+                });
 
                 appliedDeductions.push({ productId: product.id, variantId: null, qty: item.qty });
 
@@ -239,19 +261,40 @@ export const restockItems = async (orderItems = []) => {
                  const variant = product.variants.find(v => String(v.id) === String(variantId) || v.weight === variantId);
                  
                 if (variant) {
+                    const previousStock = Number(variant.stock || 0);
                     await Product.updateOne(
                         { id: product.id, 'variants.id': variant.id },
                         { $inc: { 'variants.$.stock': item.qty } }
                     );
+                    await createStockHistoryEntry({
+                        product,
+                        variant,
+                        type: 'restock',
+                        change: item.qty,
+                        previousStock,
+                        newStock: previousStock + item.qty,
+                        performedBy: 'System',
+                        reason: 'Order cancelled restock'
+                    });
                     console.log(`Restocked ${item.qty} for variant ${variant.id} of product ${product.id}`);
                 } else {
                     console.error(`Variant ${variantId} not found for product ${product.id} during restocking`);
                 }
             } else {
+                const previousStock = Number(product.stock?.quantity || 0);
                 await Product.updateOne(
                     { id: product.id },
                     { $inc: { 'stock.quantity': item.qty } }
                 );
+                await createStockHistoryEntry({
+                    product,
+                    type: 'restock',
+                    change: item.qty,
+                    previousStock,
+                    newStock: previousStock + item.qty,
+                    performedBy: 'System',
+                    reason: 'Order cancelled restock'
+                });
                 console.log(`Restocked ${item.qty} for product ${product.id}`);
             }
         } catch (error) {

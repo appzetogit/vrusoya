@@ -5,8 +5,8 @@ import { API_BASE_URL } from '@/lib/apiUrl';
 // Helper to check if user is authenticated
 const isAuthenticated = () => {
     try {
-        const user = localStorage.getItem('farmlyf_current_user');
-        const token = localStorage.getItem('farmlyf_token');
+        const user = localStorage.getItem('vrushahi_current_user');
+        const token = localStorage.getItem('vrushahi_token');
         return !!(user && token);
     } catch {
         return false;
@@ -15,7 +15,7 @@ const isAuthenticated = () => {
 
 const getAuthHeaders = () => {
     try {
-        const token = localStorage.getItem('farmlyf_token');
+        const token = localStorage.getItem('vrushahi_token');
         return token ? { Authorization: `Bearer ${token}` } : {};
     } catch {
         return {};
@@ -23,7 +23,7 @@ const getAuthHeaders = () => {
 };
 
 // Mock Banners Data for now if API not ready, or use local storage logic if that was the plan.
-// Previous implementation used localStorage 'farmlyf_banners'.
+// Previous implementation used localStorage 'vrushahi_banners'.
 // We can use a query that reads from localStorage for now to mimic "Server/Persisted" state,
 // or better, use a Zustand store if it's purely client-side admin demo.
 // However, the prompt asked for "Products -> React Query", implies data fetching.
@@ -535,3 +535,4 @@ export const useUpdateWebsiteContent = (slug) => {
         onError: (err) => toast.error(err.message)
     });
 };
+
