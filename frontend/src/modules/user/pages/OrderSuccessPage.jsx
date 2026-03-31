@@ -48,7 +48,7 @@ const OrderSuccessPage = () => {
                 </div>
 
                 <p className="mt-5 md:mt-7 text-[9px] md:text-[10px] text-textPrimary/45 font-bold uppercase tracking-[0.2em]">
-                    Thank you for choosing FarmLyf
+                    Thank you for choosing Vrusoya
                 </p>
             </motion.div>
         </div>
@@ -56,3 +56,4 @@ const OrderSuccessPage = () => {
 };
 
 export default OrderSuccessPage;
+

@@ -25,7 +25,7 @@ const LoginPage = () => {
             if (res.success) {
                 // Double check if the logged in user is actually an admin
                 // Note: AuthContext should ideally handle this storage update before returning
-                const user = JSON.parse(localStorage.getItem('farmlyf_current_user'));
+                const user = JSON.parse(localStorage.getItem('vrushahi_current_user'));
                 if (user && user.role === 'admin') {
                     navigate('/admin/dashboard');
                 } else {
@@ -59,7 +59,7 @@ const LoginPage = () => {
                 {/* Branding */}
                 {/* Branding */}
                 <div className="flex flex-col items-center justify-center mb-6 text-center">
-                    <img src={logo} alt="FarmLyf" className="h-12 w-auto mb-4" />
+                    <img src={logo} alt="Vrushahi" className="h-12 w-auto mb-4" />
                     <h1 className="text-2xl font-black text-white tracking-tighter uppercase mb-2">
                         Admin <span className="text-primary">Portal</span>
                     </h1>
@@ -151,3 +151,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

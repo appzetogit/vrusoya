@@ -122,9 +122,6 @@ const OfferFormPage = () => {
                         <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">
                             {isEdit ? 'Edit Offer' : 'Create New Offer'}
                         </h1>
-                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">
-                            Configure curated collections for marketing banners
-                        </p>
                     </div>
                 </div>
                 <button

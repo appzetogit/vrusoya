@@ -85,7 +85,7 @@ const defaultBanners = [
 
 const initialState = {
     coupons: [],
-    banners: JSON.parse(localStorage.getItem('farmlyf_banners')) || defaultBanners,
+    banners: JSON.parse(localStorage.getItem('vrushahi_banners')) || defaultBanners,
     loading: false,
     error: null,
 };
@@ -97,12 +97,12 @@ const shopSlice = createSlice({
         addBanner: (state, action) => {
             const newBanner = { id: 'bnr-' + Date.now(), ...action.payload };
             state.banners.push(newBanner);
-            localStorage.setItem('farmlyf_banners', JSON.stringify(state.banners));
+            localStorage.setItem('vrushahi_banners', JSON.stringify(state.banners));
             toast.success('Banner added');
         },
         deleteBanner: (state, action) => {
             state.banners = state.banners.filter(b => b.id !== action.payload);
-            localStorage.setItem('farmlyf_banners', JSON.stringify(state.banners));
+            localStorage.setItem('vrushahi_banners', JSON.stringify(state.banners));
             toast.success('Banner deleted');
         },
     },
@@ -149,4 +149,5 @@ export const selectBanners = (state) => state.shop.banners;
 export const selectBannersBySection = (state, section) => state.shop.banners.filter(b => b.section === section);
 
 export default shopSlice.reducer;
+
 

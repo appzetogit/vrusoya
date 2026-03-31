@@ -223,7 +223,7 @@ class ShiprocketService {
         billing_pincode: orderData.shippingAddress.pincode,
         billing_state: orderData.shippingAddress.state,
         billing_country: 'India',
-        billing_email: orderData.userEmail || 'customer@farmlyf.com',
+        billing_email: orderData.userEmail || 'customer@vrushahi.com',
         billing_phone: orderData.shippingAddress.phone,
         shipping_is_billing: true,
         order_items: orderItems,
@@ -536,7 +536,7 @@ class ShiprocketService {
         pickup_state: originalOrder.shippingAddress?.state,
         pickup_country: 'India',
         pickup_pincode: originalOrder.shippingAddress?.pincode,
-        pickup_email: originalOrder.userEmail || 'customer@farmlyf.com',
+        pickup_email: originalOrder.userEmail || 'customer@vrushahi.com',
         pickup_phone: originalOrder.shippingAddress?.phone,
         pickup_isd_code: '91',
         shipping_customer_name: process.env.SHIPROCKET_SELLER_NAME || 'FarmlyF',
@@ -546,7 +546,7 @@ class ShiprocketService {
         shipping_state: process.env.SHIPROCKET_SELLER_STATE || 'Maharashtra',
         shipping_country: 'India',
         shipping_pincode: process.env.SHIPROCKET_SELLER_PINCODE || '400001',
-        shipping_email: process.env.SHIPROCKET_SELLER_EMAIL || 'returns@farmlyf.com',
+        shipping_email: process.env.SHIPROCKET_SELLER_EMAIL || 'returns@vrushahi.com',
         shipping_phone: process.env.SHIPROCKET_SELLER_PHONE || '9999999999',
         order_items: orderItems.map(item => ({
           ...item,
@@ -576,3 +576,4 @@ class ShiprocketService {
 
 // Export singleton instance
 export default new ShiprocketService();
+

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, Bell, CheckCircle, RefreshCw } from 'lucide-react';
+import { Send, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNotifications } from '../../../hooks/useNotifications.jsx';
 import { API_BASE_URL } from '@/lib/apiUrl';
 
 const API_URL = API_BASE_URL;
@@ -10,7 +9,6 @@ const API_URL = API_BASE_URL;
 const PushNotificationPage = () => {
     const [searchParams] = useSearchParams();
     const activeTab = searchParams.get('tab') || 'list';
-    const { notificationPermission, initNotifications, isFirebaseConfigComplete } = useNotifications();
 
     // Push Notification State
     const [pushMessage, setPushMessage] = useState({
@@ -41,7 +39,7 @@ const PushNotificationPage = () => {
             setHistoryLoading(true);
             const response = await fetch(`${API_URL}/notifications/history?page=${page}&limit=${pagination.limit}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 },
                 credentials: 'include'
             });
@@ -77,7 +75,7 @@ const PushNotificationPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify(pushMessage)
@@ -110,7 +108,7 @@ const PushNotificationPage = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify({
@@ -173,30 +171,6 @@ const PushNotificationPage = () => {
                     <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Engage with your mobile users</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => initNotifications()}
-                        className="px-4 py-3 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all"
-                    >
-                        Enable Browser Push
-                    </button>
-                </div>
-            </div>
-
-            <div className="bg-white border border-gray-100 rounded-[2rem] p-5 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Push Status</p>
-                <p className="text-sm font-bold text-gray-800 mt-2">
-                    Firebase Web Config: {isFirebaseConfigComplete ? 'Ready' : 'Missing'}
-                </p>
-                <p className="text-sm font-bold text-gray-800 mt-1">
-                    Browser Permission: {notificationPermission}
-                </p>
-                {!isFirebaseConfigComplete && (
-                    <p className="text-xs text-red-500 mt-2">
-                        Frontend Firebase web app values are incomplete or still pointing to the old project, so browser push cannot register a valid FCM token yet.
-                    </p>
-                )}
             </div>
 
             {/* List Tab (History) */}
@@ -340,3 +314,4 @@ const PushNotificationPage = () => {
 };
 
 export default PushNotificationPage;
+

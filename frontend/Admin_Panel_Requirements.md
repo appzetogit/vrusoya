@@ -1,4 +1,4 @@
-# FarmLyf Project: User Functionality & Admin Panel Requirements
+# Vrushahi Project: User Functionality & Admin Panel Requirements
 
 This document outlines the existing functionalities and data structures in the User Module, serving as the blueprint for developing the Admin Panel.
 
@@ -62,7 +62,7 @@ This document outlines the existing functionalities and data structures in the U
 ```json
 {
   "id": "prod_001",
-  "brand": "FARMLYF ANMOL",
+  "brand": "VRUSHAHI ANMOL",
   "name": "Premium Almonds",
   "category": "Nuts",
   "image": "/path/to/image.png",
@@ -106,7 +106,7 @@ This document outlines the existing functionalities and data structures in the U
   "deliveryStatus": "Shipped",
   "amount": 1250,
   "paymentMethod": "cod", // or 'online'
-  "courierPartner": "FarmLyf Express",
+  "courierPartner": "Vrushahi Express",
   "trackingId": "TRK-123456789",
   "items": [
       { "id": "v1", "name": "Almonds", "qty": 2, "price": 350 }
@@ -178,3 +178,4 @@ This document outlines the existing functionalities and data structures in the U
   "active": true
 }
 ```
+

@@ -225,7 +225,7 @@ const AdminProfilePage = () => {
                                 disabled={!isEditing}
                                 maxLength={60}
                                 autoComplete="name"
-                                className={`w-full border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none transition-all ${isEditing ? 'bg-gray-50 focus:ring-1 focus:ring-black/5' : 'bg-transparent pl-0'}`}
+                                className={`w-full rounded-xl border px-4 py-3 text-sm font-bold text-gray-700 outline-none transition-all ${isEditing ? 'border-gray-300 bg-white focus:border-black/40 focus:ring-2 focus:ring-black/5' : 'border-gray-200 bg-gray-50'}`}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -237,7 +237,7 @@ const AdminProfilePage = () => {
                                 onChange={handleChange}
                                 disabled={!isEditing}
                                 autoComplete="email"
-                                className={`w-full border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none transition-all ${isEditing ? 'bg-gray-50 focus:ring-1 focus:ring-black/5' : 'bg-transparent pl-0'}`}
+                                className={`w-full rounded-xl border px-4 py-3 text-sm font-bold text-gray-700 outline-none transition-all ${isEditing ? 'border-gray-300 bg-white focus:border-black/40 focus:ring-2 focus:ring-black/5' : 'border-gray-200 bg-gray-50'}`}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -253,7 +253,7 @@ const AdminProfilePage = () => {
                                 minLength={10}
                                 pattern="\d{10}"
                                 autoComplete="tel"
-                                className={`w-full border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none transition-all ${isEditing ? 'bg-gray-50 focus:ring-1 focus:ring-black/5' : 'bg-transparent pl-0'}`}
+                                className={`w-full rounded-xl border px-4 py-3 text-sm font-bold text-gray-700 outline-none transition-all ${isEditing ? 'border-gray-300 bg-white focus:border-black/40 focus:ring-2 focus:ring-black/5' : 'border-gray-200 bg-gray-50'}`}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -262,7 +262,7 @@ const AdminProfilePage = () => {
                                 type="text"
                                 value="Super Admin"
                                 disabled
-                                className="w-full bg-transparent pl-0 border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 cursor-not-allowed outline-none"
+                                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-400 cursor-not-allowed outline-none"
                             />
                         </div>
                     </div>

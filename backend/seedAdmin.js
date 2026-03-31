@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi';
 
 const seedAdmin = async () => {
   try {
@@ -41,3 +41,4 @@ const seedAdmin = async () => {
 };
 
 seedAdmin();
+

@@ -7,7 +7,6 @@ import {
     Banknote,
     Box,
     FileWarning,
-    History,
     AlertTriangle,
     Layers,
     Boxes,
@@ -17,11 +16,8 @@ import {
     MessageSquare,
     ShieldCheck,
     Plus,
-    List,
-    Bell,
-    Settings
 } from 'lucide-react';
-import { useAllOrders, useAllReturns } from '../../../hooks/useOrders';
+import { useAllOrders } from '../../../hooks/useOrders';
 import { useProducts, useCategories, useSubCategories } from '../../../hooks/useProducts';
 import { useUsers } from '../../../hooks/useUsers';
 import { useCoupons } from '../../../hooks/useCoupons';
@@ -32,7 +28,6 @@ const DashboardPage = () => {
 
     // Data Fetching
     const { data: orders = [] } = useAllOrders();
-    const { data: returns = [] } = useAllReturns();
     const { data: products = [] } = useProducts();
     const { data: userData } = useUsers();
     const totalUsersCount = userData?.total || 0;
@@ -72,12 +67,6 @@ const DashboardPage = () => {
             return stock > 0 && stock < 15;
         }).length;
 
-        // Returns
-        const pendingReturns = returns.filter(r => normalizeStatus(r.status) === 'pending').length;
-        const activeReplacements = returns.filter(r => r.type === 'replacement' && r.status !== 'Completed').length;
-        const completedReturns = returns.filter(r =>
-            ['completed', 'refunded'].includes(normalizeStatus(r.status))
-        ).length;
         const userReviewCount = allReviews.filter((review) =>
             Boolean(review?.product?.id || review?.product?.name || review?.product)
         ).length;
@@ -101,23 +90,17 @@ const DashboardPage = () => {
             { label: 'Sold Out', value: outOfStock, icon: FileWarning, color: 'text-red-600', link: '/admin/inventory/alerts', badge: outOfStock > 0 ? 'Urgent' : null },
             { label: 'Low Stock', value: lowStock, icon: AlertTriangle, color: 'text-amber-500', link: '/admin/inventory/alerts' },
 
-            // Section 4: Returns
-            { label: 'Pending Returns', value: pendingReturns, icon: History, color: 'text-orange-500', link: '/admin/returns', badge: pendingReturns > 0 ? 'New' : null },
-            { label: 'Active Replacements', value: activeReplacements, icon: History, color: 'text-blue-500', link: '/admin/replacements' },
-            { label: 'Completed Returns', value: completedReturns, icon: CheckCircle2, color: 'text-emerald-500', link: '/admin/returns' },
-
-            // Section 5: Engagement
+            // Section 4: Engagement
             { label: 'Active Coupons', value: coupons.filter(c => c.active).length, icon: TicketPercent, color: 'text-pink-500', link: '/admin/coupons' },
             { label: 'User Reviews', value: userReviewCount, icon: MessageSquare, color: 'text-blue-400', link: '/admin/reviews' },
             { label: 'Admin Reviews', value: adminReviewCount, icon: ShieldCheck, color: 'text-slate-600', link: '/admin/reviews' },
         ];
-    }, [orders, products, returns, userData, categories, subcategories, coupons, allReviews, adminReviews]);
+    }, [orders, products, userData, categories, subcategories, coupons, allReviews, adminReviews]);
 
     const quickActions = [
         { label: 'Add Product', icon: Plus, link: '/admin/products/add', color: 'bg-emerald-50 text-emerald-600' },
         { label: 'Create Coupon', icon: TicketPercent, link: '/admin/coupons/add', color: 'bg-pink-50 text-pink-600' },
         { label: 'Pending Orders', icon: Clock, link: '/admin/orders?status=Processing', color: 'bg-amber-50 text-amber-600' },
-        { label: 'Check Returns', icon: History, link: '/admin/returns', color: 'bg-orange-50 text-orange-600' },
         { label: 'Stock Alerts', icon: AlertTriangle, link: '/admin/inventory/alerts', color: 'bg-red-50 text-red-600' },
         { label: 'Manage Banners', icon: Boxes, link: '/admin/banners', color: 'bg-blue-50 text-blue-600' },
     ];

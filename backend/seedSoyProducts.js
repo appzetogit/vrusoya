@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi';
 
 const buildVariant = ({ id, quantity, unit, price, stock = 100 }) => ({
   id,
@@ -250,3 +250,4 @@ const seedSoyProducts = async () => {
 };
 
 seedSoyProducts();
+

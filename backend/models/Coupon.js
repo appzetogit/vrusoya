@@ -7,10 +7,11 @@ const couponSchema = new mongoose.Schema({
   value: Number,
   minOrderValue: Number,
   maxDiscount: Number,
+  validFrom: Date,
   validUntil: Date,
-  usageLimit: Number,
+  usageLimit: { type: Number, min: 1 },
   usageCount: { type: Number, default: 0 },
-  perUserLimit: Number,
+  perUserLimit: { type: Number, min: 1 },
   active: { type: Boolean, default: true },
   
   // Enhanced Validation Fields

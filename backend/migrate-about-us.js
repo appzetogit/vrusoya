@@ -45,7 +45,7 @@ async function migrate() {
       title: section.title || 'Freshness That',
       highlightedTitle: section.highlightedTitle || 'Connects Us!',
       description1: section.description1 || "Our journey began with a simple mission: to bring the finest, farm-fresh dry fruits and nuts directly to your doorstep. We believe that healthy eating shouldn't be a luxury.",
-      description2: section.description2 || "Today, FarmLyf is a community of health enthusiasts. We source premium produce, ensuring every pack carries our promise of quality and nutrition.",
+      description2: section.description2 || "Today, Vrushahi is a community of health enthusiasts. We source premium produce, ensuring every pack carries our promise of quality and nutrition.",
       image: section.image || 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&q=80&w=1600',
       stats: section.stats && section.stats.length > 0 ? section.stats.map(s => ({ 
         label: s.label, 
@@ -61,7 +61,7 @@ async function migrate() {
         title: 'Freshness That',
         highlightedTitle: 'Connects Us!',
         description1: "Our journey began with a simple mission: to bring the finest, farm-fresh dry fruits and nuts directly to your doorstep. We believe that healthy eating shouldn't be a luxury.",
-        description2: "Today, FarmLyf is a community of health enthusiasts. We source premium produce, ensuring every pack carries our promise of quality and nutrition.",
+        description2: "Today, Vrushahi is a community of health enthusiasts. We source premium produce, ensuring every pack carries our promise of quality and nutrition.",
         image: 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&q=80&w=1600',
         stats: [
             { id: '1', label: 'Outlets', value: '15+' },
@@ -92,3 +92,4 @@ async function migrate() {
 }
 
 migrate();
+

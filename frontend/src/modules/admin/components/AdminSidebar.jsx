@@ -8,7 +8,6 @@ import {
     Package,
     Boxes,
     ShoppingBag,
-    RefreshCcw,
     TicketPercent,
     Settings,
     LogOut,
@@ -28,7 +27,6 @@ import {
     CheckCircle,
     Truck,
     CheckCircle2,
-    ArrowLeftRight,
     AlertTriangle,
     Upload,
     Activity,
@@ -112,8 +110,6 @@ const AdminSidebar = () => {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
         { icon: Users, label: 'Users', path: '/admin/users' },
         { icon: Layers, label: 'Categories', path: '/admin/categories' },
-        { icon: RefreshCcw, label: 'Returns', path: '/admin/returns' },
-        { icon: ArrowLeftRight, label: 'Replacements', path: '/admin/replacements' },
         { icon: TicketPercent, label: 'Coupons', path: '/admin/coupons' },
         { icon: Tag, label: 'Offers & Collections', path: '/admin/offers' },
     ];
@@ -133,7 +129,7 @@ const AdminSidebar = () => {
         <div className="w-72 h-screen bg-footerBg text-white flex flex-col fixed left-0 top-0 z-50 overflow-hidden" style={{ overscrollBehavior: 'contain' }} data-lenis-prevent>
             {/* Logo Section */}
             <div className="p-6 border-b border-white/10 flex items-center gap-3 shrink-0">
-                <img src={logo} alt="FarmLyf" className="h-8 w-auto object-contain" />
+                <img src={logo} alt="Vrushahi" className="h-8 w-auto object-contain" />
                 <span className="font-brand font-bold text-xl tracking-tight">Admin</span>
             </div>
 
@@ -526,23 +522,6 @@ const AdminSidebar = () => {
 
                 </div>
 
-                {/* Items After Reviews (Returns and Replacements) */}
-                {
-                    menuItems.slice(3, 5).map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${isDirectItemHighlighted(item.path)
-                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                }`}
-                        >
-                            <item.icon size={20} strokeWidth={isDirectItemHighlighted(item.path) ? 2.5 : 2} />
-                            <span className="font-bold text-sm">{item.label}</span>
-                        </Link>
-                    ))
-                }
-
                 {/* Inventory Management Section - Expandable */}
                 <div className="mt-1">
                     <button
@@ -568,16 +547,6 @@ const AdminSidebar = () => {
                             >
                                 <Plus size={16} />
                                 <span className="font-semibold">Stock Adjustments</span>
-                            </Link>
-                            <Link
-                                to="/admin/inventory/history"
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm ${location.pathname === '/admin/inventory/history'
-                                    ? 'bg-primary/20 text-white'
-                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                                    }`}
-                            >
-                                <Clock size={16} />
-                                <span className="font-semibold">Stock History</span>
                             </Link>
                             <Link
                                 to="/admin/inventory/alerts"
@@ -606,7 +575,7 @@ const AdminSidebar = () => {
 
                 {/* Remaining Menu Items */}
                 {
-                    menuItems.slice(5).map((item) => (
+                    menuItems.slice(3).map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
@@ -728,3 +697,4 @@ const AdminSidebar = () => {
 };
 
 export default AdminSidebar;
+

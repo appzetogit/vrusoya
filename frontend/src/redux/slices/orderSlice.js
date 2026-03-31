@@ -20,7 +20,7 @@ export const fetchOrders = createAsyncThunk('orders/fetchOrders', async (userId,
 });
 
 const initialState = {
-    orders: JSON.parse(localStorage.getItem('farmlyf_orders')) || {}, // { userId: [orders] }
+    orders: JSON.parse(localStorage.getItem('vrushahi_orders')) || {}, // { userId: [orders] }
     loading: false,
     error: null,
 };
@@ -50,12 +50,12 @@ const orderSlice = createSlice({
                 }],
                 estimatedDelivery: estimatedDeliveryDate.toISOString(),
                 deliveredDate: null,
-                courierPartner: 'FarmLyf Express',
+                courierPartner: 'Vrushahi Express',
                 ...orderData
             };
 
             state.orders[userId].unshift(newOrder);
-            localStorage.setItem('farmlyf_orders', JSON.stringify(state.orders));
+            localStorage.setItem('vrushahi_orders', JSON.stringify(state.orders));
             toast.success('Order placed successfully!');
             return; // Context returned ID, we can't easily return from reducer but can use callback or selector
         },
@@ -76,7 +76,7 @@ const orderSlice = createSlice({
                     if (newStatus === 'Delivered' && !order.deliveredDate) {
                         order.deliveredDate = newStatusEntry.timestamp;
                     }
-                    localStorage.setItem('farmlyf_orders', JSON.stringify(state.orders));
+                    localStorage.setItem('vrushahi_orders', JSON.stringify(state.orders));
                     toast.success(`Order updated to ${newStatus}`);
                 }
              }
@@ -104,3 +104,4 @@ export const selectOrderById = (state, userId, orderId) =>
     state.orders.orders[userId]?.find(o => o.id === orderId);
 
 export default orderSlice.reducer;
+

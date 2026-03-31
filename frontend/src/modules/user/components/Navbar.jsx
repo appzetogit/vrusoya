@@ -43,8 +43,8 @@ const Navbar = () => {
 
     const notificationItems = React.useMemo(() => {
         const guestItems = notificationsMap.guest || [];
-        const userClearKey = `farmlyf_notif_feed_cleared_at_${user?.id || 'guest'}`;
-        const guestClearKey = 'farmlyf_notif_feed_cleared_at_guest';
+        const userClearKey = `vrushahi_notif_feed_cleared_at_${user?.id || 'guest'}`;
+        const guestClearKey = 'vrushahi_notif_feed_cleared_at_guest';
         const userClearedAt = localStorage.getItem(userClearKey);
         const guestClearedAt = localStorage.getItem(guestClearKey);
         const clearCutoffMs = Math.max(
@@ -210,7 +210,7 @@ const Navbar = () => {
             <div className="hidden md:flex justify-between items-center gap-4 md:gap-8">
                 {/* Logo */}
                 <Link to="/" className="flex-shrink-0 flex items-center gap-1.5 relative">
-                    <img src={logo} alt="FarmLyf" className="h-12 md:h-16 w-auto object-contain scale-110" />
+                    <img src={logo} alt="Vrushahi" className="h-12 md:h-16 w-auto object-contain scale-110" />
                     <div className="hidden md:flex flex-col justify-center gap-0 pl-2">
                         <span className="font-brand font-black text-[22px] tracking-[0.02em] leading-[0.9] text-primary uppercase">VRUSHAHI</span>
                         <span className="font-brand font-bold text-[13px] tracking-[0.34em] leading-normal text-secondary uppercase">SOya Products</span>
@@ -415,8 +415,8 @@ const Navbar = () => {
                                             type="button"
                                             onClick={() => {
                                                 const now = new Date().toISOString();
-                                                localStorage.setItem(`farmlyf_notif_feed_cleared_at_${user?.id || 'guest'}`, now);
-                                                localStorage.setItem('farmlyf_notif_feed_cleared_at_guest', now);
+                                                localStorage.setItem(`vrushahi_notif_feed_cleared_at_${user?.id || 'guest'}`, now);
+                                                localStorage.setItem('vrushahi_notif_feed_cleared_at_guest', now);
                                                 clearNotifications(user?.id);
                                                 clearNotifications('guest');
                                             }}
@@ -499,7 +499,7 @@ const Navbar = () => {
                 {/* Centered Logo */}
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
                     <Link to="/" className="flex-shrink-0">
-                        <img src={logo} alt="FarmLyf" className="h-10 w-auto object-contain" />
+                        <img src={logo} alt="Vrushahi" className="h-10 w-auto object-contain" />
                     </Link>
                     <div className="hidden flex-col items-start leading-none text-left">
                         <span className="font-brand font-black text-[20px] tracking-[0.02em] text-primary uppercase">VRUSHAHI</span>
@@ -558,8 +558,8 @@ const Navbar = () => {
                                             type="button"
                                             onClick={() => {
                                                 const now = new Date().toISOString();
-                                                localStorage.setItem(`farmlyf_notif_feed_cleared_at_${user?.id || 'guest'}`, now);
-                                                localStorage.setItem('farmlyf_notif_feed_cleared_at_guest', now);
+                                                localStorage.setItem(`vrushahi_notif_feed_cleared_at_${user?.id || 'guest'}`, now);
+                                                localStorage.setItem('vrushahi_notif_feed_cleared_at_guest', now);
                                                 clearNotifications(user?.id);
                                                 clearNotifications('guest');
                                             }}
@@ -801,3 +801,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

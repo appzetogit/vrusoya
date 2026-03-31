@@ -30,7 +30,7 @@ const blogSchema = new mongoose.Schema({
   author: {
     type: String,
     required: true,
-    default: 'FarmLyf'
+    default: 'Vrushahi'
   },
   category: {
     type: String,
@@ -48,3 +48,4 @@ const blogSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export default mongoose.model('Blog', blogSchema);
+

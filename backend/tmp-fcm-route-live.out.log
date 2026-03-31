@@ -1,0 +1,4 @@
+[dotenv@17.2.3] injecting env (26) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+MongoDB Connected: ac-l12nwhb-shard-00-00.5oxllok.mongodb.net
+Server running on port 5051

@@ -13,9 +13,10 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'farmlyf_banners',
+    folder: 'vrushahi_banners',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'avif'],
   },
 });
 
 export { cloudinary, storage };
+

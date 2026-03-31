@@ -4,7 +4,7 @@ let connectionPromise = null;
 let hasConnectionListeners = false;
 
 const connectDB = async () => {
-  const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf';
+  const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi';
 
   if (!uri) {
     throw new Error('MONGO_URI is not configured');
@@ -51,3 +51,4 @@ const connectDB = async () => {
 };
 
 export default connectDB;
+

@@ -90,7 +90,7 @@ const OrderDetailPage = () => {
         queryFn: async () => {
             const res = await fetch(`${API_URL}/users/${order.userId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('farmlyf_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
                 }
             });
             if (!res.ok) return null;
@@ -733,4 +733,5 @@ const OrderDetailPage = () => {
 };
 
 export default OrderDetailPage;
+
 

@@ -58,7 +58,6 @@ const DEFAULT_FOOTER_CONFIG = {
             links: [
                 { label: 'About Us', url: '/about-us' },
                 { label: 'Track Order', url: '/orders' },
-                { label: 'Returns', url: '/returns' },
                 { label: 'Privacy Policy', url: '/privacy-policy' },
                 { label: 'Terms & Conditions', url: '/terms-conditions' }
             ]
@@ -67,14 +66,26 @@ const DEFAULT_FOOTER_CONFIG = {
     contact: {
         address: "Office No 501, Princess center, 5th Floor, New Palasia, Indore, 452001",
         phone: "+91 98765 43210",
-        email: "support@farmlyf.com"
+        email: "support@vrushahi.com"
     },
     badges: [
         { icon: 'Award', text: 'Certified Quality' },
         { icon: 'Truck', text: 'Pan-India Delivery' },
-        { icon: 'ShieldCheck', text: 'Secure Checkout' },
-        { icon: 'RotateCcw', text: '7-Day Return' }
+        { icon: 'ShieldCheck', text: 'Secure Checkout' }
     ]
+};
+
+const sanitizeFooterConfig = (rawConfig) => {
+    const nextConfig = structuredClone(rawConfig);
+
+    nextConfig.columns = (nextConfig.columns || []).map((column) => ({
+        ...column,
+        links: (column.links || []).filter((link) => !['/returns', '/return', '/replacement', '/request-return'].includes(link.url))
+    }));
+
+    nextConfig.badges = (nextConfig.badges || []).filter((badge) => !/return|replacement/i.test(String(badge.text || '')));
+
+    return nextConfig;
 };
 
 const FooterManagerPage = () => {
@@ -86,7 +97,7 @@ const FooterManagerPage = () => {
 
     useEffect(() => {
         if (serverConfig?.content) {
-            setConfig(serverConfig.content);
+            setConfig(sanitizeFooterConfig(serverConfig.content));
         }
     }, [serverConfig]);
 
@@ -94,7 +105,7 @@ const FooterManagerPage = () => {
         try {
             await updateMutation.mutateAsync({
                 title: 'Footer Configuration',
-                content: config,
+                content: sanitizeFooterConfig(config),
                 slug: 'footer-config'
             });
             setIsEditing(false);
@@ -498,3 +509,4 @@ const FooterManagerPage = () => {
 };
 
 export default FooterManagerPage;
+

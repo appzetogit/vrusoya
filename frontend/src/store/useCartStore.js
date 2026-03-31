@@ -128,7 +128,7 @@ const useCartStore = create(
             getAppliedCoupon: (userId) => get().appliedCoupons[userId || 'guest'] || null
         }),
         {
-            name: 'farmlyf_cart', // unique name
+            name: 'vrushahi_cart', // unique name
             storage: createJSONStorage(() => localStorage),
             partialize: (state) => ({
                 cartItems: state.cartItems,
@@ -139,3 +139,4 @@ const useCartStore = create(
 );
 
 export default useCartStore;
+

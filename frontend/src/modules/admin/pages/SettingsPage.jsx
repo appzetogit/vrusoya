@@ -22,6 +22,9 @@ const API_URL = API_BASE_URL;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const STORE_NAME_REGEX = /^[A-Za-z ]+$/;
 const WHATSAPP_REGEX = /^\+?[0-9]{10,15}$/;
+const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$/;
+const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+const FSSAI_REGEX = /^\d{14}$/;
 const ALLOWED_TABS = ['general', 'invoice'];
 
 const SettingsPage = () => {
@@ -180,6 +183,11 @@ const SettingsPage = () => {
                 await saveStoreGeneralSettings();
             }
 
+            if (activeTab === 'invoice') {
+                await handleSaveInvoiceSettings();
+                return;
+            }
+
             await updateSettingMutation.mutateAsync({
                 key: 'checkout_fee_config',
                 value: checkoutFees
@@ -212,6 +220,20 @@ const SettingsPage = () => {
         }));
     };
 
+    const handleInvoiceInputChange = (field, value) => {
+        let nextValue = String(value || '');
+
+        if (field === 'gstNumber') {
+            nextValue = nextValue.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 15);
+        } else if (field === 'panNumber') {
+            nextValue = nextValue.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 10);
+        } else if (field === 'fssai') {
+            nextValue = nextValue.replace(/\D/g, '').slice(0, 14);
+        }
+
+        setInvoiceSettings((prev) => ({ ...prev, [field]: nextValue }));
+    };
+
     const checkoutFeeItems = [
         {
             key: 'paymentHandlingFee',
@@ -242,9 +264,55 @@ const SettingsPage = () => {
 
     const handleSaveInvoiceSettings = async () => {
         try {
+            const normalizedInvoiceSettings = {
+                sellerName: String(invoiceSettings.sellerName || '').trim(),
+                sellerAddress: String(invoiceSettings.sellerAddress || '').trim(),
+                companyOfficeAddress: String(invoiceSettings.companyOfficeAddress || '').trim(),
+                gstNumber: String(invoiceSettings.gstNumber || '').trim().toUpperCase(),
+                panNumber: String(invoiceSettings.panNumber || '').trim().toUpperCase(),
+                fssai: String(invoiceSettings.fssai || '').trim()
+            };
+
+            if (!normalizedInvoiceSettings.sellerName) {
+                toast.error('Seller name is required');
+                return;
+            }
+            if (!normalizedInvoiceSettings.sellerAddress) {
+                toast.error('Seller address is required');
+                return;
+            }
+            if (!normalizedInvoiceSettings.companyOfficeAddress) {
+                toast.error('Company office address is required');
+                return;
+            }
+            if (!normalizedInvoiceSettings.gstNumber) {
+                toast.error('GSTIN number is required');
+                return;
+            }
+            if (!GSTIN_REGEX.test(normalizedInvoiceSettings.gstNumber)) {
+                toast.error('Please enter a valid GSTIN number');
+                return;
+            }
+            if (!normalizedInvoiceSettings.panNumber) {
+                toast.error('PAN number is required');
+                return;
+            }
+            if (!PAN_REGEX.test(normalizedInvoiceSettings.panNumber)) {
+                toast.error('Please enter a valid PAN number');
+                return;
+            }
+            if (!normalizedInvoiceSettings.fssai) {
+                toast.error('FSSAI number is required');
+                return;
+            }
+            if (!FSSAI_REGEX.test(normalizedInvoiceSettings.fssai)) {
+                toast.error('FSSAI number must be exactly 14 digits');
+                return;
+            }
+
             await updateSettingMutation.mutateAsync({
                 key: 'invoice_settings',
-                value: invoiceSettings
+                value: normalizedInvoiceSettings
             });
         } catch {
             // Error toast already handled in hook
@@ -328,7 +396,7 @@ const SettingsPage = () => {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                                <input type="email" defaultValue="admin@farmlyf.com" className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-black/5 transition-all outline-none" />
+                                <input type="email" defaultValue="admin@vrushahi.com" className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-black/5 transition-all outline-none" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
@@ -574,7 +642,7 @@ const SettingsPage = () => {
                                 <input 
                                     type="text" 
                                     value={invoiceSettings.sellerName}
-                                    onChange={(e) => setInvoiceSettings({ ...invoiceSettings, sellerName: e.target.value })}
+                                    onChange={(e) => handleInvoiceInputChange('sellerName', e.target.value)}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" 
                                     placeholder="Vrushahi"
                                 />
@@ -584,7 +652,8 @@ const SettingsPage = () => {
                                 <input 
                                     type="text" 
                                     value={invoiceSettings.gstNumber}
-                                    onChange={(e) => setInvoiceSettings({ ...invoiceSettings, gstNumber: e.target.value })}
+                                    onChange={(e) => handleInvoiceInputChange('gstNumber', e.target.value)}
+                                    maxLength={15}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" 
                                     placeholder="24AAAAA0000A1Z5"
                                 />
@@ -594,7 +663,8 @@ const SettingsPage = () => {
                                 <input 
                                     type="text" 
                                     value={invoiceSettings.panNumber}
-                                    onChange={(e) => setInvoiceSettings({ ...invoiceSettings, panNumber: e.target.value })}
+                                    onChange={(e) => handleInvoiceInputChange('panNumber', e.target.value)}
+                                    maxLength={10}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" 
                                     placeholder="ABCDE1234F"
                                 />
@@ -604,7 +674,9 @@ const SettingsPage = () => {
                                 <input 
                                     type="text" 
                                     value={invoiceSettings.fssai}
-                                    onChange={(e) => setInvoiceSettings({ ...invoiceSettings, fssai: e.target.value })}
+                                    onChange={(e) => handleInvoiceInputChange('fssai', e.target.value)}
+                                    inputMode="numeric"
+                                    maxLength={14}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all" 
                                     placeholder="12345678901234"
                                 />
@@ -614,7 +686,7 @@ const SettingsPage = () => {
                                 <textarea 
                                     rows="2"
                                     value={invoiceSettings.sellerAddress}
-                                    onChange={(e) => setInvoiceSettings({ ...invoiceSettings, sellerAddress: e.target.value })}
+                                    onChange={(e) => handleInvoiceInputChange('sellerAddress', e.target.value)}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none" 
                                     placeholder="123, Green Park, Delhi - 110016"
                                 />
@@ -624,23 +696,13 @@ const SettingsPage = () => {
                                 <textarea 
                                     rows="2"
                                     value={invoiceSettings.companyOfficeAddress}
-                                    onChange={(e) => setInvoiceSettings({ ...invoiceSettings, companyOfficeAddress: e.target.value })}
+                                    onChange={(e) => handleInvoiceInputChange('companyOfficeAddress', e.target.value)}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all resize-none" 
                                     placeholder="Vrushahi Soya Product Pvt Ltd, Corporate House, Mumbai - 400001"
                                 />
                             </div>
                         </div>
 
-                        <div className="pt-4">
-                            <button
-                                type="button"
-                                onClick={handleSaveInvoiceSettings}
-                                disabled={updateSettingMutation.isPending}
-                                className="bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl shadow-black/10 active:scale-95 disabled:opacity-60 text-xs flex items-center gap-2"
-                            >
-                                {updateSettingMutation.isPending ? 'Saving...' : <><Save size={16} /> Save Invoice Settings</>}
-                            </button>
-                        </div>
                     </div>
                 )}
             </div>
@@ -650,3 +712,4 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+

@@ -4,8 +4,7 @@ import Pagination from '../components/Pagination';
 import {
     ArrowLeft,
     Download,
-    Calendar,
-    DollarSign
+    Calendar
 } from 'lucide-react';
 import { AdminTable, AdminTableHeader, AdminTableHead, AdminTableBody, AdminTableRow, AdminTableCell } from '../components/AdminTable';
 
@@ -14,7 +13,11 @@ import { useAllOrders } from '../../../hooks/useOrders';
 
 const InventoryReportsPage = () => {
     const navigate = useNavigate();
-    const [dateRange, setDateRange] = useState('All Time');
+    const [dateRange, setDateRange] = useState('Last 30 Days');
+    const [customDateRange, setCustomDateRange] = useState({
+        startDate: '',
+        endDate: ''
+    });
     const [activeTab, setActiveTab] = useState('category'); // 'category' or 'sku'
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -24,6 +27,104 @@ const InventoryReportsPage = () => {
 
     const isLoading = loadingProducts || loadingOrders;
 
+    const normalizeStatus = (value) => String(value || '').trim().toLowerCase();
+
+    const getOrderDate = (order) => {
+        const rawDate = order?.createdAt || order?.date;
+        const parsedDate = rawDate ? new Date(rawDate) : null;
+        return parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : null;
+    };
+
+    const getProductStock = (product) => {
+        const variants = Array.isArray(product?.variants) ? product.variants : [];
+        if (variants.length > 0) {
+            return variants.reduce((sum, variant) => sum + Number(variant?.stock || 0), 0);
+        }
+        return Number(product?.stock?.quantity || 0);
+    };
+
+    const getProductValue = (product) => {
+        const variants = Array.isArray(product?.variants) ? product.variants : [];
+        if (variants.length > 0) {
+            return variants.reduce(
+                (sum, variant) => sum + (Number(variant?.stock || 0) * Number(variant?.price || 0)),
+                0
+            );
+        }
+        return Number(product?.stock?.quantity || 0) * Number(product?.price || 0);
+    };
+
+    const getProductImage = (product) =>
+        product?.image ||
+        product?.imageUrl ||
+        product?.images?.[0] ||
+        'https://placehold.co/100x100/png';
+
+    const findProductMatch = (item) => {
+        const itemId = String(item?.id || '');
+        const productId = String(item?.productId || '');
+
+        for (const product of products) {
+            const normalizedProductId = String(product?._id || product?.id || '');
+            const variants = Array.isArray(product?.variants) ? product.variants : [];
+            const matchedVariant = variants.find((variant) => String(variant?.id || variant?._id || '') === itemId);
+
+            if (matchedVariant) {
+                return { product, variant: matchedVariant };
+            }
+
+            if (productId && normalizedProductId === productId) {
+                const variantByWeight = variants.find(
+                    (variant) => String(variant?.weight || '').trim() === String(item?.weight || '').trim()
+                );
+                return { product, variant: variantByWeight || null };
+            }
+
+            if (normalizedProductId && normalizedProductId === itemId) {
+                return { product, variant: null };
+            }
+        }
+
+        return { product: null, variant: null };
+    };
+
+    const filteredOrders = useMemo(() => {
+        const now = new Date();
+        let startDate = null;
+        let endDate = new Date();
+        endDate.setHours(23, 59, 59, 999);
+
+        if (dateRange === 'Last 7 Days') {
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 7);
+        } else if (dateRange === 'Last 30 Days') {
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 30);
+        } else if (dateRange === 'Last 90 Days') {
+            startDate = new Date(now);
+            startDate.setDate(now.getDate() - 90);
+        } else if (dateRange === 'Custom') {
+            if (!customDateRange.startDate || !customDateRange.endDate) return [];
+            startDate = new Date(customDateRange.startDate);
+            endDate = new Date(customDateRange.endDate);
+            endDate.setHours(23, 59, 59, 999);
+        }
+
+        if (!startDate || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+            return [];
+        }
+
+        return orders.filter((order) => {
+            const orderDate = getOrderDate(order);
+            return (
+                normalizeStatus(order?.status) !== 'cancelled' &&
+                orderDate &&
+                orderDate >= startDate &&
+                orderDate <= endDate
+            );
+        });
+    }, [orders, dateRange, customDateRange]);
+
     // Valuation Logic
     const valuationData = useMemo(() => {
         const categories = {};
@@ -32,13 +133,12 @@ const InventoryReportsPage = () => {
             if (!categories[cat]) {
                 categories[cat] = { id: cat, category: cat, items: 0, totalStock: 0, value: 0 };
             }
-            const stock = p.stock?.quantity || 0;
-            // Best effort price estimation: first variant's price or fallback
-            const price = p.variants?.[0]?.price || p.price || 0;
+            const stock = getProductStock(p);
+            const value = getProductValue(p);
 
             categories[cat].items += 1;
             categories[cat].totalStock += stock;
-            categories[cat].value += (stock * price);
+            categories[cat].value += value;
         });
         return Object.values(categories).sort((a, b) => b.value - a.value);
     }, [products]);
@@ -46,22 +146,29 @@ const InventoryReportsPage = () => {
     // Sales Logic
     const productSalesData = useMemo(() => {
         const sales = {};
-        orders.forEach(order => {
+        filteredOrders.forEach(order => {
             order.items?.forEach(item => {
-                const prodId = item.id;
-                if (!sales[prodId]) {
-                    const product = products.find(p => p.id === prodId || p._id === prodId);
-                    sales[prodId] = {
-                        id: prodId,
-                        name: item.name,
+                const { product, variant } = findProductMatch(item);
+                const baseId = String(item?.productId || product?._id || product?.id || item?.id || item?.name);
+                const variantId = String(variant?.id || variant?._id || item?.id || '');
+                const salesKey = variantId ? `${baseId}::${variantId}` : baseId;
+
+                if (!sales[salesKey]) {
+                    const productName = product?.name || item?.name || 'Unnamed Product';
+                    const weightLabel = variant?.weight || item?.weight;
+
+                    sales[salesKey] = {
+                        id: salesKey,
+                        name: weightLabel ? `${productName} (${weightLabel})` : productName,
                         category: product?.category || 'Uncategorized',
                         unitsSold: 0,
                         revenue: 0,
-                        image: product?.image || 'https://placehold.co/100x100/png'
+                        image: item?.image || getProductImage(product)
                     };
                 }
-                sales[prodId].unitsSold += (item.qty || 0);
-                sales[prodId].revenue += ((item.qty || 0) * (item.price || 0));
+
+                sales[salesKey].unitsSold += Number(item?.qty || 0);
+                sales[salesKey].revenue += Number(item?.qty || 0) * Number(item?.price || 0);
             });
         });
 
@@ -71,7 +178,7 @@ const InventoryReportsPage = () => {
                 avgPrice: s.unitsSold > 0 ? s.revenue / s.unitsSold : 0
             }))
             .sort((a, b) => b.revenue - a.revenue);
-    }, [orders, products]);
+    }, [filteredOrders, products]);
 
     const totalInventoryValue = valuationData.reduce((sum, item) => sum + item.value, 0);
     const totalItemsInStock = valuationData.reduce((sum, item) => sum + item.totalStock, 0);
@@ -83,6 +190,50 @@ const InventoryReportsPage = () => {
             currency: 'INR',
             maximumFractionDigits: 0
         }).format(amount);
+    };
+
+    const exportRows = useMemo(() => {
+        if (activeTab === 'category') {
+            return valuationData.map((row) => ({
+                Category: row.category,
+                'Unique Products': row.items,
+                'Total Quantity': row.totalStock,
+                'Estimated Value': row.value
+            }));
+        }
+
+        return productSalesData.map((row) => ({
+            'Product Name': row.name,
+            Category: row.category,
+            'Units Sold': row.unitsSold,
+            'Average Price': row.avgPrice,
+            'Total Revenue': row.revenue
+        }));
+    }, [activeTab, valuationData, productSalesData]);
+
+    const handleExport = () => {
+        if (exportRows.length === 0) return;
+
+        const headers = Object.keys(exportRows[0]);
+        const csvContent = [
+            headers.join(','),
+            ...exportRows.map((row) =>
+                headers.map((header) => `"${String(row[header] ?? '').replace(/"/g, '""')}"`).join(',')
+            )
+        ].join('\n');
+
+        const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+        const downloadLink = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const tabSlug = activeTab === 'category' ? 'category-report' : 'sku-report';
+        const dateSlug = new Date().toISOString().slice(0, 10);
+
+        downloadLink.href = url;
+        downloadLink.download = `inventory-${tabSlug}-${dateSlug}.csv`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
     };
 
     if (isLoading) {
@@ -111,13 +262,53 @@ const InventoryReportsPage = () => {
                 </div>
 
                 <div className="flex gap-3">
-                    <button className="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-50 flex items-center gap-2">
-                        <Calendar size={16} />
-                        {dateRange}
-                    </button>
-                    <button className="px-6 py-2.5 rounded-xl bg-black text-white text-xs font-bold hover:bg-gray-800 transition-all flex items-center gap-2 shadow-lg shadow-gray-200">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative">
+                            <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                            <select
+                                value={dateRange}
+                                onChange={(e) => {
+                                    setDateRange(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="appearance-none pl-10 pr-8 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-50 focus:outline-none focus:border-black"
+                            >
+                                <option>Last 7 Days</option>
+                                <option>Last 30 Days</option>
+                                <option>Last 90 Days</option>
+                                <option>Custom</option>
+                            </select>
+                        </div>
+                        {dateRange === 'Custom' && (
+                            <>
+                                <input
+                                    type="date"
+                                    value={customDateRange.startDate}
+                                    onChange={(e) => {
+                                        setCustomDateRange((prev) => ({ ...prev, startDate: e.target.value }));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-bold focus:outline-none focus:border-black"
+                                />
+                                <input
+                                    type="date"
+                                    value={customDateRange.endDate}
+                                    onChange={(e) => {
+                                        setCustomDateRange((prev) => ({ ...prev, endDate: e.target.value }));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-600 text-xs font-bold focus:outline-none focus:border-black"
+                                />
+                            </>
+                        )}
+                    </div>
+                    <button
+                        onClick={handleExport}
+                        disabled={exportRows.length === 0}
+                        className="px-6 py-2.5 rounded-xl bg-black text-white text-xs font-bold hover:bg-gray-800 transition-all flex items-center gap-2 shadow-lg shadow-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         <Download size={16} />
-                        Export PDF
+                        Export CSV
                     </button>
                 </div>
             </div>
@@ -212,7 +403,7 @@ const InventoryReportsPage = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">Product Sales Report</h2>
-                                <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">Top selling products and revenue</p>
+                                <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-[0.2em]">Top selling products and revenue for the selected date range</p>
                             </div>
                         </div>
 

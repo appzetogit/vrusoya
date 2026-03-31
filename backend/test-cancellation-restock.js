@@ -8,7 +8,7 @@ dotenv.config({ path: './backend/.env' });
 
 async function runVerification() {
     try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf');
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi');
         console.log('Connected to MongoDB');
 
         // 1. Test Base Product Restock
@@ -86,3 +86,4 @@ async function runVerification() {
 }
 
 runVerification();
+

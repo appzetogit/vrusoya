@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/farmlyf';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/vrushahi';
 
 const productMappings = {
   'soy-curd': { category: 'curd', subcategory: '' },
@@ -105,3 +105,4 @@ const repair = async () => {
 };
 
 repair();
+
