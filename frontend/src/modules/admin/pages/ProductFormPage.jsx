@@ -16,18 +16,15 @@ import {
     Search,
     Star
 } from 'lucide-react';
-import ReactQuill, { Quill } from 'react-quill-new';
+import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import BlotFormatter from 'quill-blot-formatter';
 import { useProducts, useProduct, useAddProduct, useUpdateProduct, useCategories, useUploadImage } from '../../../hooks/useProducts';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { registerQuillModules } from '../../../utils/registerQuillModules';
 
-// Register BlotFormatter
-if (typeof window !== 'undefined' && Quill) {
-    Quill.register('modules/blotFormatter', BlotFormatter);
-}
+registerQuillModules();
 
 const API_URL = API_BASE_URL;
 

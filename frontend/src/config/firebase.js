@@ -17,11 +17,16 @@ const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 // Initialize Firebase
 let app;
 let messaging;
+const isFirebaseConfigComplete = Object.values(firebaseConfig).every(Boolean) && Boolean(VAPID_KEY);
 
 try {
-  app = initializeApp(firebaseConfig);
-  messaging = getMessaging(app);
-  console.log('Firebase initialized successfully');
+  if (isFirebaseConfigComplete) {
+    app = initializeApp(firebaseConfig);
+    messaging = getMessaging(app);
+    console.log('Firebase initialized successfully');
+  } else {
+    console.warn('Firebase web config is incomplete. Push notifications will not work until all VITE_FIREBASE_* values are set.');
+  }
 } catch (error) {
   console.error('Firebase initialization error:', error);
 }
@@ -29,6 +34,11 @@ try {
 // Request notification permission and get FCM token
 export const requestNotificationPermission = async () => {
   try {
+    if (!isFirebaseConfigComplete || !messaging) {
+      console.error('Firebase messaging is not configured. Missing VITE_FIREBASE_* values or VAPID key.');
+      return null;
+    }
+
     const permission = await Notification.requestPermission();
     
     if (permission === 'granted') {
@@ -65,10 +75,11 @@ export const requestNotificationPermission = async () => {
 
 // Listen for foreground messages (returns unsubscribe function)
 export const onMessageListener = (callback) => {
+  if (!messaging) return () => {};
   return onMessage(messaging, (payload) => {
     console.log('Message received in foreground:', payload);
     callback(payload);
   });
 };
 
-export { messaging };
+export { messaging, isFirebaseConfigComplete };

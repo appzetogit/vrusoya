@@ -171,9 +171,6 @@ const PushNotificationPage = () => {
                     <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Engage with your mobile users</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {/* Add New Button if needed, or leave empty if not requested, but I'll leave the header clean */}
-                </div>
             </div>
 
             {/* List Tab (History) */}

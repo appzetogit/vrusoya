@@ -12,13 +12,13 @@ const DEFAULT_CONTACT = {
 };
 
 const ContactItem = ({ icon: Icon, title, children }) => (
-    <div className="flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+    <div className="flex items-start gap-4 md:gap-5">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.35rem] bg-[#ecf8e9] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
             <Icon size={22} strokeWidth={2.2} />
         </div>
-        <div className="space-y-1">
-            <h3 className="text-lg md:text-[1.45rem] font-bold text-footerBg">{title}</h3>
-            <div className="text-sm md:text-base text-gray-600 leading-relaxed">
+        <div className="space-y-2">
+            <h3 className="text-[1.15rem] md:text-[1.45rem] font-black tracking-tight text-footerBg">{title}</h3>
+            <div className="max-w-[28rem] text-[15px] md:text-[1.02rem] text-slate-600 leading-[1.7]">
                 {children}
             </div>
         </div>
@@ -123,25 +123,26 @@ const ContactUsPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#fcfdfb] px-3 py-2 md:px-6 md:py-3 lg:px-8">
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f7fcf7_0%,_#fbfdfb_45%,_#ffffff_100%)] px-3 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-auto max-w-6xl"
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className="mx-auto max-w-[84rem]"
             >
-                <div className="overflow-hidden rounded-[2rem] border border-primary/10 bg-white shadow-[0_20px_60px_rgba(24,40,24,0.08)]">
-                    <div className="grid gap-0 lg:grid-cols-[0.92fr_1.08fr]">
-                        <section className="space-y-6 bg-gradient-to-br from-[#f7fbf4] to-white p-5 md:p-6 lg:p-7">
-                            <div className="space-y-3">
+                <div className="overflow-hidden rounded-[2.2rem] border border-[#dfead9] bg-white shadow-[0_18px_55px_rgba(65,101,71,0.08)] lg:rounded-[2.5rem]">
+                    <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
+                        <section className="space-y-8 bg-[linear-gradient(180deg,_#fbfdf9_0%,_#ffffff_100%)] p-6 md:p-8 lg:p-9 xl:p-10">
+                            <div className="space-y-4">
                                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">Contact Us</p>
-                                <h1 className="text-[1.65rem] md:text-[2rem] font-black text-footerBg tracking-tight">Our Contact Details</h1>
-                                <div className="h-px w-full bg-black/10 relative">
+                                <h1 className="text-[2rem] md:text-[2.5rem] font-black text-footerBg tracking-[-0.03em]">Our Contact Details</h1>
+                                <div className="relative h-px w-full bg-[#d8dfd2]">
                                     <div className="absolute left-0 top-0 h-px w-28 bg-primary" />
                                 </div>
-                                <p className="text-sm md:text-base text-gray-600">Reach us easily for orders, queries, or support.</p>
+                                <p className="max-w-xl text-base md:text-[1.05rem] text-slate-600">Reach us easily for orders, queries, or support.</p>
                             </div>
 
-                            <div className="space-y-6 pt-1">
+                            <div className="space-y-8 pt-1 md:pt-3">
                                 <ContactItem icon={MapPin} title="Store Address">
                                     <p>{contact.address}</p>
                                 </ContactItem>
@@ -156,40 +157,41 @@ const ContactUsPage = () => {
                             </div>
                         </section>
 
-                        <section className="space-y-6 border-t border-primary/10 p-5 md:p-6 lg:border-t-0 lg:border-l lg:border-primary/10 lg:p-7">
-                            <div className="space-y-3">
+                        <section className="space-y-8 border-t border-[#e4ecdf] p-6 md:p-8 lg:border-l lg:border-t-0 lg:p-9 xl:p-10">
+                            <div className="space-y-4">
                                 <p className="text-[11px] font-black uppercase tracking-[0.28em] text-primary">Quick Form</p>
-                                <h2 className="text-[1.65rem] md:text-[2rem] font-black text-footerBg tracking-tight">Get in Touch</h2>
-                                <div className="h-px w-full bg-black/10 relative">
+                                <h2 className="text-[2rem] md:text-[2.5rem] font-black text-footerBg tracking-[-0.03em]">Get in Touch</h2>
+                                <div className="relative h-px w-full bg-[#d8dfd2]">
                                     <div className="absolute left-0 top-0 h-px w-28 bg-primary" />
                                 </div>
-                                <p className="text-sm md:text-base text-gray-600">Have a question or need support? We&apos;re just a message away.</p>
+                                <p className="max-w-2xl text-base md:text-[1.05rem] text-slate-600">Have a question or need support? We&apos;re just a message away.</p>
                             </div>
 
                             <form className="space-y-4" onSubmit={handleSubmit} noValidate>
                                 <div className="grid gap-3 md:grid-cols-2">
                                     <label className="block space-y-2">
-                                        <span className="text-sm font-bold text-footerBg">Your Name</span>
+                                        <span className="text-sm font-extrabold text-footerBg">Your Name</span>
                                         <input
                                             type="text"
                                             value={formData.name}
                                             onChange={(e) => handleChange('name', e.target.value)}
                                             inputMode="text"
                                             className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
+                                            className="h-14 w-full rounded-[1.05rem] border border-[#dbe4d7] bg-white px-5 text-[15px] text-footerBg outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                                         />
                                     </label>
                                     <label className="block space-y-2">
-                                        <span className="text-sm font-bold text-footerBg">Your Email</span>
+                                        <span className="text-sm font-extrabold text-footerBg">Your Email</span>
                                         <input
                                             type="email"
                                             value={formData.email}
                                             onChange={(e) => handleChange('email', e.target.value)}
                                             placeholder="name@example.com"
-                                            className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
+                                            className="h-14 w-full rounded-[1.05rem] border border-[#dbe4d7] bg-white px-5 text-[15px] text-footerBg outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                                         />
                                     </label>
                                     <label className="block space-y-2">
-                                        <span className="text-sm font-bold text-footerBg">Phone Number</span>
+                                        <span className="text-sm font-extrabold text-footerBg">Phone Number</span>
                                         <input
                                             type="text"
                                             value={formData.phone}
@@ -197,36 +199,36 @@ const ContactUsPage = () => {
                                             inputMode="numeric"
                                             maxLength={10}
                                             placeholder="9876543210"
-                                            className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
+                                            className="h-14 w-full rounded-[1.05rem] border border-[#dbe4d7] bg-white px-5 text-[15px] text-footerBg outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                                         />
                                     </label>
                                     <label className="block space-y-2">
-                                        <span className="text-sm font-bold text-footerBg">Company</span>
+                                        <span className="text-sm font-extrabold text-footerBg">Company</span>
                                         <input
                                             type="text"
                                             value={formData.company}
                                             onChange={(e) => handleChange('company', e.target.value)}
-                                            className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
+                                            className="h-14 w-full rounded-[1.05rem] border border-[#dbe4d7] bg-white px-5 text-[15px] text-footerBg outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                                         />
                                     </label>
                                 </div>
 
                                 <label className="block space-y-2">
-                                    <span className="text-sm font-bold text-footerBg">Your Message</span>
+                                    <span className="text-sm font-extrabold text-footerBg">Your Message</span>
                                     <textarea
-                                        rows="6"
+                                        rows="7"
                                         value={formData.message}
                                         onChange={(e) => handleChange('message', e.target.value)}
-                                        className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-4 py-4 text-sm outline-none transition-colors focus:border-primary"
+                                        className="min-h-[12rem] w-full resize-none rounded-[1.45rem] border border-[#dbe4d7] bg-white px-5 py-4 text-[15px] text-footerBg outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                                     />
                                 </label>
 
                                 <button
                                     type="submit"
                                     disabled={isSubmitting || !isFormFilled}
-                                    className={`inline-flex h-12 items-center justify-center rounded-xl px-6 text-sm font-black uppercase tracking-[0.16em] text-white transition-colors ${isSubmitting || !isFormFilled
+                                    className={`inline-flex h-12 items-center justify-center rounded-[0.95rem] px-7 text-sm font-black uppercase tracking-[0.16em] transition-all duration-200 ${isSubmitting || !isFormFilled
                                         ? 'cursor-not-allowed bg-[#e8f3e6] text-[#8aa487]'
-                                        : 'bg-primary text-white hover:bg-primary/90'
+                                        : 'bg-primary text-white shadow-[0_12px_26px_rgba(60,179,74,0.22)] hover:bg-primary/90'
                                         }`}
                                 >
                                     {isSubmitting ? 'Submitting...' : 'Ask A Question'}
