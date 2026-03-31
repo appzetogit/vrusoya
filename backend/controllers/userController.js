@@ -374,8 +374,8 @@ export const toggleBanUser = async (req, res) => {
 // @route   PUT /api/users/fcm-token
 // @access  Private
 export const updateFcmToken = asyncHandler(async (req, res) => {
-    const { token } = req.body;
-    if (!token) {
+    const normalizedToken = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+    if (!normalizedToken) {
         res.status(400);
         throw new Error('FCM token is required');
     }
@@ -396,7 +396,7 @@ export const updateFcmToken = asyncHandler(async (req, res) => {
     }
 
     if (user) {
-        user.fcmToken = token;
+        user.fcmToken = normalizedToken;
         await user.save();
         res.json({ message: 'FCM token updated successfully' });
     } else {
