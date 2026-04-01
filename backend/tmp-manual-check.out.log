@@ -1,0 +1,16 @@
+[dotenv@17.2.3] injecting env (27) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+MongoDB Connected: ac-xlr1les-shard-00-00.iixi9pf.mongodb.net
+Server running on port 5000
+GET /
+POST /api/users
+PUT /api/users/fcm-token
+POST /api/users/send-otp-login
+[SMS] Mock mode check: {
+  provider: 'PRP',
+  useMock: true,
+  forceMock: true,
+  hasCredentials: true
+}
+[MOCK MODE] OTP for 7223077890 (Customer): 4396
+POST /api/users

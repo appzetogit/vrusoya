@@ -3,6 +3,29 @@ import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import Notification from '../models/Notification.js';
 
+const NON_EMPTY_TOKEN_QUERY = { $exists: true, $nin: [null, ''] };
+
+const buildUserTokenQuery = (extraQuery = {}) => ({
+  ...extraQuery,
+  $or: [
+    { fcmtokenweb: NON_EMPTY_TOKEN_QUERY },
+    { fcmtokenmobile: NON_EMPTY_TOKEN_QUERY },
+    { fcmToken: NON_EMPTY_TOKEN_QUERY }
+  ]
+});
+
+const extractUserTokens = (user) => (
+  [user?.fcmtokenweb, user?.fcmtokenmobile, user?.fcmToken]
+    .map((token) => (typeof token === 'string' ? token.trim() : ''))
+    .filter(Boolean)
+);
+
+const extractAdminTokens = (adminUser) => (
+  [adminUser?.fcmToken]
+    .map((token) => (typeof token === 'string' ? token.trim() : ''))
+    .filter(Boolean)
+);
+
 // Initialize Firebase Admin SDK
 let firebaseInitialized = false;
 
@@ -41,38 +64,46 @@ export const sendNotification = async (req, res) => {
     let targetAdmins = [];
     
     if (target === 'all') {
-      targetUsers = await User.find({ 
-        fcmToken: { $exists: true, $nin: [null, ''] }
-      });
+      targetUsers = await User.find(buildUserTokenQuery());
       targetAdmins = await Admin.find({
-        fcmToken: { $exists: true, $nin: [null, ''] }
+        fcmToken: NON_EMPTY_TOKEN_QUERY
       });
     } else if (target === 'active') {
       // Users active in last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      targetUsers = await User.find({
-        fcmToken: { $exists: true, $nin: [null, ''] },
+      targetUsers = await User.find(buildUserTokenQuery({
         updatedAt: { $gte: thirtyDaysAgo }
-      });
+      }));
       targetAdmins = await Admin.find({
-        fcmToken: { $exists: true, $nin: [null, ''] }
+        fcmToken: NON_EMPTY_TOKEN_QUERY
       });
     } else if (target === 'cart') {
       // For now, send to all users with tokens
-      targetUsers = await User.find({ 
-        fcmToken: { $exists: true, $nin: [null, ''] }
-      });
+      targetUsers = await User.find(buildUserTokenQuery());
       targetAdmins = await Admin.find({
-        fcmToken: { $exists: true, $nin: [null, ''] }
+        fcmToken: NON_EMPTY_TOKEN_QUERY
       });
     }
 
-    // Debug: Log all users with any fcmToken field
-    const allUsersWithToken = await User.find({ fcmToken: { $exists: true } }).select('email fcmToken');
+    // Debug: Log all users/admins with any notification token field
+    const allUsersWithToken = await User.find({
+      $or: [
+        { fcmtokenweb: { $exists: true } },
+        { fcmtokenmobile: { $exists: true } },
+        { fcmToken: { $exists: true } }
+      ]
+    }).select('email fcmtokenweb fcmtokenmobile fcmToken');
     const allAdminsWithToken = await Admin.find({ fcmToken: { $exists: true } }).select('email fcmToken');
-    console.log('DEBUG - Users with fcmToken field:', allUsersWithToken.length);
-    console.log('DEBUG - Sample tokens:', allUsersWithToken.map(u => ({ email: u.email, hasToken: !!u.fcmToken, tokenPreview: u.fcmToken?.substring(0, 30) })));
+    console.log('DEBUG - Users with notification token fields:', allUsersWithToken.length);
+    console.log('DEBUG - Sample user tokens:', allUsersWithToken.map(u => ({
+      email: u.email,
+      hasWebToken: !!u.fcmtokenweb,
+      hasMobileToken: !!u.fcmtokenmobile,
+      hasLegacyToken: !!u.fcmToken,
+      webPreview: u.fcmtokenweb?.substring(0, 30),
+      mobilePreview: u.fcmtokenmobile?.substring(0, 30)
+    })));
     console.log('DEBUG - Admins with fcmToken field:', allAdminsWithToken.length);
     console.log('DEBUG - Admin token samples:', allAdminsWithToken.map(a => ({ email: a.email, hasToken: !!a.fcmToken, tokenPreview: a.fcmToken?.substring(0, 30) })));
     console.log('DEBUG - Target users found:', targetUsers.length);
@@ -85,7 +116,10 @@ export const sendNotification = async (req, res) => {
     }
 
     // Extract and dedupe FCM tokens across users/admins
-    const tokens = [...new Set(recipients.map((entry) => entry.fcmToken).filter(Boolean))];
+    const tokens = [...new Set([
+      ...targetUsers.flatMap(extractUserTokens),
+      ...targetAdmins.flatMap(extractAdminTokens)
+    ])];
 
     if (tokens.length === 0) {
       return res.status(400).json({ error: 'No valid tokens found' });

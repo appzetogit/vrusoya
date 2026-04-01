@@ -10,7 +10,7 @@ const router = express.Router();
 const sendMethodNotAllowed = (req, res) => {
     res.set('Allow', 'PUT');
     res.status(405).json({
-        message: 'Method not allowed. Use PUT /api/users/fcm-token with authentication.'
+        message: 'Method not allowed. Use PUT /api/users/fcm-token with authentication and a { token, platform } payload.'
     });
 };
 
