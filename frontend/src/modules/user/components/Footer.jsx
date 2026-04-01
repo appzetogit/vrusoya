@@ -191,9 +191,8 @@ const Footer = () => {
                 <p className="flex flex-col sm:flex-row items-center gap-2 text-center md:text-left">
                     <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-white/80">
                         <Leaf size={14} className="text-secondary" />
-                        <span>&copy; 2026 vrushahi market</span>
+                        <span>&copy; Vrushahi Soya Products</span>
                     </span>
-                    <span className="text-white/60">Powered by Vrushahi Soya products</span>
                 </p>
                 <div className="flex gap-6">
                     <Link to="/privacy-policy" className="hover:text-secondary transition-colors">Privacy</Link>

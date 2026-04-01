@@ -176,7 +176,6 @@ const ContactUsPage = () => {
                                             value={formData.name}
                                             onChange={(e) => handleChange('name', e.target.value)}
                                             inputMode="text"
-                                            className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm outline-none transition-colors focus:border-primary"
                                             className="h-14 w-full rounded-[1.05rem] border border-[#dbe4d7] bg-white px-5 text-[15px] text-footerBg outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10"
                                         />
                                     </label>
