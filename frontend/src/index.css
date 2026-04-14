@@ -138,3 +138,43 @@
   /* Bright Blue */
   text-decoration: underline !important;
 }
+
+/* Keep Add to Cart always visible on touch/tablet.
+   Apply hover-reveal only on desktop-like devices. */
+.product-card .product-card-add-to-cart-label {
+  opacity: 1;
+  transform: none;
+}
+
+.product-card .product-card-add-to-cart-icon {
+  display: none;
+}
+
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .product-card .product-card-add-to-cart {
+    transform: translateY(100%);
+  }
+
+  .product-card:hover .product-card-add-to-cart {
+    transform: translateY(0);
+  }
+
+  .product-card .product-card-add-to-cart-icon {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, calc(-50% + 1rem)) scale(0.5);
+    opacity: 0;
+  }
+
+  .product-card .product-card-add-to-cart:hover .product-card-add-to-cart-label {
+    transform: translateY(-1rem) scale(0.75);
+    opacity: 0;
+  }
+
+  .product-card .product-card-add-to-cart:hover .product-card-add-to-cart-icon {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
