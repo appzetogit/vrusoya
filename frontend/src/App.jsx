@@ -19,6 +19,7 @@ import InfoPage from './modules/user/pages/InfoPage';
 import ContactUsPage from './modules/user/pages/ContactUsPage';
 import VaultPage from './modules/user/pages/VaultPage';
 import OTPPage from './modules/user/pages/OTPPage';
+import OffersPage from './modules/user/pages/OffersPage';
 import AdminLayout from './modules/admin/layout/AdminLayout';
 import DashboardPage from './modules/admin/pages/DashboardPage';
 import UsersPage from './modules/admin/pages/UsersPage';
@@ -115,6 +116,7 @@ function App() {
                 <Route path="blog/:slug" element={<BlogDetailPage />} />
                 <Route path="login" element={<AuthPage />} />
                 <Route path="otp-verification" element={<OTPPage />} />
+                <Route path="offers" element={<OffersPage />} />
                 <Route path="offers/:slug" element={<SingleOfferPage />} />
               </Route>
 

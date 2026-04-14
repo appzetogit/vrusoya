@@ -26,7 +26,9 @@ const userSchema = new mongoose.Schema({
   accountType: { type: String, enum: ['Individual', 'Business'], default: 'Individual' },
   gstNumber: String, // Optional GST number for business accounts
   isBanned: { type: Boolean, default: false },
-  fcmToken: String // FCM device token for push notifications
+  fcmtokenweb: { type: String, default: '' },
+  fcmtokenmobile: { type: String, default: '' },
+  fcmToken: { type: String, default: '' } // Legacy fallback token during rollout
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

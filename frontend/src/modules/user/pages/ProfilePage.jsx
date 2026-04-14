@@ -45,6 +45,10 @@ const ProfilePage = () => {
         isDefault: false
     });
     const todayDate = new Date().toISOString().split('T')[0];
+    const hasAuthToken = typeof window !== 'undefined' && !!localStorage.getItem('vrushahi_token');
+    const profileName = String(userData?.name || user?.name || '').trim();
+    const firstName = profileName ? profileName.split(' ')[0] : 'User';
+    const profileInitial = profileName ? profileName.charAt(0).toUpperCase() : 'U';
 
     const formatAddressPhone = (value = '') => {
         const digits = String(value || '').replace(/\D/g, '');
@@ -813,7 +817,7 @@ const ProfilePage = () => {
         </div>
     );
 
-    if (profileError || (!userData && !profileLoading && !!user)) return (
+    if (profileError || (!userData && !profileLoading && !!user && hasAuthToken)) return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
             <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
                 <X size={32} />
@@ -846,11 +850,11 @@ const ProfilePage = () => {
                             <div className="flex justify-between items-start mb-6 md:mb-10">
                                 <div>
                                     <h3 className="text-lg md:text-xl font-bold font-['Poppins'] tracking-tight">Hey</h3>
-                                    <h2 className="text-2xl md:text-3xl font-bold font-['Poppins'] tracking-tight text-white">{userData.name.split(' ')[0]}</h2>
+                                    <h2 className="text-2xl md:text-3xl font-bold font-['Poppins'] tracking-tight text-white">{firstName}</h2>
                                 </div>
                                 <div className="relative">
                                     <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full border border-white/20 flex items-center justify-center text-2xl font-bold lowercase">
-                                        {userData.name.charAt(0)}
+                                        {profileInitial}
                                     </div>
 
                                     {/* Desktop Edit Button */}
@@ -917,7 +921,7 @@ const ProfilePage = () => {
                                             />
                                         ) : (
                                             <div className="w-full bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold text-white/90 text-sm">
-                                                {userData.name}
+                                                {profileName || 'Not Set'}
                                             </div>
                                         )}
                                     </div>
@@ -932,7 +936,7 @@ const ProfilePage = () => {
                                             />
                                         ) : (
                                             <div className="w-full bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold text-white/90 truncate text-[13px]">
-                                                {userData.email}
+                                                {userData?.email || user?.email || 'Not Linked'}
                                             </div>
                                         )}
                                     </div>
@@ -951,8 +955,8 @@ const ProfilePage = () => {
                                                 className="w-full bg-white/10 border border-white/20 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold text-white outline-none focus:border-primary transition-all text-[13px]"
                                             />
                                         ) : (
-                                            <div className={`w-full bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold ${userData.phone ? 'text-white/90' : 'text-white/40'} text-[13px]`}>
-                                                {userData.phone || 'Not Linked'}
+                                            <div className={`w-full bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold ${userData?.phone ? 'text-white/90' : 'text-white/40'} text-[13px]`}>
+                                                {userData?.phone || 'Not Linked'}
                                             </div>
                                         )}
                                     </div>
@@ -974,7 +978,7 @@ const ProfilePage = () => {
                                                 </div>
                                             ) : (
                                                 <div className="w-full bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold text-white/90 text-xs">
-                                                    {userData.gender || 'N/A'}
+                                                    {userData?.gender || 'N/A'}
                                                 </div>
                                             )}
                                         </div>
@@ -992,7 +996,7 @@ const ProfilePage = () => {
                                                 </div>
                                             ) : (
                                                 <div className="w-full bg-white/5 border border-white/10 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 font-semibold text-white/90 text-xs">
-                                                    {userData.birthDate || 'Not Set'}
+                                                    {userData?.birthDate || 'Not Set'}
                                                 </div>
                                             )}
                                         </div>

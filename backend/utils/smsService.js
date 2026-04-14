@@ -284,11 +284,16 @@ async function verifyOtpFromDb(mobile, otp, userType, deleteOnSuccess = true) {
 
 /**
  * Check if special bypass should be used
+ * @returns {string|null} The special OTP if bypass is triggered, else null.
  */
-function isSpecialBypass(mobile) {
-    const isBypass = mobile === '9111966732';
-    if (isBypass) console.log('[SMS] Special bypass triggered for:', mobile);
-    return isBypass;
+function getSpecialOtp(mobile) {
+    const specialNumbers = {
+        '9111966732': '1234',
+        '7610416911': '0000'
+    };
+    const otp = specialNumbers[mobile];
+    if (otp) console.log('[SMS] Special bypass triggered for:', mobile, 'with OTP:', otp);
+    return otp;
 }
 
 /**
@@ -331,8 +336,8 @@ export async function sendSmsOtp(mobile, userType = 'Delivery') {
         const otp = generateOTP(4);
 
         // Special number bypass
-        if (isSpecialBypass(mobile)) {
-            const specialOtp = '1234';
+        const specialOtp = getSpecialOtp(mobile);
+        if (specialOtp) {
             await saveOtpToDb(mobile, specialOtp, userType);
             return {
                 success: true,
@@ -414,8 +419,8 @@ export async function sendOTP(mobile, userType) {
     try {
         const otp = generateOTP(4);
 
-        if (isSpecialBypass(mobile)) {
-            const specialOtp = '1234';
+        const specialOtp = getSpecialOtp(mobile);
+        if (specialOtp) {
             await saveOtpToDb(mobile, specialOtp, userType);
             return { success: true, message: 'OTP sent successfully' };
         }

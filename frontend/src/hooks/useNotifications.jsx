@@ -68,14 +68,14 @@ export const useNotifications = () => {
   };
 
   // Register FCM token with backend
-  const registerFcmToken = async (token) => {
+  const registerFcmToken = async (token, platform = 'web') => {
     try {
       const authHeaders = getAuthHeaders ? getAuthHeaders() : { 'Content-Type': 'application/json' };
       const response = await fetch(`${API_URL}/users/fcm-token`, {
         method: 'PUT',
         headers: authHeaders,
         credentials: 'include',
-        body: JSON.stringify({ token })
+        body: JSON.stringify({ token, platform })
       });
 
       if (response.ok) {

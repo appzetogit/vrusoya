@@ -11,7 +11,8 @@ export const useUserProfile = () => {
         queryKey: ['user-profile', user?.id || null],
         queryFn: async () => {
             const res = await fetch(`${API_URL}/users/profile`, { 
-                headers: getAuthHeaders()
+                headers: getAuthHeaders(),
+                credentials: 'include'
             });
             if (!res.ok) throw new Error('Failed to fetch profile');
             return res.json();
@@ -29,7 +30,8 @@ export const useUpdateProfile = () => {
             const res = await fetch(`${API_URL}/users/profile`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify(userData)
+                body: JSON.stringify(userData),
+                credentials: 'include'
             });
 
             if (!res.ok) {

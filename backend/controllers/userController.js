@@ -12,6 +12,64 @@ const DEFAULT_ADMIN_NAME = process.env.ADMIN_NAME || 'Super Admin';
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123456';
 
 const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const VALID_FCM_PLATFORMS = ['web', 'mobile'];
+
+const normalizeFcmPlatform = (platform = '') => {
+  const normalizedPlatform = String(platform).trim().toLowerCase();
+  return VALID_FCM_PLATFORMS.includes(normalizedPlatform) ? normalizedPlatform : '';
+};
+
+const resolveFcmPayload = (payload = {}) => {
+  const source = payload?.fcm && typeof payload.fcm === 'object' ? payload.fcm : payload;
+  const token = typeof source?.token === 'string' ? source.token.trim() : '';
+  const platform = normalizeFcmPlatform(source?.platform);
+
+  return { token, platform };
+};
+
+const validateOptionalFcmPayload = (payload = {}) => {
+  const source = payload?.fcm && typeof payload.fcm === 'object' ? payload.fcm : payload;
+  const tokenProvided = source?.token !== undefined;
+  const platformProvided = source?.platform !== undefined;
+  const { token, platform } = resolveFcmPayload(payload);
+
+  if (tokenProvided || platformProvided) {
+    if (!token) {
+      const error = new Error('FCM token is required');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (!platform) {
+      const error = new Error('Platform must be either web or mobile');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+
+  return { token, platform };
+};
+
+const buildUserFcmFields = ({ token = '', platform = '' } = {}) => ({
+  fcmtokenweb: platform === 'web' ? token : '',
+  fcmtokenmobile: platform === 'mobile' ? token : '',
+  fcmToken: token || ''
+});
+
+const applyUserFcmFields = (user, { token = '', platform = '' } = {}) => {
+  if (!user || !token || !platform) return false;
+
+  if (platform === 'web') {
+    user.fcmtokenweb = token;
+  }
+
+  if (platform === 'mobile') {
+    user.fcmtokenmobile = token;
+  }
+
+  user.fcmToken = token;
+  return true;
+};
 
 const findUserByPhoneFlexible = async (normalizedPhone) => {
   if (!normalizedPhone) return null;
@@ -38,6 +96,8 @@ export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    const fcmPayload = validateOptionalFcmPayload(req.body);
+
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please add all fields' });
     }
@@ -61,7 +121,8 @@ export const registerUser = async (req, res) => {
         password: hashedPassword,
         addresses: [],
         wishlist: [],
-        usedCoupons: []
+        usedCoupons: [],
+        ...buildUserFcmFields(fcmPayload)
     });
 
     if (user) {
@@ -79,7 +140,7 @@ export const registerUser = async (req, res) => {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-     res.status(500).json({ message: error.message });
+     res.status(error.statusCode || 500).json({ message: error.message });
   }
 };
 
@@ -374,10 +435,16 @@ export const toggleBanUser = async (req, res) => {
 // @route   PUT /api/users/fcm-token
 // @access  Private
 export const updateFcmToken = asyncHandler(async (req, res) => {
-    const { token } = req.body;
-    if (!token) {
+    const { token: normalizedToken, platform } = validateOptionalFcmPayload(req.body);
+
+    if (!normalizedToken) {
         res.status(400);
         throw new Error('FCM token is required');
+    }
+
+    if (!platform) {
+        res.status(400);
+        throw new Error('Platform must be either web or mobile');
     }
 
     let user;
@@ -396,9 +463,19 @@ export const updateFcmToken = asyncHandler(async (req, res) => {
     }
 
     if (user) {
-        user.fcmToken = token;
+        if (req.user.role === 'admin') {
+            user.fcmToken = normalizedToken;
+        } else {
+            applyUserFcmFields(user, { token: normalizedToken, platform });
+        }
         await user.save();
-        res.json({ message: 'FCM token updated successfully' });
+        res.json({
+            message: 'FCM token updated successfully',
+            platform,
+            savedField: req.user.role === 'admin'
+                ? 'fcmToken'
+                : (platform === 'web' ? 'fcmtokenweb' : 'fcmtokenmobile')
+        });
     } else {
         res.status(404);
         throw new Error('User not found');
@@ -442,6 +519,7 @@ export const sendOtpForLogin = asyncHandler(async (req, res) => {
  */
 export const verifyOtpForLogin = asyncHandler(async (req, res) => {
     const { phone, otp, name, email, accountType, gstNumber } = req.body;
+    const fcmPayload = validateOptionalFcmPayload(req.body);
 
     if (!phone || !otp) {
         res.status(400);
@@ -488,7 +566,8 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
             gstNumber: gstNumber || undefined,
             addresses: [],
             wishlist: [],
-            usedCoupons: []
+            usedCoupons: [],
+            ...buildUserFcmFields(fcmPayload)
         });
     }
 
@@ -500,6 +579,13 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
     // Ensure phone used to sign in is always persisted in normalized format.
     if (user && user.phone !== normalizedPhone) {
         user.phone = normalizedPhone;
+    }
+
+    if (user && applyUserFcmFields(user, fcmPayload)) {
+        // Persist the latest platform-specific token during OTP login when provided.
+    }
+
+    if (user?.isModified()) {
         await user.save();
     }
 
