@@ -111,7 +111,7 @@ const AdminSidebar = () => {
         { icon: Users, label: 'Users', path: '/admin/users' },
         { icon: Layers, label: 'Categories', path: '/admin/categories' },
         { icon: TicketPercent, label: 'Coupons', path: '/admin/coupons' },
-        { icon: Tag, label: 'Offers & Collections', path: '/admin/offers' },
+        { icon: Tag, label: 'Promotions', path: '/admin/promotions' },
     ];
 
     // Main highlight logic: Only one item in the main list can be green at once
@@ -122,7 +122,7 @@ const AdminSidebar = () => {
 
     const isDirectItemHighlighted = (path) => {
         // Highlight only if no section is active/open and the path matches
-        return !openSection && location.pathname === path;
+        return !openSection && (location.pathname === path || (path === '/admin/promotions' && location.pathname.startsWith('/admin/promotions')));
     };
 
     return (

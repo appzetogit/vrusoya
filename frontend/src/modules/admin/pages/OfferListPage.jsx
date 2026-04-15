@@ -48,10 +48,10 @@ const OfferListPage = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['offers']);
-            toast.success('Offer deleted successfully');
+            toast.success('Promotion deleted successfully');
         },
         onError: () => {
-            toast.error('Failed to delete offer');
+            toast.error('Failed to delete promotion');
         }
     });
 
@@ -73,7 +73,7 @@ const OfferListPage = () => {
     const totalPages = Math.ceil(filteredOffers.length / itemsPerPage);
 
     const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this offer?')) {
+        if (window.confirm('Are you sure you want to delete this promotion?')) {
             deleteMutation.mutate(id);
         }
     };
@@ -88,17 +88,17 @@ const OfferListPage = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">Offers & Collections</h1>
+                    <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">Promotions</h1>
                 </div>
                 <button
-                    onClick={() => navigate('/admin/offers/add')}
+                    onClick={() => navigate('/admin/promotions/add')}
                     className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-primaryDeep transition-all shadow-lg shadow-primary/20"
                 >
-                    <Plus size={18} strokeWidth={3} /> Create New Offer
+                    <Plus size={18} strokeWidth={3} /> Create New Promotion
                 </button>
             </div>
 
-            {/* Search Bar */}
+            {/* Promotions Table */}
             <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                 <div className="relative w-full md:w-96">
                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -116,7 +116,7 @@ const OfferListPage = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
                 <AdminTable>
                     <AdminTableHeader>
-                        <AdminTableHead>Offer Details</AdminTableHead>
+                        <AdminTableHead>Promotion Details</AdminTableHead>
                         <AdminTableHead>Target Link</AdminTableHead>
                         <AdminTableHead>Products</AdminTableHead>
                         <AdminTableHead>Status</AdminTableHead>
@@ -124,14 +124,14 @@ const OfferListPage = () => {
                     </AdminTableHeader>
                     <AdminTableBody>
                         {isLoading ? (
-                            <tr><td colSpan="5" className="py-20 text-center"><p className="text-xs font-bold text-gray-400 animate-pulse uppercase tracking-widest">Loading offers...</p></td></tr>
+                            <tr><td colSpan="5" className="py-20 text-center"><p className="text-xs font-bold text-gray-400 animate-pulse uppercase tracking-widest">Loading promotions...</p></td></tr>
                         ) : paginatedOffers.length === 0 ? (
                             <tr><td colSpan="5" className="py-40 text-center">
                                 <div className="flex flex-col items-center">
                                     <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-300 mb-4 border border-dashed border-gray-200">
                                         <Tag size={32} />
                                     </div>
-                                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No offers created yet</p>
+                                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">No promotions created yet</p>
                                 </div>
                             </td></tr>
                         ) : (
@@ -188,7 +188,7 @@ const OfferListPage = () => {
                                     <AdminTableCell className="text-right">
                                         <div className="flex items-center justify-end gap-1.5">
                                             <button
-                                                onClick={() => navigate(`/admin/offers/edit/${offer._id}`)}
+                                                onClick={() => navigate(`/admin/promotions/edit/${offer._id}`)}
                                                 className="p-2 text-gray-400 hover:text-primary hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100"
                                             >
                                                 <Edit2 size={16} strokeWidth={2.5} />

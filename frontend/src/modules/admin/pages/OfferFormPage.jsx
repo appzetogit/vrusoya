@@ -86,11 +86,11 @@ const OfferFormPage = () => {
 
         if (isEdit) {
             updateOfferMutation.mutate({ id, data: formData }, {
-                onSuccess: () => navigate('/admin/offers')
+                onSuccess: () => navigate('/admin/promotions')
             });
         } else {
             addOfferMutation.mutate(formData, {
-                onSuccess: () => navigate('/admin/offers')
+                onSuccess: () => navigate('/admin/promotions')
             });
         }
     };
@@ -104,7 +104,7 @@ const OfferFormPage = () => {
     }, [products, productSearch]);
 
     if (isEdit && isOfferLoading) {
-        return <div className="py-20 text-center font-black text-gray-400 animate-pulse">LOADING OFFER...</div>;
+        return <div className="py-20 text-center font-black text-gray-400 animate-pulse">LOADING PROMOTION...</div>;
     }
 
     return (
@@ -113,14 +113,14 @@ const OfferFormPage = () => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <button
-                        onClick={() => navigate('/admin/offers')}
+                        onClick={() => navigate('/admin/promotions')}
                         className="p-3 bg-white text-footerBg rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:bg-footerBg hover:text-white transition-all group"
                     >
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
                     </button>
                     <div>
                         <h1 className="text-xl font-black text-footerBg uppercase tracking-tight">
-                            {isEdit ? 'Edit Offer' : 'Create New Offer'}
+                            {isEdit ? 'Edit Promotion' : 'Create New Promotion'}
                         </h1>
                     </div>
                 </div>
@@ -129,7 +129,7 @@ const OfferFormPage = () => {
                     disabled={addOfferMutation.isPending || updateOfferMutation.isPending}
                     className="bg-primary text-white px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-primaryDeep transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
                 >
-                    <Save size={18} /> {isEdit ? 'Update Offer' : 'Save Offer'}
+                    <Save size={18} /> {isEdit ? 'Update Promotion' : 'Save Promotion'}
                 </button>
             </div>
 
@@ -145,7 +145,7 @@ const OfferFormPage = () => {
 
                         <div className="space-y-6">
                             <div className="flex flex-col gap-2">
-                                <label className="text-xs font-black text-black uppercase tracking-widest ml-1">Offer Title</label>
+                                <label className="text-xs font-black text-black uppercase tracking-widest ml-1">Promotion Title</label>
                                 <input
                                     type="text"
                                     name="title"
@@ -189,7 +189,7 @@ const OfferFormPage = () => {
                                     value={formData.description}
                                     onChange={handleChange}
                                     rows="3"
-                                    placeholder="Brief summary displayed on the offer page..."
+                                    placeholder="Brief summary displayed on the promotion page..."
                                     className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-sm font-bold text-black outline-none focus:border-black transition-all resize-none"
                                 ></textarea>
                             </div>

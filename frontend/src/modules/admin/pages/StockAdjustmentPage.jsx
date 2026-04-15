@@ -309,6 +309,8 @@ const StockAdjustmentPage = () => {
                         <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
+                            totalItems={filteredProducts.length}
+                            itemsPerPage={itemsPerPage}
                             onPageChange={(page) => {
                                 setCurrentPage(page);
                                 window.scrollTo({ top: 0, behavior: 'smooth' });

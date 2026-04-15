@@ -206,10 +206,18 @@ const SettingsPage = () => {
     };
 
     const handleFeeInputChange = (field, value) => {
+        if (value === '') {
+            setCheckoutFees((prev) => ({
+                ...prev,
+                [field]: ''
+            }));
+            return;
+        }
+
         const numeric = Number(value);
         setCheckoutFees((prev) => ({
             ...prev,
-            [field]: Number.isFinite(numeric) && numeric >= 0 ? numeric : 0
+            [field]: Number.isFinite(numeric) && numeric >= 0 ? numeric : prev[field]
         }));
     };
 

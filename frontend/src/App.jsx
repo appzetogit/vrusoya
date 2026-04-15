@@ -143,9 +143,9 @@ function App() {
                 <Route path="inventory/adjust" element={<StockAdjustmentPage />} />
                 <Route path="inventory/alerts" element={<LowStockAlertsPage />} />
                 <Route path="inventory/reports" element={<InventoryReportsPage />} />
-                <Route path="offers" element={<OfferListPage />} />
-                <Route path="offers/add" element={<OfferFormPage />} />
-                <Route path="offers/edit/:id" element={<OfferFormPage />} />
+                <Route path="promotions" element={<OfferListPage />} />
+                <Route path="promotions/add" element={<OfferFormPage />} />
+                <Route path="promotions/edit/:id" element={<OfferFormPage />} />
                 <Route path="sections/why-choose-us" element={<WhyChooseUsPage />} />
                 <Route path="sections/about-us" element={<AboutSectionPage />} />
                 <Route path="sections/health-benefits" element={<HealthBenefitsSectionPage />} />

@@ -1,11 +1,12 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }) => {
-    if (totalPages <= 1) return null;
+const Pagination = ({ currentPage, totalPages, onPageChange, totalItems = 0, itemsPerPage = 10 }) => {
+    if (Number.isNaN(totalPages) || totalPages <= 1 || itemsPerPage <= 0 || totalItems <= 0) return null;
 
-    const startItem = (currentPage - 1) * itemsPerPage + 1;
-    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+    const startItem = (safeCurrentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(safeCurrentPage * itemsPerPage, totalItems);
 
     return (
         <div className="flex items-center justify-between px-8 py-4 bg-gray-50/50 border-t border-gray-100">
