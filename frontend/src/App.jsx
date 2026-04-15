@@ -17,6 +17,7 @@ import OrderDetailPage from './modules/user/pages/OrderDetailPage';
 import ProfilePage from './modules/user/pages/ProfilePage';
 import InfoPage from './modules/user/pages/InfoPage';
 import ContactUsPage from './modules/user/pages/ContactUsPage';
+import SupportPage from './modules/user/pages/SupportPage';
 import VaultPage from './modules/user/pages/VaultPage';
 import OTPPage from './modules/user/pages/OTPPage';
 import OffersPage from './modules/user/pages/OffersPage';
@@ -110,6 +111,8 @@ function App() {
                 <Route path="vault" element={<VaultPage />} />
                 <Route path="profile/:tab?" element={<ProfilePage />} />
                 <Route path="contact-us" element={<ContactUsPage />} />
+                <Route path="support" element={<SupportPage />} />
+                <Route path="privacy" element={<InfoPage type="privacy-policy" />} />
                 <Route path="blog/:slug" element={<BlogDetailPage />} />
                 <Route path="login" element={<AuthPage />} />
                 <Route path="otp-verification" element={<OTPPage />} />

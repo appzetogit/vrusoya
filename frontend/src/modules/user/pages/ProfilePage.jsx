@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
 
 // Hooks
-import { useUserProfile, useUpdateProfile } from '../../../hooks/useUser';
+import { useUserProfile, useUpdateProfile, useDeleteAccount } from '../../../hooks/useUser';
 import { useActiveCoupons } from '../../../hooks/useCoupons';
 
 
@@ -17,10 +17,12 @@ const ProfilePage = () => {
     const { user, loading: authLoading, logout } = useAuth();
     const { data: userData, isLoading: profileLoading, isError: profileError } = useUserProfile();
     const updateProfileMutation = useUpdateProfile();
+    const deleteAccountMutation = useDeleteAccount();
     const { data: activeCoupons = [], isLoading: couponsLoading } = useActiveCoupons();
     const { tab } = useParams();
     const activeTab = tab ? tab.charAt(0).toUpperCase() + tab.slice(1) : 'Overview';
     const [isEditing, setIsEditing] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [editForm, setEditForm] = useState({
         name: '',
         email: '',
@@ -97,6 +99,22 @@ const ProfilePage = () => {
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
+        if (!confirmed) return;
+
+        setIsDeletingAccount(true);
+        try {
+            await deleteAccountMutation.mutateAsync();
+            logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Delete account error:', error);
+        } finally {
+            setIsDeletingAccount(false);
+        }
     };
 
     const openProfileEditor = () => {
@@ -861,6 +879,23 @@ const ProfilePage = () => {
                         </div>
                         <ChevronRight size={18} className="text-gray-300" />
                     </button>
+
+                    <div className="mt-8 rounded-3xl bg-red-50 border border-red-200 p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h5 className="text-sm font-black text-red-700 uppercase tracking-widest">Delete Account</h5>
+                                <p className="text-xs text-red-600 mt-2">Removing your account will permanently delete your profile and saved data.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleDeleteAccount}
+                                disabled={isDeletingAccount}
+                                className="w-full sm:w-auto bg-red-600 text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-red-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                                {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </motion.div>
@@ -1092,6 +1127,13 @@ const ProfilePage = () => {
                                 <p className="text-[9px] md:text-[10px] text-white/60 font-medium">End session</p>
                             </div>
                         </button>
+                        <button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeletingAccount}
+                            className="w-full hidden lg:flex items-center justify-center bg-red-600 text-white hover:bg-red-700 transition-all rounded-xl py-4 uppercase tracking-[0.2em] text-xs font-black mt-4 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+                        </button>
                     </div>
 
                     {/* MAIN CONTENT AREA */}
@@ -1116,7 +1158,7 @@ const ProfilePage = () => {
                 </div>
 
                 {activeTab === 'Overview' && (
-                    <div className="lg:hidden px-4 pb-1 pt-2">
+                    <div className="lg:hidden px-4 pb-1 pt-2 space-y-3">
                         <button
                             onClick={handleLogout}
                             className="w-full flex items-center bg-[#ef4444] text-white rounded-2xl overflow-hidden shadow-lg shadow-red-500/10 active:scale-[0.98] transition-all"
@@ -1128,6 +1170,13 @@ const ProfilePage = () => {
                                 <p className="text-xs font-black uppercase tracking-widest">Logout</p>
                                 <p className="text-[9px] text-white/60 font-medium">End current session</p>
                             </div>
+                        </button>
+                        <button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeletingAccount}
+                            className="w-full flex items-center justify-center bg-red-600 text-white rounded-2xl py-4 uppercase tracking-widest text-xs font-black shadow-lg shadow-red-500/10 hover:bg-red-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
                         </button>
                     </div>
                 )}

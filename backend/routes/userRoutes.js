@@ -1,7 +1,7 @@
 import express from 'express';
 import { 
     getUsers, registerUser, loginUser, logoutUser, 
-    getUserProfile, updateUserProfile, toggleBanUser, 
+    getUserProfile, updateUserProfile, deleteUserAccount, toggleBanUser, 
     getUserById, updateFcmToken, sendOtpForLogin, verifyOtpForLogin 
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
@@ -24,6 +24,7 @@ router.post('/verify-otp-login', verifyOtpForLogin);
 
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
+router.delete('/profile', protect, deleteUserAccount);
 router.route('/fcm-token')
     .put(protect, updateFcmToken)
     .all(sendMethodNotAllowed);

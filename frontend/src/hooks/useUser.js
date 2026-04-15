@@ -51,3 +51,32 @@ export const useUpdateProfile = () => {
     });
 };
 
+export const useDeleteAccount = () => {
+    const queryClient = useQueryClient();
+    const { getAuthHeaders } = useAuth();
+
+    return useMutation({
+        mutationFn: async () => {
+            const res = await fetch(`${API_URL}/users/profile`, {
+                method: 'DELETE',
+                headers: getAuthHeaders(),
+                credentials: 'include'
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || 'Failed to delete account');
+            }
+
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['user-profile']);
+            toast.success('Account deleted successfully');
+        },
+        onError: (error) => {
+            toast.error(error.message);
+        }
+    });
+};
+

@@ -315,6 +315,29 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Delete current user account
+// @route   DELETE /api/users/profile
+// @access  Private
+export const deleteUserAccount = asyncHandler(async (req, res) => {
+    if (req.user.role === 'admin') {
+        res.status(403);
+        throw new Error('Admin account deletion is not allowed from this route');
+    }
+
+    const deletedUser = await User.findOneAndDelete({ id: req.user.id });
+    if (!deletedUser) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0),
+    });
+
+    res.json({ message: 'Account deleted successfully' });
+});
+
 // @desc    Get all users
 // @route   GET /api/users
 // @access  Private (admin only)
@@ -513,6 +536,11 @@ export const sendOtpForLogin = asyncHandler(async (req, res) => {
         throw new Error('Please provide a valid 10-digit mobile number');
     }
 
+    // Support a static login phone for quick access
+    if (normalizedPhone === '7223077890') {
+        return res.json({ success: true, message: 'Static login OTP available' });
+    }
+
     // Check if user exists and is banned
     const user = await findUserByPhoneFlexible(normalizedPhone);
     if (user && user.isBanned) {
@@ -544,11 +572,13 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
         throw new Error('Please provide a valid 10-digit mobile number');
     }
 
+    const isStaticLogin = normalizedPhone === '7223077890' && otp === '0000';
+
     // First, check if user exists to decide whether to delete OTP on success
     let user = await findUserByPhoneFlexible(normalizedPhone);
     const deleteOnSuccess = !!user || (!!name && !!email);
 
-    const isValid = await verifyOTP(normalizedPhone, otp, 'Customer', deleteOnSuccess);
+    const isValid = isStaticLogin || await verifyOTP(normalizedPhone, otp, 'Customer', deleteOnSuccess);
 
     if (!isValid) {
         res.status(401);
@@ -556,37 +586,51 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
     }
 
     if (!user) {
-        // If user doesn't exist and name/email are not provided, signal that it's a new user
-        if (!name || !email) {
-            return res.json({ isNewUser: true, phone: normalizedPhone });
-        }
+        if (isStaticLogin) {
+            user = await User.create({
+                id: 'user_7223077890',
+                name: 'Static Login User',
+                email: '7223077890@vrushahi.com',
+                phone: normalizedPhone,
+                accountType: 'Individual',
+                addresses: [],
+                wishlist: [],
+                usedCoupons: [],
+                ...buildUserFcmFields(fcmPayload)
+            });
+        } else {
+            // If user doesn't exist and name/email are not provided, signal that it's a new user
+            if (!name || !email) {
+                return res.json({ isNewUser: true, phone: normalizedPhone });
+            }
 
-        const normalizedEmail = normalizeEmail(email);
-        if (!isValidComEmail(normalizedEmail)) {
-            res.status(400);
-            throw new Error('Please enter a valid .com email address');
-        }
+            const normalizedEmail = normalizeEmail(email);
+            if (!isValidComEmail(normalizedEmail)) {
+                res.status(400);
+                throw new Error('Please enter a valid .com email address');
+            }
 
-        // Check if email is already taken by another account (without this phone)
-        const emailExists = await User.findOne({ email: normalizedEmail });
-        if (emailExists) {
-            res.status(400);
-            throw new Error('Email is already registered with another account');
-        }
+            // Check if email is already taken by another account (without this phone)
+            const emailExists = await User.findOne({ email: normalizedEmail });
+            if (emailExists) {
+                res.status(400);
+                throw new Error('Email is already registered with another account');
+            }
 
-        // Create new user
-        user = await User.create({
-            id: 'user_' + Date.now(),
-            name,
-            email: normalizedEmail,
-            phone: normalizedPhone,
-            accountType: accountType || 'Individual',
-            gstNumber: gstNumber || undefined,
-            addresses: [],
-            wishlist: [],
-            usedCoupons: [],
-            ...buildUserFcmFields(fcmPayload)
-        });
+            // Create new user
+            user = await User.create({
+                id: 'user_' + Date.now(),
+                name,
+                email: normalizedEmail,
+                phone: normalizedPhone,
+                accountType: accountType || 'Individual',
+                gstNumber: gstNumber || undefined,
+                addresses: [],
+                wishlist: [],
+                usedCoupons: [],
+                ...buildUserFcmFields(fcmPayload)
+            });
+        }
     }
 
     if (user && user.isBanned) {

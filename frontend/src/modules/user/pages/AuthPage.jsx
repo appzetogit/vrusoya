@@ -95,8 +95,12 @@ const AuthPage = () => {
                 {/* Right Side - Form */}
                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white relative">
                     <div className="text-center md:text-left mb-8">
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Poppins'] mb-2">
-                            Welcome to Vrushahi Soya Products
+                        <div className="mx-auto mb-6 h-16 w-16 md:hidden rounded-full overflow-hidden border border-gray-200 shadow-sm">
+                            <img src={authShowcaseImg} alt="Vrushahi logo" className="h-full w-full object-cover" />
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-['Poppins'] mb-2 leading-tight">
+                            <span className="block md:hidden">Welcome to Vrushahi</span>
+                            <span className="hidden md:block">Welcome to Vrushahi Soya Products</span>
                         </h1>
                         <p className="text-gray-500 text-sm">
                             Enter your mobile number to get started.

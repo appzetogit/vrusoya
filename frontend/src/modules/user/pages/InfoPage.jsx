@@ -48,6 +48,9 @@ const InfoPage = ({ type }) => {
                     <p>Your privacy is important to us. This policy outlines how we collect, use, and protect your personal information.</p>
                     <h3 className="text-xl font-bold text-footerBg mb-2">1. Information Collection</h3>
                     <p>We collect information you provide directly to us, such as when you create an account, make a purchase, or sign up for our newsletter.</p>
+                    <h3 className="text-xl font-bold text-footerBg mb-2">2. Contact & Support</h3>
+                    <p>If you have any questions about this privacy policy or need assistance with our website, please contact us at <strong>vrushahigroup@gmail.com</strong> or call <strong>9970907005</strong>.</p>
+                    <p>We are committed to addressing your concerns quickly and maintaining the security of your information.</p>
                 </div>
             )
         },
