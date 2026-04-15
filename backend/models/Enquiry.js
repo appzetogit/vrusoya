@@ -12,7 +12,7 @@ const enquirySchema = new mongoose.Schema({
     required: true,
     trim: true,
     lowercase: true,
-    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email address']
+    match: [/^[^\s@]+@[^\s@]+\.com$/i, 'Please enter a valid email address']
   },
   phone: {
     type: String,
@@ -31,3 +31,4 @@ const enquirySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export default mongoose.model('Enquiry', enquirySchema);
+

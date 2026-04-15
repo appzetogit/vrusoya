@@ -99,6 +99,12 @@ const ProfilePage = () => {
         navigate('/');
     };
 
+    const openProfileEditor = () => {
+        setShowMobileDetails(true);
+        setIsEditing(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleCopyCode = (code) => {
         navigator.clipboard.writeText(code);
         toast.success('Coupon code copied!');
@@ -154,10 +160,38 @@ const ProfilePage = () => {
 
     const handleSaveAddress = async (e) => {
         if (e) e.preventDefault();
+
+        const trimmedAddressForm = {
+            fullName: String(addressForm.fullName || '').trim(),
+            address: String(addressForm.address || '').trim(),
+            city: String(addressForm.city || '').trim(),
+            state: String(addressForm.state || '').trim(),
+            phone: formatAddressPhone(addressForm.phone),
+            pincode: String(addressForm.pincode || '').replace(/\D/g, '').slice(0, 6),
+        };
+
+        const isAddressFormComplete = (
+            trimmedAddressForm.fullName &&
+            trimmedAddressForm.address &&
+            trimmedAddressForm.city &&
+            trimmedAddressForm.state &&
+            /^\d{10}$/.test(trimmedAddressForm.phone) &&
+            /^\d{6}$/.test(trimmedAddressForm.pincode)
+        );
+
+        if (!isAddressFormComplete) {
+            toast.error('Please fill all fields correctly.');
+            return;
+        }
         
         const normalizedAddressForm = {
             ...addressForm,
-            phone: formatAddressPhone(addressForm.phone),
+            fullName: trimmedAddressForm.fullName,
+            address: trimmedAddressForm.address,
+            city: trimmedAddressForm.city,
+            state: trimmedAddressForm.state,
+            phone: trimmedAddressForm.phone,
+            pincode: trimmedAddressForm.pincode,
         };
 
         let updatedAddresses = [...(userData?.addresses || [])];
@@ -265,16 +299,18 @@ const ProfilePage = () => {
         ];
 
         const accountItems = [
-            { id: 'settings', label: 'Settings', icon: User, desc: 'Update profile and security', action: () => { setIsEditing(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
+            { id: 'settings', label: 'Settings', icon: User, desc: 'Update profile and security', action: openProfileEditor },
             { id: 'addresses', label: 'Addresses', icon: MapPin, desc: 'Manage shipping locations', action: () => navigate('/profile/addresses') },
+            { id: 'contact-us', label: 'Contact Us', icon: Headphones, desc: 'Reach our support team', action: () => navigate('/contact-us') },
         ];
 
         // Desktop View Items
         const desktopItems = [
             { id: 'orders', label: 'Orders', icon: Package, desc: 'Check your orders status and history here', action: () => navigate('/orders') },
             { id: 'coupons', label: 'Coupons', icon: Ticket, desc: 'Explore great coupon deals to get extra discounts', action: () => navigate('/profile/coupons') },
-            { id: 'settings', label: 'Profile Settings', icon: User, desc: 'Update your password, profile details and more', action: () => { setIsEditing(true); window.scrollTo({ top: 0, behavior: 'smooth' }); } },
+            { id: 'settings', label: 'Profile Settings', icon: User, desc: 'Update your password, profile details and more', action: openProfileEditor },
             { id: 'addresses', label: 'Addresses', icon: Home, desc: 'Add, edit, or manage your address easily', action: () => navigate('/profile/addresses') },
+            { id: 'contact-us', label: 'Contact Us', icon: Headphones, desc: 'Reach our support team anytime', action: () => navigate('/contact-us') },
             { id: 'wishlist', label: 'Wishlist', icon: Heart, desc: 'Shop your specially saved items from here', action: () => navigate('/wishlist') }
         ];
 
@@ -441,6 +477,22 @@ const ProfilePage = () => {
 
     const renderAddresses = () => {
         const addresses = userData?.addresses || [];
+        const trimmedAddressForm = {
+            fullName: String(addressForm.fullName || '').trim(),
+            address: String(addressForm.address || '').trim(),
+            city: String(addressForm.city || '').trim(),
+            state: String(addressForm.state || '').trim(),
+            phone: formatAddressPhone(addressForm.phone),
+            pincode: String(addressForm.pincode || '').replace(/\D/g, '').slice(0, 6),
+        };
+        const isAddressFormComplete = (
+            trimmedAddressForm.fullName &&
+            trimmedAddressForm.address &&
+            trimmedAddressForm.city &&
+            trimmedAddressForm.state &&
+            /^\d{10}$/.test(trimmedAddressForm.phone) &&
+            /^\d{6}$/.test(trimmedAddressForm.pincode)
+        );
 
         return (
             <motion.div
@@ -500,7 +552,8 @@ const ProfilePage = () => {
                                     <button
                                         type="button"
                                         onClick={handleSaveAddress}
-                                        className="px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-secondary/20 transition-all flex items-center gap-2"
+                                        disabled={!isAddressFormComplete || updateProfileMutation.isPending}
+                                        className="px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-secondary/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Check size={14} /> Quick Save
                                     </button>
@@ -539,7 +592,10 @@ const ProfilePage = () => {
                                         <input
                                             required
                                             value={addressForm.phone}
-                                            onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                                            onChange={(e) => setAddressForm({ ...addressForm, phone: formatAddressPhone(e.target.value) })}
+                                            inputMode="numeric"
+                                            maxLength={10}
+                                            pattern="[0-9]{10}"
                                             className="w-full bg-background border border-secondary/20 rounded-xl md:rounded-2xl px-5 md:px-6 py-3.5 md:py-4 font-black text-sm text-textPrimary focus:border-secondary outline-none transition-all placeholder:font-bold placeholder:text-textPrimary/30"
                                             placeholder="+91"
                                         />
@@ -582,7 +638,10 @@ const ProfilePage = () => {
                                         <input
                                             required
                                             value={addressForm.pincode}
-                                            onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
+                                            onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                                            inputMode="numeric"
+                                            maxLength={6}
+                                            pattern="[0-9]{6}"
                                             className="w-full bg-background border border-secondary/20 rounded-xl md:rounded-2xl px-5 md:px-6 py-3 md:py-3.5 font-black text-xs md:text-sm text-textPrimary focus:border-secondary outline-none transition-all"
                                         />
                                     </div>
@@ -602,7 +661,8 @@ const ProfilePage = () => {
                                 <div className="pt-8">
                                     <button
                                         type="submit"
-                                        className="w-full bg-secondary text-white py-4 md:py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-xs md:text-sm hover:bg-primary transition-all shadow-xl shadow-secondary/10 active:scale-[0.98]"
+                                        disabled={!isAddressFormComplete || updateProfileMutation.isPending}
+                                        className="w-full bg-secondary text-white py-4 md:py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-xs md:text-sm hover:bg-primary transition-all shadow-xl shadow-secondary/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {addressToEdit ? 'Update details' : 'Save location'}
                                     </button>

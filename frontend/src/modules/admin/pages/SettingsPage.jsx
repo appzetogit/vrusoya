@@ -588,9 +588,9 @@ const SettingsPage = () => {
                                 <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Checkout Fees</h4>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Used across checkout, order totals, and invoices</p>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                                 {checkoutFeeItems.map((item) => (
-                                    <div key={item.key} className="rounded-2xl bg-gray-50 p-4 space-y-4">
+                                    <div key={item.key} className="rounded-2xl bg-gray-50 p-3 space-y-3 min-h-[178px]">
                                         <div className="flex flex-col gap-2">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{item.label}</label>
                                             <input
@@ -599,12 +599,12 @@ const SettingsPage = () => {
                                                 step={item.step || '1'}
                                                 value={checkoutFees[item.key]}
                                                 onChange={(e) => handleFeeInputChange(item.key, e.target.value)}
-                                                className="w-full bg-white border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
+                                                className="w-full bg-white border-none rounded-2xl px-4 py-3 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-black/5 transition-all"
                                             />
                                         </div>
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div>
-                                                <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest">{item.toggleLabel}</p>
+                                        <div className="flex items-center justify-between gap-3 mt-auto">
+                                            <div className="min-h-[34px]">
+                                                <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-tight">{item.toggleLabel}</p>
                                                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
                                                     {checkoutFees[item.toggleKey] ? 'Enabled in checkout' : 'Disabled in checkout'}
                                                 </p>
@@ -614,10 +614,10 @@ const SettingsPage = () => {
                                                 role="switch"
                                                 aria-checked={checkoutFees[item.toggleKey]}
                                                 onClick={() => handleCheckoutToggleChange(item.toggleKey)}
-                                                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${checkoutFees[item.toggleKey] ? 'bg-black' : 'bg-gray-300'}`}
+                                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors shrink-0 ${checkoutFees[item.toggleKey] ? 'bg-black' : 'bg-gray-300'}`}
                                             >
                                                 <span
-                                                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${checkoutFees[item.toggleKey] ? 'translate-x-7' : 'translate-x-1'}`}
+                                                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${checkoutFees[item.toggleKey] ? 'translate-x-6' : 'translate-x-1'}`}
                                                 />
                                             </button>
                                         </div>

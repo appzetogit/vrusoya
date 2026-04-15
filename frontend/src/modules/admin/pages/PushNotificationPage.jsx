@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, RefreshCw } from 'lucide-react';
+import { Send, RefreshCw, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/lib/apiUrl';
 
@@ -18,6 +18,7 @@ const PushNotificationPage = () => {
     });
     const [loading, setLoading] = useState(false);
     const [resendingIds, setResendingIds] = useState(new Set()); // Track which notifications are being resent
+    const [deletingIds, setDeletingIds] = useState(new Set());
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(true);
     const [pagination, setPagination] = useState({
@@ -138,6 +139,46 @@ const PushNotificationPage = () => {
         }
     };
 
+    const handleDelete = async (notification) => {
+        try {
+            if (!notification?._id) return;
+            const confirmed = window.confirm('Delete this notification from history?');
+            if (!confirmed) return;
+
+            setDeletingIds(prev => new Set(prev).add(notification._id));
+
+            const response = await fetch(`${API_URL}/notifications/${notification._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('vrushahi_token')}`
+                },
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                toast.success(data.message || 'Notification deleted');
+
+                // Keep pagination valid after deletion
+                const nextPage = history.length === 1 && pagination.page > 1
+                    ? pagination.page - 1
+                    : pagination.page;
+                fetchHistory(nextPage);
+            } else {
+                toast.error(data.error || 'Failed to delete notification');
+            }
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+            toast.error('Failed to delete notification. Please try again.');
+        } finally {
+            setDeletingIds(prev => {
+                const next = new Set(prev);
+                next.delete(notification?._id);
+                return next;
+            });
+        }
+    };
+
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -200,11 +241,19 @@ const PushNotificationPage = () => {
                                         <div className="flex items-center gap-3">
                                             <button
                                                 onClick={() => handleResend(n)}
-                                                disabled={resendingIds.has(n._id)}
+                                                disabled={resendingIds.has(n._id) || deletingIds.has(n._id)}
                                                 className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all disabled:opacity-50"
                                                 title="Resend this notification"
                                             >
                                                 <RefreshCw size={14} className={`text-gray-600 ${resendingIds.has(n._id) ? 'animate-spin' : ''}`} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(n)}
+                                                disabled={deletingIds.has(n._id) || resendingIds.has(n._id)}
+                                                className="p-2 bg-red-50 hover:bg-red-100 rounded-xl transition-all disabled:opacity-50"
+                                                title="Delete this notification"
+                                            >
+                                                <Trash2 size={14} className={`${deletingIds.has(n._id) ? 'text-red-400' : 'text-red-600'}`} />
                                             </button>
                                             <div className="text-right">
                                                 <span className="text-[9px] font-bold text-gray-400 uppercase">{formatDate(n.createdAt)}</span>

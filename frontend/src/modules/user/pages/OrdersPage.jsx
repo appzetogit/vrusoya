@@ -13,6 +13,31 @@ const formatINR = (amount) => new Intl.NumberFormat('en-IN', {
     maximumFractionDigits: 2
 }).format(Number(amount || 0));
 
+const getOrderStatusBadgeClass = (status) => {
+    const normalizedStatus = String(status || '').trim().toLowerCase();
+
+    if (normalizedStatus === 'cancelled' || normalizedStatus === 'canceled') {
+        return 'bg-red-50 text-red-500';
+    }
+
+    if (normalizedStatus === 'shipped') {
+        return 'bg-indigo-50 text-indigo-500';
+    }
+
+    return 'bg-green-50 text-green-500';
+};
+
+const getUserFacingOrderStatus = (order) => {
+    const normalizedStatus = String(order?.status || '').trim().toLowerCase();
+    const normalizedReason = String(order?.cancellationReason || '').trim().toLowerCase();
+
+    if ((normalizedStatus === 'cancelled' || normalizedStatus === 'canceled') && normalizedReason.includes('admin')) {
+        return 'Cancelled by Admin';
+    }
+
+    return order?.status || 'Processing';
+};
+
 const OrdersPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -76,8 +101,8 @@ const OrdersPage = () => {
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono text-[9px] md:text-[11px] text-textPrimary tracking-wide">Order ID: {orderId}</span>
-                                                    <span className={`text-[8px] md:text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-widest ${order.status?.toLowerCase() === 'shipped' ? 'bg-indigo-50 text-indigo-500' : 'bg-green-50 text-green-500'}`}>
-                                                        {order.status}
+                                                    <span className={`text-[8px] md:text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-widest ${getOrderStatusBadgeClass(order.status)}`}>
+                                                        {getUserFacingOrderStatus(order)}
                                                     </span>
                                                 </div>
                                                 <div className="text-[9px] md:text-xs text-textPrimary font-bold uppercase tracking-wider flex items-center gap-1">

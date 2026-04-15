@@ -109,9 +109,6 @@ function App() {
                 <Route path="wishlist" element={<UserProtectedRoute><WishlistPage /></UserProtectedRoute>} />
                 <Route path="vault" element={<VaultPage />} />
                 <Route path="profile/:tab?" element={<ProfilePage />} />
-                {staticPageRoutes.map((pageSlug) => (
-                  <Route key={pageSlug} path={pageSlug} element={<InfoPage type={pageSlug} />} />
-                ))}
                 <Route path="contact-us" element={<ContactUsPage />} />
                 <Route path="blog/:slug" element={<BlogDetailPage />} />
                 <Route path="login" element={<AuthPage />} />
@@ -119,6 +116,10 @@ function App() {
                 <Route path="offers" element={<OffersPage />} />
                 <Route path="offers/:slug" element={<SingleOfferPage />} />
               </Route>
+
+              {staticPageRoutes.map((pageSlug) => (
+                <Route key={`static-${pageSlug}`} path={`/${pageSlug}`} element={<InfoPage type={pageSlug} />} />
+              ))}
 
               <Route path="/admin/login" element={<LoginPage />} />
 

@@ -14,14 +14,22 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const comEmailPattern = /^[^\s@]+@[^\s@]+\.com$/i;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        if (!comEmailPattern.test(normalizedEmail)) {
+            setError('Please enter a valid .com email address.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
-            const res = await login(email, password);
+            const res = await login(normalizedEmail, password);
             if (res.success) {
                 // Double check if the logged in user is actually an admin
                 // Note: AuthContext should ideally handle this storage update before returning
@@ -95,6 +103,8 @@ const LoginPage = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="aditiparihar179@gmail.com"
+                                    pattern="^[^\s@]+@[^\s@]+\.com$"
+                                    title="Please enter a valid .com email address"
                                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-white outline-none focus:bg-white/10 focus:border-primary transition-all placeholder:text-gray-600"
                                 />
                             </div>

@@ -247,3 +247,20 @@ export const getPublicNotificationFeed = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Delete a notification from history
+export const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await Notification.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    return res.json({ success: true, message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    return res.status(500).json({ error: error.message });
+  }
+};

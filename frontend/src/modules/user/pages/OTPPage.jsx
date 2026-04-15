@@ -17,7 +17,7 @@ const OTPPage = () => {
     const [email, setEmail] = useState('');
     const inputRefs = useRef([]);
     const namePattern = /^[A-Za-z ]+$/;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.com$/i;
 
     // Get phone from previous navigation state
     const phone = location.state?.contact;
@@ -98,7 +98,7 @@ const OTPPage = () => {
                 return;
             }
             if (!emailPattern.test(trimmedEmail)) {
-                toast.error('Please enter a valid email address');
+                toast.error('Please enter a valid .com email address');
                 setIsLoading(false);
                 return;
             }
@@ -234,8 +234,8 @@ const OTPPage = () => {
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
                                         placeholder="john@example.com"
-                                        pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
-                                        title="Please enter a valid email address"
+                                        pattern="^[^\s@]+@[^\s@]+\.com$"
+                                        title="Please enter a valid .com email address"
                                     />
                                 </div>
                             </div>

@@ -16,7 +16,7 @@ export const createEnquiry = async (req, res) => {
       return res.status(400).json({ message: 'Name should not contain numbers.' });
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    if (!/^[^\s@]+@[^\s@]+\.com$/i.test(normalizedEmail)) {
       return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
 
@@ -64,3 +64,4 @@ export const updateEnquiryStatus = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+

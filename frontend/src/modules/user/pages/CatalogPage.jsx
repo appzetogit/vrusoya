@@ -111,6 +111,38 @@ const CatalogPage = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    useEffect(() => {
+        if (!isSortMenuOpen) return undefined;
+
+        const scrollY = window.scrollY;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+        const previousHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+        const previousBodyPosition = document.body.style.position;
+        const previousBodyTop = document.body.style.top;
+        const previousBodyWidth = document.body.style.width;
+        const previousBodyOverflow = document.body.style.overflow;
+        const previousBodyTouchAction = document.body.style.touchAction;
+
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.overscrollBehavior = 'none';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.style.touchAction = 'none';
+
+        return () => {
+            document.documentElement.style.overflow = previousHtmlOverflow;
+            document.documentElement.style.overscrollBehavior = previousHtmlOverscroll;
+            document.body.style.position = previousBodyPosition;
+            document.body.style.top = previousBodyTop;
+            document.body.style.width = previousBodyWidth;
+            document.body.style.overflow = previousBodyOverflow;
+            document.body.style.touchAction = previousBodyTouchAction;
+            window.scrollTo(0, scrollY);
+        };
+    }, [isSortMenuOpen]);
+
     const sortOptions = [
         { value: 'alphabetical-az', label: 'Alphabetically: A-Z' },
         { value: 'alphabetical-za', label: 'Alphabetically: Z-A' },
@@ -432,14 +464,14 @@ const CatalogPage = () => {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={() => setIsSortMenuOpen(false)}
-                                className="fixed inset-0 bg-black/60 z-[80] lg:hidden backdrop-blur-sm"
+                                className="fixed inset-0 bg-black/60 z-[1090] lg:hidden backdrop-blur-sm"
                             />
                             <motion.div
                                 initial={{ y: '100%' }}
                                 animate={{ y: 0 }}
                                 exit={{ y: '100%' }}
                                 transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-                                className="fixed bottom-0 left-0 right-0 bg-background z-[90] lg:hidden rounded-t-[20px] overflow-hidden shadow-2xl border-t border-secondary/20"
+                                className="fixed bottom-[65px] left-0 right-0 bg-background z-[1100] lg:hidden rounded-t-[20px] overflow-hidden shadow-2xl border-t border-secondary/20"
                             >
                                 <div className="flex items-center justify-between p-4 border-b border-secondary/20">
                                     <span className="text-sm font-black text-textPrimary uppercase tracking-widest">Sort By</span>
@@ -447,7 +479,7 @@ const CatalogPage = () => {
                                         <X size={16} className="text-secondary" />
                                     </button>
                                 </div>
-                                <div className="p-4 pb-8 space-y-1.5 max-h-[60vh] overflow-y-auto">
+                                <div className="p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-1.5 max-h-[72vh] overflow-y-auto">
                                     {sortOptions.map(option => (
                                         <button
                                             key={option.value}
@@ -502,7 +534,7 @@ const CatalogPage = () => {
                         </button>
                     </div>
 
-                    <div className="lg:border lg:border-[#842A35] lg:rounded-sm lg:overflow-hidden lg:sticky lg:top-24 pb-24 lg:pb-0">
+                    <div className="lg:border lg:border-[#842A35] lg:rounded-sm lg:overflow-hidden lg:sticky lg:top-24 pb-36 lg:pb-0">
                         <FilterSection title="Price" openFilters={openFilters} toggleAccordion={toggleFilterAccordion}>
                             <div className="space-y-6 mt-2">
                                 {/* Dual Input Section */}
@@ -674,12 +706,14 @@ const CatalogPage = () => {
                         </FilterSection>
                     </div>
 
-                    <button
-                        onClick={clearAllFilters}
-                        className="w-full mt-4 text-[11px] font-black text-[#842A35] uppercase tracking-widest hover:underline text-left px-2"
-                    >
-                        Clear all filters
-                    </button>
+                    <div className="sticky bottom-[72px] z-20 bg-white/95 backdrop-blur-sm border-t border-gray-100 p-3 lg:static lg:bg-transparent lg:border-0 lg:p-0">
+                        <button
+                            onClick={clearAllFilters}
+                            className="w-full lg:mt-4 text-[11px] font-black text-[#842A35] uppercase tracking-widest hover:underline text-left px-2"
+                        >
+                            Clear all filters
+                        </button>
+                    </div>
                 </aside>
 
                 {/* MAIN GRID */}

@@ -258,22 +258,20 @@ const OrderListPage = () => {
                         className="w-full bg-gray-50 border border-transparent rounded-xl py-2.5 pl-12 pr-4 text-sm font-semibold outline-none focus:bg-white focus:border-primary transition-all"
                     />
                 </div>
-                {statusFilter === 'All' && (
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto no-scrollbar">
-                            {['All', 'Processing', 'Delivered', 'Cancelled'].map(s => (
-                                <button
-                                    key={s}
-                                    onClick={() => navigate(`/admin/orders?status=${s}`)}
-                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${statusFilter === s ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-footerBg'
-                                        }`}
-                                >
-                                    {s === 'Processing' ? 'Pending' : s}
-                                </button>
-                            ))}
-                        </div>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100 overflow-x-auto no-scrollbar">
+                        {['All', 'Processing', 'Delivered', 'Cancelled'].map(s => (
+                            <button
+                                key={s}
+                                onClick={() => navigate(`/admin/orders?status=${s}`)}
+                                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${statusFilter === s ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-footerBg'
+                                    }`}
+                            >
+                                {s === 'Processing' ? 'Pending' : s}
+                            </button>
+                        ))}
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Orders Table */}

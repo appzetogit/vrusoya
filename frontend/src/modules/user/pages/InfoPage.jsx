@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useWebsiteContent } from '../../../hooks/useContent';
 
 const InfoPage = ({ type }) => {
+    const navigate = useNavigate();
     const { data: pageData, isLoading } = useWebsiteContent(type);
     const isLegalPolicyPage = [
         'privacy-policy',
@@ -75,6 +78,23 @@ const InfoPage = ({ type }) => {
                 animate={{ opacity: 1, y: 0 }}
                 className="max-w-7xl mx-auto md:px-0"
             >
+                <div className="mb-3 md:mb-5">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (window.history.length > 1) {
+                                navigate(-1);
+                                return;
+                            }
+                            navigate('/');
+                        }}
+                        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs md:text-sm font-bold text-footerBg hover:bg-gray-50 transition-colors"
+                    >
+                        <ArrowLeft size={16} />
+                        Back
+                    </button>
+                </div>
+
                 <div className="text-center mb-6 md:mb-8">
                     <h1 className={`${isLegalPolicyPage ? 'text-xl md:text-2xl lg:text-4xl' : 'text-2xl md:text-3xl lg:text-5xl'} font-black text-footerBg uppercase tracking-tighter mb-2`}>{displayTitle}</h1>
                     {displaySubtitle && <p className="text-primary font-black tracking-[0.2em] uppercase text-[10px] md:text-xs">{displaySubtitle}</p>}

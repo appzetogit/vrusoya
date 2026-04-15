@@ -111,6 +111,8 @@ const OrderDetailPage = () => {
     }
 
     const isCancelled = order.status === 'Cancelled';
+    const isCancelledByAdmin = isCancelled && String(order.cancellationReason || '').toLowerCase().includes('admin');
+    const userFacingCancelledLabel = isCancelledByAdmin ? 'Cancelled by Admin' : 'Cancelled';
     const cancellableStatuses = ['pending', 'processing', 'received', 'processed'];
     const canCancelOrder = cancellableStatuses.includes(String(order.status || '').trim().toLowerCase()) && !isCancelled;
 
@@ -163,14 +165,6 @@ const OrderDetailPage = () => {
                 );
             case 'not_applicable':
             default:
-                if (order.paymentMethod === 'cod') {
-                    return (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl">
-                            <CreditCard size={14} className="text-gray-500" />
-                            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">COD - No Refund Required</span>
-                        </div>
-                    );
-                }
                 return null;
         }
     };
@@ -184,8 +178,22 @@ const OrderDetailPage = () => {
         { status: 'Delivered', label: 'Delivered', icon: CheckCircle }
     ];
 
+    const cancelledProgressStatus = (() => {
+        const value = String(order.deliveryStatus || '').trim().toLowerCase();
+        if (value === 'pending' || value === 'processing') return 'Processing';
+        if (value === 'packed') return 'Packed';
+        if (value === 'shipped') return 'Shipped';
+        if (value === 'out for delivery' || value === 'outfordelivery') return 'Out for Delivery';
+        if (value === 'delivered') return 'Delivered';
+        return null;
+    })();
+
+    const cancelledProgressIndex = steps.findIndex((step) => step.status === cancelledProgressStatus);
     const timelineSteps = isCancelled
-        ? [...steps, { status: 'Cancelled', label: 'Cancelled', icon: Ban }]
+        ? [
+            ...(cancelledProgressIndex >= 0 ? steps.slice(0, cancelledProgressIndex + 1) : []),
+            { status: 'Cancelled', label: userFacingCancelledLabel, icon: Ban }
+        ]
         : steps;
 
     const normalizedDeliveryStatus = (() => {
@@ -245,15 +253,15 @@ const OrderDetailPage = () => {
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <div className="p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-50">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 flex items-center justify-center text-green-600">
+                                    <div className={`w-10 h-10 flex items-center justify-center ${isCancelled ? 'text-red-600' : 'text-green-600'}`}>
                                         <Truck size={24} strokeWidth={2.5} />
                                     </div>
                                     <div>
                                         <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">
                                             {order.awbCode ? 'AWB / Tracking ID' : 'Order Status'}
                                         </p>
-                                        <p className="text-sm font-bold text-textPrimary">
-                                            {order.awbCode || order.status || 'Processing'}
+                                        <p className={`text-sm font-bold ${isCancelled ? 'text-red-600' : 'text-textPrimary'}`}>
+                                            {order.awbCode || (isCancelled ? userFacingCancelledLabel : (order.status || 'Processing'))}
                                         </p>
                                         {order.courierName && (
                                             <p className="text-[10px] text-gray-400">via {order.courierName}</p>
@@ -443,6 +451,9 @@ const OrderDetailPage = () => {
                                     <Ban size={16} className="text-red-600" />
                                     <div>
                                         <p className="text-[10px] font-black text-red-700 uppercase tracking-widest">Order Cancelled</p>
+                                        {isCancelledByAdmin && (
+                                            <p className="text-[9px] text-red-600 font-semibold">Cancelled by admin</p>
+                                        )}
                                         {order.cancelledAt && (
                                             <p className="text-[9px] text-textPrimary mt-0.5 font-semibold">
                                                 {new Date(order.cancelledAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

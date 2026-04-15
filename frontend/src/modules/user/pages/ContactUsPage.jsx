@@ -37,7 +37,7 @@ const ContactUsPage = () => {
     });
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const namePattern = /^[^\d]+$/;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.com$/i;
     const phonePattern = /^\d{10}$/;
     const isFormFilled = [
         formData.name,
@@ -242,3 +242,4 @@ const ContactUsPage = () => {
 };
 
 export default ContactUsPage;
+

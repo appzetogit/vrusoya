@@ -7,6 +7,8 @@ import asyncHandler from 'express-async-handler';
 import { sendOTP, verifyOTP } from '../utils/smsService.js';
 
 const normalizePhone = (phone = '') => String(phone).replace(/\D/g, '').slice(-10);
+const normalizeEmail = (email = '') => String(email).trim().toLowerCase();
+const isValidComEmail = (email = '') => /^[^\s@]+@[^\s@]+\.com$/i.test(String(email).trim());
 const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'aditiparihar179@gmail.com';
 const DEFAULT_ADMIN_NAME = process.env.ADMIN_NAME || 'Super Admin';
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123456';
@@ -97,13 +99,18 @@ export const registerUser = async (req, res) => {
 
   try {
     const fcmPayload = validateOptionalFcmPayload(req.body);
+    const normalizedEmail = normalizeEmail(email);
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please add all fields' });
     }
 
+    if (!isValidComEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Please enter a valid .com email address' });
+    }
+
     // Check if user exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -117,7 +124,7 @@ export const registerUser = async (req, res) => {
     const user = await User.create({
         id: 'user_' + Date.now(),
         name,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         addresses: [],
         wishlist: [],
@@ -149,9 +156,14 @@ export const registerUser = async (req, res) => {
 // @access  Public
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = normalizeEmail(email);
 
   try {
-    const admin = await Admin.findOne({ email });
+    if (!isValidComEmail(normalizedEmail)) {
+      return res.status(400).json({ message: 'Please enter a valid .com email address' });
+    }
+
+    const admin = await Admin.findOne({ email: normalizedEmail });
     if (admin && (await bcrypt.compare(password, admin.password))) {
       const token = generateToken('admin_01');
       res.cookie('jwt', token, getJwtCookieOptions());
@@ -164,7 +176,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     
     if (user && user.isBanned) {
         return res.status(401).json({ message: 'This account has been restricted. Please contact support.' });
@@ -518,8 +530,8 @@ export const sendOtpForLogin = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const verifyOtpForLogin = asyncHandler(async (req, res) => {
-    const { phone, otp, name, email, accountType, gstNumber } = req.body;
-    const fcmPayload = validateOptionalFcmPayload(req.body);
+  const { phone, otp, name, email, accountType, gstNumber } = req.body;
+  const fcmPayload = validateOptionalFcmPayload(req.body);
 
     if (!phone || !otp) {
         res.status(400);
@@ -549,8 +561,14 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
             return res.json({ isNewUser: true, phone: normalizedPhone });
         }
 
+        const normalizedEmail = normalizeEmail(email);
+        if (!isValidComEmail(normalizedEmail)) {
+            res.status(400);
+            throw new Error('Please enter a valid .com email address');
+        }
+
         // Check if email is already taken by another account (without this phone)
-        const emailExists = await User.findOne({ email });
+        const emailExists = await User.findOne({ email: normalizedEmail });
         if (emailExists) {
             res.status(400);
             throw new Error('Email is already registered with another account');
@@ -560,7 +578,7 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
         user = await User.create({
             id: 'user_' + Date.now(),
             name,
-            email,
+            email: normalizedEmail,
             phone: normalizedPhone,
             accountType: accountType || 'Individual',
             gstNumber: gstNumber || undefined,

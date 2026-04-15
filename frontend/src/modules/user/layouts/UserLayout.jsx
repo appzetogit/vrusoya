@@ -10,33 +10,42 @@ import FloatingContact from '../components/FloatingContact';
 import BottomNavbar from '../components/BottomNavbar';
 import CartDrawer from '../components/CartDrawer';
 import { useNotifications } from '../../../hooks/useNotifications.jsx';
+import { PAGES_CONFIG } from '../../../config/pagesConfig';
 
 const UserLayout = () => {
     const location = useLocation();
-    const isHome = location.pathname === '/';
+    const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+    const staticPagePaths = Object.values(PAGES_CONFIG).map((page) => page.publicPath);
+    const isStaticContentPage = staticPagePaths.includes(normalizedPath);
 
     // Initialize notification listeners and token registration
     useNotifications();
 
     return (
         <div className="flex flex-col min-h-screen font-sans bg-background">
-            <header className="sticky top-0 shadow-md flex flex-col shrink-0 bg-background" style={{ zIndex: 100 }}>
-                <div className="hidden md:block">
-                    <TopBar />
-                </div>
-                <Navbar />
-                <div className="hidden md:block">
-                    <CategoryNav />
-                </div>
-                <OfferStrip />
-            </header>
-            <main className="flex-grow pb-16 md:pb-0">
+            {!isStaticContentPage && (
+                <header className="sticky top-0 shadow-md flex flex-col shrink-0 bg-background" style={{ zIndex: 100 }}>
+                    <div className="hidden md:block">
+                        <TopBar />
+                    </div>
+                    <Navbar />
+                    <div className="hidden md:block">
+                        <CategoryNav />
+                    </div>
+                    <OfferStrip />
+                </header>
+            )}
+            <main className={`flex-grow ${isStaticContentPage ? 'pb-0' : 'pb-16 md:pb-0'}`}>
                 <Outlet />
             </main>
-            <Footer />
-            <FloatingContact />
-            <BottomNavbar />
-            <CartDrawer />
+            {!isStaticContentPage && (
+                <div className="hidden md:block">
+                    <Footer />
+                </div>
+            )}
+            {!isStaticContentPage && <FloatingContact />}
+            {!isStaticContentPage && <BottomNavbar />}
+            {!isStaticContentPage && <CartDrawer />}
         </div>
     );
 };
