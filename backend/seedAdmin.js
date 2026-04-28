@@ -12,8 +12,8 @@ const seedAdmin = async () => {
     await mongoose.connect(MONGO_URI);
     console.log('MongoDB connected for admin seeding');
 
-    const email = 'vrushahi@gmail.com';
-    const password = 'sumeet@2626';
+    const email = 'vrushahigroup@gmail.com';
+    const password = 'SumeeT@2626';
     const name = 'Vrushahi Admin';
 
     const salt = await bcrypt.genSalt(10);

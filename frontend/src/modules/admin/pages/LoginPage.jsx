@@ -51,7 +51,7 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-footerBg flex items-center justify-center p-6 text-left selection:bg-primary selection:text-white">
+        <div className="min-h-screen bg-[#f4f8f2] flex items-center justify-center p-6 text-left selection:bg-primary selection:text-white">
             {/* Background Decorative Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
@@ -68,17 +68,17 @@ const LoginPage = () => {
                 {/* Branding */}
                 <div className="flex flex-col items-center justify-center mb-6 text-center">
                     <img src={logo} alt="Vrushahi" className="h-12 w-auto mb-4" />
-                    <h1 className="text-2xl font-black text-white tracking-tighter uppercase mb-2">
-                        Admin <span className="text-primary">Portal</span>
+                    <h1 className="text-2xl font-black text-footerBg tracking-tighter uppercase mb-2">
+                        <span className="text-primary">Admin</span> <span className="text-primary">Portal</span>
                     </h1>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[2.5rem] shadow-2xl shadow-black/40">
+                <div className="bg-white border border-emerald-100 p-10 rounded-[2.5rem] shadow-2xl shadow-emerald-100/80">
                     <div className="mb-8 flex flex-col items-center justify-center gap-3 text-center">
                         <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center">
                             <ShieldCheck size={20} strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-xl font-black text-white uppercase tracking-tight">Verify Identity</h2>
+                        <h2 className="text-xl font-black text-footerBg uppercase tracking-tight">Verify Identity</h2>
                     </div>
 
                     {error && (
@@ -92,9 +92,9 @@ const LoginPage = () => {
                         </motion.div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Admin Email</label>
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Admin Email</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors" size={18} />
                                 <input
@@ -102,30 +102,30 @@ const LoginPage = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="aditiparihar179@gmail.com"
+                                    autoComplete="off"
                                     pattern="^[^\s@]+@[^\s@]+\.com$"
                                     title="Please enter a valid .com email address"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-white outline-none focus:bg-white/10 focus:border-primary transition-all placeholder:text-gray-600"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-footerBg outline-none focus:bg-white focus:border-primary transition-all"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Security Key</label>
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Security Key</label>
                             <div className="relative group">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary transition-colors" size={18} />
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showPassword ? 'text' : 'password'}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-sm font-bold text-white outline-none focus:bg-white/10 focus:border-primary transition-all placeholder:text-gray-600"
+                                    autoComplete="new-password"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-4 pl-12 pr-12 text-sm font-bold text-footerBg outline-none focus:bg-white focus:border-primary transition-all"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
@@ -153,12 +153,9 @@ const LoginPage = () => {
                         </div>
                     </form>
                 </div>
-
-
             </motion.div>
         </div>
     );
 };
 
 export default LoginPage;
-
