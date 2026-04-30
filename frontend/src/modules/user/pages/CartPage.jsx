@@ -348,6 +348,12 @@ const CartPage = () => {
                                 </div>
                             </div>
 
+                            {!user && (
+                                <div className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-[10px] md:text-xs font-bold text-textPrimary/75">
+                                    Login is only needed at checkout. Your cart items are saved here for now.
+                                </div>
+                            )}
+
                             <button
                                 onClick={() => {
                                     if (user) {
@@ -358,7 +364,7 @@ const CartPage = () => {
                                 }}
                                 className="w-full bg-secondary text-white py-2.5 md:py-4 rounded-lg md:rounded-xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] hover:bg-primary transition-all shadow-lg active:scale-95"
                             >
-                                Secure Checkout
+                                {user ? 'Secure Checkout' : 'Login to Checkout'}
                             </button>
                         </div>
                     </div>

@@ -279,11 +279,6 @@ const ProductCard = ({ product, showVault = true, compact = false }) => {
                                     return;
                                 }
 
-                                if (!user) {
-                                    navigate('/login?redirect=/cart');
-                                    return;
-                                }
-
                                 addToCart(user?.id, itemId, 1, cartItemMeta);
                                 openCartDrawer();
                             }}

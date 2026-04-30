@@ -943,11 +943,6 @@ const ProductDetailPage = () => {
                                             return;
                                         }
 
-                                        if (!user) {
-                                            navigate('/login?redirect=/cart');
-                                            return;
-                                        }
-
                                         if (quantity > currentStock) {
                                             toast.error(`Requested quantity exceeds available stock (${currentStock})`);
                                             return;
@@ -1382,9 +1377,8 @@ const ProductDetailPage = () => {
                             </div>
                             <button
                                 onClick={() => {
-                                    if (!user) return navigate('/login');
                                     const skuId = (isGroupProduct && selectedVariant) ? selectedVariant.id : product.id;
-                                    addToCart(user.id, skuId, quantity, {
+                                    addToCart(user?.id, skuId, quantity, {
                                         name: product.name,
                                         weight: currentVariant.weight || product.weight || `${currentVariant.quantity || ''} ${currentVariant.unit || ''}`.trim(),
                                         price: Number(currentPrice || 0),

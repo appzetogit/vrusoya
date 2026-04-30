@@ -19,12 +19,6 @@ const CartDrawer = () => {
     const { data: products = [] } = useProducts();
 
     React.useEffect(() => {
-        if (!isCartDrawerOpen || user) return;
-        closeCartDrawer();
-        navigate('/login?redirect=%2Fcart');
-    }, [closeCartDrawer, isCartDrawerOpen, navigate, user]);
-
-    React.useEffect(() => {
         if (!isCartDrawerOpen) return undefined;
 
         const scrollY = window.scrollY;
@@ -134,7 +128,7 @@ const CartDrawer = () => {
         navigate(path);
     };
 
-    if (!isCartDrawerOpen || !user) return null;
+    if (!isCartDrawerOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[11000] overscroll-none">
@@ -279,10 +273,10 @@ const CartDrawer = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => handleNavigate('/checkout')}
+                                    onClick={() => handleNavigate(user ? '/checkout' : '/login?redirect=/checkout')}
                                     className="flex-1 rounded-xl bg-secondary px-3 py-3 text-[11px] font-black uppercase tracking-[0.1em] text-white transition-colors hover:bg-primary shadow-sm hover:shadow-md"
                                 >
-                                    Checkout
+                                    {user ? 'Checkout' : 'Login to Checkout'}
                                 </button>
                             </div>
                         </div>
