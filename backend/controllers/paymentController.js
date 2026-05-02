@@ -86,6 +86,17 @@ const resolveOrderUserName = async (orderData = {}) => {
   return String(user?.name || '').trim();
 };
 
+const resolveOrderUserEmail = async (orderData = {}) => {
+  const payloadEmail = String(orderData?.userEmail || '').trim().toLowerCase();
+  if (payloadEmail) return payloadEmail;
+
+  const uid = String(orderData?.userId || '').trim();
+  if (!uid) return '';
+
+  const user = await User.findOne({ id: uid }).select('email');
+  return String(user?.email || '').trim().toLowerCase();
+};
+
 const normalizeAddressValue = (value = '') => String(value).trim();
 const normalizePhoneForAddress = (value = '') => String(value).replace(/\D/g, '').slice(-10);
 
@@ -226,12 +237,14 @@ export const verifyPayment = asyncHandler(async (req, res) => {
         const orderId = `ORD-${timestamp}-${randomSuffix}`;
 
         const resolvedUserName = await resolveOrderUserName(normalizedOrderData);
+        const resolvedUserEmail = await resolveOrderUserEmail(normalizedOrderData);
 
         // Create order in our database
         const newOrder = new Order({
             ...normalizedOrderData,
             id: orderId,
             userName: resolvedUserName,
+            userEmail: resolvedUserEmail,
             date: new Date(),
             paymentStatus: 'paid',
             status: 'pending', // Order received
@@ -365,11 +378,13 @@ export const createCODOrder = asyncHandler(async (req, res) => {
         const orderId = `ORD-${timestamp}-${randomSuffix}`;
 
         const resolvedUserName = await resolveOrderUserName(normalizedOrderData);
+        const resolvedUserEmail = await resolveOrderUserEmail(normalizedOrderData);
 
         const newOrder = new Order({
             ...normalizedOrderData,
             id: orderId,
             userName: resolvedUserName,
+            userEmail: resolvedUserEmail,
             date: new Date(),
             paymentMethod: 'cod',
             paymentStatus: 'pending',

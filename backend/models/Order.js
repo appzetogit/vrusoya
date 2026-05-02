@@ -20,6 +20,7 @@ const orderSchema = new mongoose.Schema({
   id: { type: String, unique: true }, // Custom ID: "ORD-..."
   userId: String,
   userName: String,
+  userEmail: String,
   date: Date,
   status: { type: String, default: 'pending' },
   deliveryStatus: { type: String, default: 'pending' },
