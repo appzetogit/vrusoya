@@ -566,6 +566,7 @@ const CheckoutPage = () => {
         const orderData = {
             userId: user?.id,
             userName: String(userData?.name || user?.name || '').trim(),
+            userEmail: String(userData?.email || user?.email || '').trim().toLowerCase(),
             items: enrichedCart,
             shippingAddress: {
                 ...formData,
@@ -651,6 +652,7 @@ const CheckoutPage = () => {
                     },
                     prefill: {
                         name: trimmedName,
+                        email: String(userData?.email || user?.email || '').trim().toLowerCase(),
                         contact: trimmedPhone,
                     },
                     theme: {
