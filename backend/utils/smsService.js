@@ -49,7 +49,7 @@ function buildOtpMessage(otp) {
     if (isPrpProvider(provider)) {
         const prpTemplateText = process.env.PRP_SMS_TEMPLATE_TEXT;
         if (prpTemplateText && prpTemplateText.trim()) {
-            return prpTemplateText.replace(/\{#var#\}/g, otp);
+            return prpTemplateText.replace(/\{#(?:var|numeric)#\}/g, otp);
         }
         return `Dear customer, your OTP for mobile verification from ${appName.toLowerCase()}.com is ${otp}. This code is valid for 10 minutes. Do not share it with anyone.`;
     }
@@ -131,6 +131,11 @@ async function sendSmsViaPrpTemplate(mobile, otp) {
     });
 
     console.log('[SMS] PRP Template API Response:', response.status, response.data);
+
+    if (!response.data?.isSuccess) {
+        const providerMessage = response.data?.returnMessage || 'Unknown PRP template API error.';
+        throw new Error(`PRP SMS template API error: ${providerMessage}`);
+    }
 }
 
 /**
