@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import generateToken from '../utils/generateToken.js';
 import asyncHandler from 'express-async-handler';
 import { sendOTP, verifyOTP } from '../utils/smsService.js';
@@ -90,6 +91,41 @@ const getJwtCookieOptions = () => ({
   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 30 * 24 * 60 * 60 * 1000,
 });
+
+const generateOtpSignupToken = (phone) => jwt.sign(
+  { phone, type: 'otp-signup' },
+  process.env.JWT_SECRET || 'secret123',
+  { expiresIn: '15m' }
+);
+
+const sanitizeIncomingAddresses = (addresses = []) => {
+  if (!Array.isArray(addresses)) return [];
+
+  return addresses
+    .map((address, index) => ({
+      id: Number(address?.id) || Date.now() + index,
+      type: String(address?.type || 'Home').trim() || 'Home',
+      fullName: String(address?.fullName || '').trim(),
+      phone: normalizePhone(address?.phone || ''),
+      address: String(address?.address || '').trim(),
+      city: String(address?.city || '').trim(),
+      state: String(address?.state || '').trim(),
+      pincode: String(address?.pincode || '').replace(/\D/g, '').slice(0, 6),
+      isDefault: Boolean(address?.isDefault)
+    }))
+    .filter((address) => (
+      address.fullName
+      && address.phone.length === 10
+      && address.address
+      && address.city
+      && address.state
+      && /^\d{6}$/.test(address.pincode)
+    ))
+    .map((address, index, validAddresses) => ({
+      ...address,
+      isDefault: validAddresses.length === 1 ? true : (address.isDefault || index === 0)
+    }));
+};
 
 // @desc    Register new user
 // @route   POST /api/users
@@ -558,7 +594,7 @@ export const sendOtpForLogin = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const verifyOtpForLogin = asyncHandler(async (req, res) => {
-  const { phone, otp, name, email, accountType, gstNumber } = req.body;
+  const { phone, otp, name, email, accountType, gstNumber, addresses } = req.body;
   const fcmPayload = validateOptionalFcmPayload(req.body);
 
     if (!phone || !otp) {
@@ -601,7 +637,11 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
         } else {
             // If user doesn't exist and name/email are not provided, signal that it's a new user
             if (!name || !email) {
-                return res.json({ isNewUser: true, phone: normalizedPhone });
+                return res.json({
+                  isNewUser: true,
+                  phone: normalizedPhone,
+                  signupToken: generateOtpSignupToken(normalizedPhone)
+                });
             }
 
             const normalizedEmail = normalizeEmail(email);
@@ -625,7 +665,7 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
                 phone: normalizedPhone,
                 accountType: accountType || 'Individual',
                 gstNumber: gstNumber || undefined,
-                addresses: [],
+                addresses: sanitizeIncomingAddresses(addresses),
                 wishlist: [],
                 usedCoupons: [],
                 ...buildUserFcmFields(fcmPayload)
@@ -664,4 +704,93 @@ export const verifyOtpForLogin = asyncHandler(async (req, res) => {
         role: user.email === DEFAULT_ADMIN_EMAIL ? 'admin' : 'user',
         token
     });
+});
+
+/**
+ * @desc    Complete new user registration after OTP verification
+ * @route   POST /api/users/complete-otp-registration
+ * @access  Public
+ */
+export const completeOtpRegistration = asyncHandler(async (req, res) => {
+  const { signupToken, name, email, accountType, gstNumber, addresses } = req.body;
+  const fcmPayload = validateOptionalFcmPayload(req.body);
+
+  if (!signupToken || !name || !email) {
+    res.status(400);
+    throw new Error('Please provide signup token, name, and email');
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(signupToken, process.env.JWT_SECRET || 'secret123');
+  } catch {
+    res.status(401);
+    throw new Error('Signup session expired. Please verify OTP again.');
+  }
+
+  if (decoded?.type !== 'otp-signup' || !decoded?.phone) {
+    res.status(401);
+    throw new Error('Invalid signup session. Please verify OTP again.');
+  }
+
+  const normalizedPhone = normalizePhone(decoded.phone);
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!isValidComEmail(normalizedEmail)) {
+    res.status(400);
+    throw new Error('Please enter a valid .com email address');
+  }
+
+  const existingUserByPhone = await findUserByPhoneFlexible(normalizedPhone);
+  if (existingUserByPhone) {
+    const token = generateToken(existingUserByPhone.id);
+    res.cookie('jwt', token, getJwtCookieOptions());
+    return res.json({
+      _id: existingUserByPhone.id,
+      name: existingUserByPhone.name,
+      email: existingUserByPhone.email,
+      phone: existingUserByPhone.phone,
+      accountType: existingUserByPhone.accountType,
+      role: existingUserByPhone.email === DEFAULT_ADMIN_EMAIL ? 'admin' : 'user',
+      token
+    });
+  }
+
+  const emailExists = await User.findOne({ email: normalizedEmail });
+  if (emailExists) {
+    res.status(400);
+    throw new Error('Email is already registered with another account');
+  }
+
+  const sanitizedAddresses = sanitizeIncomingAddresses(addresses);
+  if (Array.isArray(addresses) && addresses.length > 0 && sanitizedAddresses.length === 0) {
+    res.status(400);
+    throw new Error('Please provide a valid delivery address');
+  }
+
+  const user = await User.create({
+    id: 'user_' + Date.now(),
+    name: String(name).trim(),
+    email: normalizedEmail,
+    phone: normalizedPhone,
+    accountType: accountType || 'Individual',
+    gstNumber: gstNumber || undefined,
+    addresses: sanitizedAddresses,
+    wishlist: [],
+    usedCoupons: [],
+    ...buildUserFcmFields(fcmPayload)
+  });
+
+  const token = generateToken(user.id);
+  res.cookie('jwt', token, getJwtCookieOptions());
+
+  res.json({
+    _id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    accountType: user.accountType,
+    role: user.email === DEFAULT_ADMIN_EMAIL ? 'admin' : 'user',
+    token
+  });
 });
