@@ -2,7 +2,7 @@ import express from 'express';
 import { 
     getUsers, registerUser, loginUser, logoutUser, 
     getUserProfile, updateUserProfile, deleteUserAccount, toggleBanUser, 
-    getUserById, updateFcmToken, sendOtpForLogin, verifyOtpForLogin 
+    getUserById, updateFcmToken, sendOtpForLogin, verifyOtpForLogin, completeOtpRegistration 
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -21,6 +21,7 @@ router.post('/logout', logoutUser);
 // New OTP Flow
 router.post('/send-otp-login', sendOtpForLogin);
 router.post('/verify-otp-login', verifyOtpForLogin);
+router.post('/complete-otp-registration', completeOtpRegistration);
 
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, updateUserProfile);
