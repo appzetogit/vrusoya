@@ -1,26 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShieldCheck, RefreshCw, User, Mail } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, RefreshCw, User, Mail, MapPin, Phone, LocateFixed } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../context/AuthContext';
 
 const OTPPage = () => {
-    const { verifyOtp, sendOtp } = useAuth();
+    const { verifyOtp, sendOtp, completeOtpRegistration } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [otp, setOtp] = useState(['', '', '', '']);
     const [timer, setTimer] = useState(30);
     const [isLoading, setIsLoading] = useState(false);
     const [isNewUser, setIsNewUser] = useState(false);
+    const [detectingLocation, setDetectingLocation] = useState(false);
+    const [signupToken, setSignupToken] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [addressForm, setAddressForm] = useState({
+        fullName: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: ''
+    });
     const inputRefs = useRef([]);
     const namePattern = /^[A-Za-z ]+$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.com$/i;
 
     // Get phone from previous navigation state
     const phone = location.state?.contact;
+    const signupStorageKey = phone ? `vrushahi_otp_signup_${phone}` : '';
 
     useEffect(() => {
         if (!phone) {
@@ -32,7 +43,44 @@ const OTPPage = () => {
             const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
             return () => clearInterval(interval);
         }
-    }, [timer, phone]);
+    }, [timer, phone, navigate]);
+
+    useEffect(() => {
+        if (!phone) return;
+        setAddressForm((prev) => ({ ...prev, phone: prev.phone || phone }));
+    }, [phone]);
+
+    useEffect(() => {
+        if (!signupStorageKey || typeof window === 'undefined') return;
+
+        try {
+            const storedSession = sessionStorage.getItem(signupStorageKey);
+            if (!storedSession) return;
+
+            const parsedSession = JSON.parse(storedSession);
+            if (parsedSession?.signupToken) {
+                setSignupToken(parsedSession.signupToken);
+            }
+            if (parsedSession?.isNewUser) {
+                setIsNewUser(true);
+            }
+            if (typeof parsedSession?.otp === 'string' && /^\d{4}$/.test(parsedSession.otp)) {
+                setOtp(parsedSession.otp.split(''));
+            }
+        } catch (error) {
+            console.error('Failed to restore OTP signup session:', error);
+        }
+    }, [signupStorageKey]);
+
+    const persistSignupSession = (session) => {
+        if (!signupStorageKey || typeof window === 'undefined') return;
+        sessionStorage.setItem(signupStorageKey, JSON.stringify(session));
+    };
+
+    const clearSignupSession = () => {
+        if (!signupStorageKey || typeof window === 'undefined') return;
+        sessionStorage.removeItem(signupStorageKey);
+    };
 
     const handleChange = (index, value) => {
         if (isNaN(value)) return;
@@ -71,10 +119,79 @@ const OTPPage = () => {
         inputRefs.current[lastIndex].focus();
     };
 
+    const handleAddressChange = (field, value) => {
+        setAddressForm((prev) => ({
+            ...prev,
+            [field]: field === 'phone'
+                ? String(value || '').replace(/\D/g, '').slice(0, 10)
+                : field === 'pincode'
+                    ? String(value || '').replace(/\D/g, '').slice(0, 6)
+                    : value
+        }));
+    };
+
+    const handleDetectLocation = () => {
+        if (!navigator.geolocation) {
+            toast.error('Geolocation is not supported by your browser');
+            return;
+        }
+
+        const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (!API_KEY) {
+            toast.error('Google Maps API Key missing. Please add it to your environment.');
+            return;
+        }
+
+        setDetectingLocation(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                try {
+                    const response = await fetch(
+                        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}`
+                    );
+                    const data = await response.json();
+
+                    if (data.status === 'OK') {
+                        const result = data.results[0];
+                        const components = result.address_components;
+                        const getComponent = (type) =>
+                            components.find((c) => c.types.includes(type))?.long_name || '';
+
+                        const city = getComponent('locality') || getComponent('administrative_area_level_2');
+                        const state = getComponent('administrative_area_level_1');
+                        const pincode = getComponent('postal_code');
+                        const address = result.formatted_address;
+
+                        setAddressForm((prev) => ({
+                            ...prev,
+                            address: address || prev.address,
+                            city: city || prev.city,
+                            state: state || prev.state,
+                            pincode: pincode || prev.pincode,
+                        }));
+                        toast.success('Location detected and address filled!');
+                    } else {
+                        toast.error('Failed to get address details');
+                    }
+                } catch (error) {
+                    console.error('Location detection error:', error);
+                    toast.error('Error fetching location details');
+                } finally {
+                    setDetectingLocation(false);
+                }
+            },
+            () => {
+                toast.error('Location permission denied');
+                setDetectingLocation(false);
+            }
+        );
+    };
+
     const handleVerify = async (e) => {
         e.preventDefault();
         const fullOtp = otp.join('');
-        if (fullOtp.length < 4) {
+        if (!isNewUser && fullOtp.length < 4) {
             toast.error('Please enter complete 4-digit OTP');
             return;
         }
@@ -86,6 +203,14 @@ const OTPPage = () => {
         if (isNewUser) {
             const trimmedName = name.trim();
             const trimmedEmail = email.trim().toLowerCase();
+            const trimmedAddress = {
+                fullName: String(addressForm.fullName || trimmedName).trim(),
+                phone: String(addressForm.phone || phone || '').replace(/\D/g, '').slice(0, 10),
+                address: String(addressForm.address || '').trim(),
+                city: String(addressForm.city || '').trim(),
+                state: String(addressForm.state || '').trim(),
+                pincode: String(addressForm.pincode || '').replace(/\D/g, '').slice(0, 6),
+            };
 
             if (!trimmedName || !trimmedEmail) {
                 toast.error('Please fill in all fields');
@@ -102,10 +227,78 @@ const OTPPage = () => {
                 setIsLoading(false);
                 return;
             }
+            if (
+                !trimmedAddress.fullName
+                || !trimmedAddress.address
+                || !trimmedAddress.city
+                || !trimmedAddress.state
+                || !/^\d{10}$/.test(trimmedAddress.phone)
+                || !/^\d{6}$/.test(trimmedAddress.pincode)
+            ) {
+                toast.error('Please fill all address fields correctly.');
+                setIsLoading(false);
+                return;
+            }
 
-            const result = await verifyOtp(phone, fullOtp, trimmedName, trimmedEmail, 'Individual', '');
+            const nextAddress = {
+                id: Date.now(),
+                type: 'Home',
+                fullName: trimmedAddress.fullName,
+                phone: trimmedAddress.phone,
+                address: trimmedAddress.address,
+                city: trimmedAddress.city,
+                state: trimmedAddress.state,
+                pincode: trimmedAddress.pincode,
+                isDefault: true
+            };
+
+            const storedSession = signupStorageKey && typeof window !== 'undefined'
+                ? sessionStorage.getItem(signupStorageKey)
+                : null;
+            let persistedSignupToken = signupToken;
+            let persistedOtp = fullOtp;
+
+            if (storedSession) {
+                try {
+                    const parsedSession = JSON.parse(storedSession);
+                    persistedSignupToken = persistedSignupToken || parsedSession?.signupToken || '';
+                    persistedOtp = /^\d{4}$/.test(persistedOtp) ? persistedOtp : (parsedSession?.otp || '');
+                } catch (error) {
+                    console.error('Failed to parse stored OTP signup session:', error);
+                }
+            }
+
+            let result;
+            if (persistedSignupToken) {
+                result = await completeOtpRegistration({
+                    signupToken: persistedSignupToken,
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    accountType: 'Individual',
+                    gstNumber: '',
+                    addresses: [nextAddress]
+                });
+            } else if (/^\d{4}$/.test(persistedOtp)) {
+                result = await verifyOtp(
+                    phone,
+                    persistedOtp,
+                    trimmedName,
+                    trimmedEmail,
+                    'Individual',
+                    '',
+                    { addresses: [nextAddress] }
+                );
+            } else {
+                toast.error('Signup session expired. Please verify OTP again.');
+                setIsLoading(false);
+                navigate('/login', { state: { from: '/otp-verification' } });
+                return;
+            }
+
             setIsLoading(false);
             if (result.success) {
+                setSignupToken('');
+                clearSignupSession();
                 navigate(redirectPath);
             }
         } else {
@@ -113,9 +306,32 @@ const OTPPage = () => {
             setIsLoading(false);
             if (result.success) {
                 if (result.isNewUser) {
+                    if (!result.signupToken) {
+                        toast.error('Backend restart required. Please restart the API server, request a new OTP, and try again.');
+                        return;
+                    }
                     setIsNewUser(true);
+                    const nextSignupToken = result.signupToken || '';
+                    setSignupToken(nextSignupToken);
+                    persistSignupSession({
+                        isNewUser: true,
+                        signupToken: nextSignupToken,
+                        otp: fullOtp
+                    });
+                    setName('');
+                    setEmail('');
+                    setAddressForm({
+                        fullName: '',
+                        phone: phone || '',
+                        address: '',
+                        city: '',
+                        state: '',
+                        pincode: ''
+                    });
                     toast.success('OTP verified! Please complete your registration.');
                 } else {
+                    setSignupToken('');
+                    clearSignupSession();
                     navigate(redirectPath);
                 }
             }
@@ -158,7 +374,7 @@ const OTPPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="w-full max-w-[400px] bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 p-6 text-center"
+                className="w-full max-w-[440px] bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10 p-6 text-center"
             >
                 <div className="w-16 h-16 bg-[#2c5336]/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-[#2c5336]/20">
                     {isNewUser ? (
@@ -173,7 +389,7 @@ const OTPPage = () => {
                 </h1>
                 <p className="text-gray-500 text-xs leading-relaxed mb-6">
                     {isNewUser
-                        ? "Please provide your details to finish signing up."
+                        ? "Please provide your details and delivery address to finish signing up."
                         : (
                             <>
                                 We've sent a 4-digit verification code to <br />
@@ -215,7 +431,14 @@ const OTPPage = () => {
                                         type="text"
                                         required
                                         value={name}
-                                        onChange={(e) => setName(e.target.value.replace(/[^A-Za-z ]/g, ''))}
+                                        onChange={(e) => {
+                                            const nextValue = e.target.value.replace(/[^A-Za-z ]/g, '');
+                                            setName(nextValue);
+                                            setAddressForm((prev) => ({
+                                                ...prev,
+                                                fullName: prev.fullName ? prev.fullName : nextValue
+                                            }));
+                                        }}
                                         className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
                                         placeholder="John Doe"
                                         pattern="[A-Za-z ]+"
@@ -236,6 +459,83 @@ const OTPPage = () => {
                                         placeholder="john@example.com"
                                         pattern="^[^\s@]+@[^\s@]+\.com$"
                                         title="Please enter a valid .com email address"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-1 text-left">
+                                <div className="flex items-center justify-between gap-3">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Delivery Address</label>
+                                    <button
+                                        type="button"
+                                        onClick={handleDetectLocation}
+                                        disabled={detectingLocation}
+                                        className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-[#2c5336] disabled:opacity-60"
+                                    >
+                                        <LocateFixed size={12} />
+                                        {detectingLocation ? 'Detecting...' : 'Use My Location'}
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <MapPin className="absolute left-3 top-3 text-gray-400" size={14} />
+                                    <textarea
+                                        required
+                                        value={addressForm.address}
+                                        onChange={(e) => handleAddressChange('address', e.target.value)}
+                                        className="w-full min-h-[78px] resize-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
+                                        placeholder="House no, street, area"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1 text-left">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">City</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={addressForm.city}
+                                        onChange={(e) => handleAddressChange('city', e.target.value)}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
+                                        placeholder="City"
+                                    />
+                                </div>
+                                <div className="space-y-1 text-left">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">State</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={addressForm.state}
+                                        onChange={(e) => handleAddressChange('state', e.target.value)}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
+                                        placeholder="State"
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1 text-left">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Phone Number</label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                        <input
+                                            type="text"
+                                            required
+                                            inputMode="numeric"
+                                            value={addressForm.phone}
+                                            onChange={(e) => handleAddressChange('phone', e.target.value)}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 pl-9 pr-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
+                                            placeholder="9876543210"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1 text-left">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Pincode</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        inputMode="numeric"
+                                        value={addressForm.pincode}
+                                        onChange={(e) => handleAddressChange('pincode', e.target.value)}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-xs font-medium text-gray-900 outline-none focus:border-primary transition-all"
+                                        placeholder="400001"
                                     />
                                 </div>
                             </div>
