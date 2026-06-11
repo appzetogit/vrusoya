@@ -136,12 +136,12 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const verifyOtp = async (phone, otp, name = null, email = null, accountType = 'Individual', gstNumber = null) => {
+    const verifyOtp = async (phone, otp, name = null, email = null, accountType = 'Individual', gstNumber = null, extraPayload = {}) => {
         try {
             const response = await fetch(`${API_URL}/users/verify-otp-login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, otp, name, email, accountType, gstNumber }),
+                body: JSON.stringify({ phone, otp, name, email, accountType, gstNumber, ...extraPayload }),
                 credentials: 'include'
             });
 
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
 
             if (response.ok) {
                 if (data.isNewUser) {
-                    return { success: true, isNewUser: true, phone: data.phone };
+                    return { success: true, isNewUser: true, phone: data.phone, signupToken: data.signupToken };
                 }
 
                 const userObj = { ...data, id: data._id };
@@ -176,6 +176,46 @@ export const AuthProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Verify OTP Error:", error);
+            toast.error('Network error, please try again');
+            return { success: false, message: 'Network error, please try again' };
+        }
+    };
+
+    const completeOtpRegistration = async ({ signupToken, name, email, accountType = 'Individual', gstNumber = null, addresses = [] }) => {
+        try {
+            const response = await fetch(`${API_URL}/users/complete-otp-registration`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ signupToken, name, email, accountType, gstNumber, addresses }),
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const userObj = { ...data, id: data._id };
+                setUser(userObj);
+
+                if (data.token) {
+                    localStorage.setItem('vrushahi_token', data.token);
+                }
+
+                localStorage.setItem('vrushahi_current_user', JSON.stringify(userObj));
+
+                try {
+                    useCartStore.getState().mergeGuestCartIntoUser(userObj.id);
+                } catch (err) {
+                    console.error("Cart merge failed:", err);
+                }
+
+                toast.success('Account created successfully!');
+                return { success: true };
+            }
+
+            toast.error(data.message || 'Registration failed');
+            return { success: false, message: data.message || 'Registration failed' };
+        } catch (error) {
+            console.error("Complete OTP Registration Error:", error);
             toast.error('Network error, please try again');
             return { success: false, message: 'Network error, please try again' };
         }
@@ -259,7 +299,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, loading, sendOtp, verifyOtp, getAuthHeaders }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, loading, sendOtp, verifyOtp, completeOtpRegistration, getAuthHeaders }}>
             {children}
         </AuthContext.Provider>
     );
