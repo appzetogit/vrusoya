@@ -18,6 +18,8 @@ import { useValidateReferral } from '../../../hooks/useReferrals';
 import { useSetting } from '../../../hooks/useSettings';
 import { API_BASE_URL } from '@/lib/apiUrl';
 
+const MANUAL_ADDRESS_ID = 'deliver-to-someone-else';
+
 const CheckoutPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -161,10 +163,10 @@ const CheckoutPage = () => {
         state: '',
         pincode: '',
     });
-    const [selectedAddressId, setSelectedAddressId] = useState('manual');
+    const [selectedAddressId, setSelectedAddressId] = useState(MANUAL_ADDRESS_ID);
 
     useEffect(() => {
-        setSelectedAddressId('manual');
+        setSelectedAddressId(MANUAL_ADDRESS_ID);
         setFormData({
             fullName: '',
             phone: '',
@@ -199,21 +201,37 @@ const CheckoutPage = () => {
         && isFilled(String(address.pincode || ''))
     );
 
-    const getMissingCheckoutFields = () => {
-        const hasAnyPhone = isFilled(formData.phone)
-            || isFilled(userData?.phone)
-            || userAddresses.some(a => isFilled(a?.phone));
-        const hasAnyAddress = hasRequiredAddress(formData)
-            || userAddresses.some(a => hasRequiredAddress(a));
+    const selectedSavedAddress = userAddresses.find((address, index) => (
+        getAddressId(address, index) === selectedAddressId
+    )) || null;
 
-        const missing = [];
-        if (!hasAnyPhone) missing.push('phone number');
-        if (!hasAnyAddress) {
-            missing.push('address');
-            missing.push('city');
-            missing.push('state');
-            missing.push('pincode');
+    const isUsingAlternateAddress = userAddresses.length > 0 && selectedAddressId === MANUAL_ADDRESS_ID;
+
+    const activeShippingAddress = selectedSavedAddress && !isUsingAlternateAddress
+        ? {
+            fullName: String(selectedSavedAddress.fullName || userData?.name || '').trim(),
+            phone: String(selectedSavedAddress.phone || userData?.phone || '').trim(),
+            address: String(selectedSavedAddress.address || '').trim(),
+            city: String(selectedSavedAddress.city || '').trim(),
+            state: String(selectedSavedAddress.state || '').trim(),
+            pincode: String(selectedSavedAddress.pincode || '').trim(),
         }
+        : {
+            fullName: String(formData.fullName || '').trim(),
+            phone: String(formData.phone || '').trim(),
+            address: String(formData.address || '').trim(),
+            city: String(formData.city || '').trim(),
+            state: String(formData.state || '').trim(),
+            pincode: String(formData.pincode || '').trim(),
+        };
+
+    const getMissingCheckoutFields = () => {
+        const missing = [];
+        if (!isFilled(activeShippingAddress.phone)) missing.push('phone number');
+        if (!isFilled(activeShippingAddress.address)) missing.push('address');
+        if (!isFilled(activeShippingAddress.city)) missing.push('city');
+        if (!isFilled(activeShippingAddress.state)) missing.push('state');
+        if (!isFilled(String(activeShippingAddress.pincode || ''))) missing.push('pincode');
         return missing;
     };
 
@@ -322,13 +340,23 @@ const CheckoutPage = () => {
 
     useEffect(() => {
         if (userData) {
-            // Keep checkout form manual by default; do not auto-prefill from profile/saved addresses.
-            setSelectedAddressId('manual');
+            if (userAddresses.length > 0) {
+                const defaultAddress = userAddresses.find((address) => address?.isDefault) || userAddresses[0];
+                const defaultAddressId = getAddressId(defaultAddress, userAddresses.indexOf(defaultAddress));
+                setSelectedAddressId((prev) => (
+                    prev !== MANUAL_ADDRESS_ID && userAddresses.some((address, index) => getAddressId(address, index) === prev)
+                        ? prev
+                        : defaultAddressId
+                ));
+                return;
+            }
+
+            setSelectedAddressId(MANUAL_ADDRESS_ID);
         }
-    }, [userData]);
+    }, [userData, userAddresses.length]);
 
     useEffect(() => {
-        const pincode = String(formData.pincode || '').trim();
+        const pincode = String(activeShippingAddress.pincode || '').trim();
         if (!enrichedCart.length || pincode.length !== 6) {
             setShippingQuote(prev => ({
                 ...prev,
@@ -396,7 +424,7 @@ const CheckoutPage = () => {
             isCancelled = true;
             clearTimeout(timer);
         };
-    }, [formData.pincode, paymentMethod, subtotal, couponDiscount, shippingItemsSignature]);
+    }, [activeShippingAddress.pincode, paymentMethod, subtotal, couponDiscount, shippingItemsSignature]);
 
     const shippingCharge = Number(shippingQuote.shippingCharge || 0);
     const parseFeeAmount = (value) => {
@@ -462,7 +490,9 @@ const CheckoutPage = () => {
             nextValue = value.replace(/[^A-Za-z ]/g, '').replace(/\s+/g, ' ');
         }
 
-        setSelectedAddressId('manual');
+        if (userAddresses.length > 0) {
+            setSelectedAddressId(MANUAL_ADDRESS_ID);
+        }
         setFormData(prev => ({ ...prev, [name]: nextValue }));
     };
 
@@ -524,11 +554,12 @@ const CheckoutPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const trimmedName = String(formData.fullName || '').trim();
-        const trimmedPhone = String(formData.phone || '').trim();
-        const trimmedCity = String(formData.city || '').trim();
-        const trimmedState = String(formData.state || '').trim();
-        const trimmedPincode = String(formData.pincode || '').trim();
+        const trimmedName = String(activeShippingAddress.fullName || '').trim();
+        const trimmedPhone = String(activeShippingAddress.phone || '').trim();
+        const trimmedAddress = String(activeShippingAddress.address || '').trim();
+        const trimmedCity = String(activeShippingAddress.city || '').trim();
+        const trimmedState = String(activeShippingAddress.state || '').trim();
+        const trimmedPincode = String(activeShippingAddress.pincode || '').trim();
 
         if (!trimmedName || !namePattern.test(trimmedName)) {
             toast.error('Please enter a valid full name using letters only.');
@@ -537,6 +568,11 @@ const CheckoutPage = () => {
 
         if (!phonePattern.test(trimmedPhone)) {
             toast.error('Phone number must be exactly 10 digits.');
+            return;
+        }
+
+        if (!trimmedAddress) {
+            toast.error('Please enter a delivery address.');
             return;
         }
 
@@ -569,9 +605,12 @@ const CheckoutPage = () => {
             userEmail: String(userData?.email || user?.email || '').trim().toLowerCase(),
             items: enrichedCart,
             shippingAddress: {
-                ...formData,
+                ...activeShippingAddress,
                 fullName: trimmedName,
                 phone: trimmedPhone,
+                address: trimmedAddress,
+                city: trimmedCity,
+                state: trimmedState,
                 pincode: trimmedPincode
             },
             paymentMethod: paymentMethod,
@@ -733,7 +772,7 @@ const CheckoutPage = () => {
                                     <Truck size={18} className="text-primary" />
                                     Delivery Details
                                 </h3>
-                                {selectedAddressId === 'manual' && (
+                                {(userAddresses.length === 0 || isUsingAlternateAddress) && (
                                     <button
                                         type="button"
                                         onClick={handleDetectLocation}
@@ -748,24 +787,10 @@ const CheckoutPage = () => {
                                 {userAddresses.length > 0 && (
                                     <div className="space-y-2 md:space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <p className="text-[10px] md:text-xs font-bold text-textPrimary/55 uppercase">Saved Addresses</p>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedAddressId('manual');
-                                                    setFormData({
-                                                        fullName: '',
-                                                        phone: '',
-                                                        address: '',
-                                                        city: '',
-                                                        state: '',
-                                                        pincode: '',
-                                                    });
-                                                }}
-                                                className="text-[10px] md:text-xs font-bold text-primary hover:underline uppercase"
-                                            >
-                                                Use Custom
-                                            </button>
+                                            <p className="text-[10px] md:text-xs font-bold text-textPrimary/55 uppercase">Choose Delivery Address</p>
+                                            <span className="text-[10px] md:text-xs font-bold text-textPrimary/45 uppercase">
+                                                Step 1
+                                            </span>
                                         </div>
                                         <div className="grid grid-cols-1 gap-2">
                                             {userAddresses.map((address, index) => {
@@ -799,6 +824,20 @@ const CheckoutPage = () => {
                                                     </button>
                                                 );
                                             })}
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedAddressId(MANUAL_ADDRESS_ID)}
+                                                className={`text-left border rounded-lg p-3 transition-all ${isUsingAlternateAddress ? 'border-primary bg-primary/5' : 'border-dashed border-secondary/30 hover:border-secondary/45'}`}
+                                            >
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-textPrimary">Deliver to someone else</p>
+                                                        <p className="text-[11px] text-textPrimary/65">
+                                                            Use a different name, phone number, and address for this order.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -809,8 +848,13 @@ const CheckoutPage = () => {
                                     </p>
                                 )}
 
-                                {(userAddresses.length === 0 || selectedAddressId === 'manual') ? (
+                                {(userAddresses.length === 0 || isUsingAlternateAddress) ? (
                                     <>
+                                        {userAddresses.length > 0 && (
+                                            <div className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-[11px] text-primary">
+                                                Enter the recipient details below. This address will be used only for this order.
+                                            </div>
+                                        )}
                                         <div className="grid grid-cols-2 gap-3 md:gap-4">
                                             <div className="space-y-1 text-left">
                                                 <label className="text-[10px] md:text-xs font-bold text-textPrimary/55 uppercase">Full Name</label>
@@ -896,8 +940,22 @@ const CheckoutPage = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <div className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-                                        Using selected saved address for this order.
+                                    <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="text-[10px] md:text-xs font-black uppercase tracking-wider text-emerald-700">
+                                                Step 2: Delivery goes here
+                                            </p>
+                                            <span className="text-[10px] font-bold text-emerald-600">Ready</span>
+                                        </div>
+                                        <div className="mt-2 space-y-1 text-[11px] md:text-sm text-emerald-900">
+                                            <p className="font-bold">{activeShippingAddress.fullName || 'Saved Address'}</p>
+                                            <p>{activeShippingAddress.phone}</p>
+                                            <p>
+                                                {[activeShippingAddress.address, activeShippingAddress.city, activeShippingAddress.state, activeShippingAddress.pincode]
+                                                    .filter(Boolean)
+                                                    .join(', ')}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </form>
